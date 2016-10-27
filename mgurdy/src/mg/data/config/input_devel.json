@@ -1,0 +1,131 @@
+[
+    {
+        "name": "Devel Input Map",
+        "type": "evdev",
+        "debug": true,
+        "device": "/dev/input/event3",
+        "mappings": [
+            {
+                "input": {"type": 1, "code": 44, "value": 1},
+                "event": {"type": "input", "name": "fn1", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 44, "value": 0},
+                "event": {"type": "input", "name": "fn1", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 30, "value": 1},
+                "event": {"type": "input", "name": "fn1", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 16, "value": 1},
+                "event": {"type": "input", "name": "fn1", "action": "long"}
+            },
+
+            {
+                "input": {"type": 1, "code": 45, "value": 1},
+                "event": {"type": "input", "name": "fn2", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 45, "value": 0},
+                "event": {"type": "input", "name": "fn2", "action": "up"}
+            },
+
+            {
+                "input": {"type": 1, "code": 46, "value": 1},
+                "event": {"type": "input", "name": "fn3", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 46, "value": 0},
+                "event": {"type": "input", "name": "fn3", "action": "up"}
+            },
+
+            {
+                "input": {"type": 1, "code": 47, "value": 1},
+                "event": {"type": "input", "name": "fn4", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 47, "value": 0},
+                "event": {"type": "input", "name": "fn4", "action": "up"}
+            },
+
+            {
+                "input": {"type": 1, "code": 49, "value": 1},
+                "event": {"type": "input", "name": "top1", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 49, "value": 0},
+                "event": {"type": "input", "name": "top1", "action": "up"}
+            },
+
+            {
+                "input": {"type": 1, "code": 50, "value": 1},
+                "event": {"type": "input", "name": "top2", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 50, "value": 0},
+                "event": {"type": "input", "name": "top2", "action": "up"}
+            },
+
+            {
+                "input": {"type": 1, "code": 51, "value": 1},
+                "event": {"type": "input", "name": "top3", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 51, "value": 0},
+                "event": {"type": "input", "name": "top3", "action": "up"}
+            },
+
+            {
+                "input": {"type": 1, "code": 52, "value": 1},
+                "event": {"type": "input", "name": "mod1", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 52, "value": 0},
+                "event": {"type": "input", "name": "mod1", "action": "up"}
+            },
+
+            {
+                "input": {"type": 1, "code": 53, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 53, "value": 0},
+                "event": {"type": "input", "name": "mod2", "action": "up"}
+            },
+
+            {
+                "input": {"type": 1, "code": 28, "value": 1},
+                "event": {"type": "input", "name": "select", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 28, "value": 0},
+                "event": {"type": "input", "name": "select", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 105, "value": 1},
+                "event": {"type": "input", "name": "back", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 105, "value": 0},
+                "event": {"type": "input", "name": "back", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 103, "value": 1},
+                "event": {"type": "input", "name": "encoder", "action": "up", "value": 1}
+            },
+            {
+                "input": {"type": 1, "code": 103, "value": 2},
+                "event": {"type": "input", "name": "encoder", "action": "up", "value": 1}
+            },
+            {
+                "input": {"type": 1, "code": 108, "value": 1},
+                "event": {"type": "input", "name": "encoder", "action": "down", "value": -1}
+            },
+            {
+                "input": {"type": 1, "code": 108, "value": 2},
+                "event": {"type": "input", "name": "encoder", "action": "down", "value": -1}
+            }
+        ]
+    }
+]

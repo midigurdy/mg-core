@@ -1,0 +1,55 @@
+{
+    "name": "Default MIDI Input",
+    "type": "midi",
+    "debug": true,
+    "mappings": [
+        {
+            "input": {
+                "name": "control_change",
+                "arg1": 7,
+                "modifier": "arg2"
+            },
+            "event": {
+                "type": "state_change",
+                "name": "main_volume",
+                "value": "arg2"
+            }
+        },
+        {
+            "input": {
+                "name": "control_change",
+                "arg1": 27,
+                "modifier": "arg2"
+            },
+            "event": {
+                "type": "state_change",
+                "name": "preset.melody.0.volume",
+                "value": "arg2"
+            }
+        },
+        {
+            "input": {
+                "name": "program_change",
+                "condition": "arg1 range 10 98",
+                "modifier": "arg1 minus 9"
+            },
+            "event": {
+                "type": "state_action",
+                "name": "load_preset",
+                "value": "arg1"
+            }
+        },
+        {
+            "input": {
+                "name": "program_change",
+                "condition": "arg1 range 0 9",
+                "modifier": "arg1"
+            },
+            "event": {
+                "type": "state_action",
+                "name": "toggle_string_mute",
+                "value": "arg1"
+            }
+        }
+    ]
+}

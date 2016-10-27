@@ -1,0 +1,202 @@
+[
+    {
+        "name": "Hardware Buttons",
+        "type": "evdev",
+        "debug": true,
+        "device": "/dev/input/event2",
+        "mappings": [
+            {
+                "input": {"type": 1, "code": 100, "value": 1},
+                "event": {"type": "input", "name": "select", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 100, "value": 0},
+                "event": {"type": "input", "name": "select", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 101, "value": 1},
+                "event": {"type": "input", "name": "select", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 102, "value": 1},
+                "event": {"type": "input", "name": "select", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 103, "value": 1},
+                "event": {"type": "input", "name": "back", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 103, "value": 0},
+                "event": {"type": "input", "name": "back", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 104, "value": 1},
+                "event": {"type": "input", "name": "back", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 105, "value": 1},
+                "event": {"type": "input", "name": "back", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 106, "value": 1},
+                "event": {"type": "input", "name": "fn1", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 106, "value": 0},
+                "event": {"type": "input", "name": "fn1", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 107, "value": 1},
+                "event": {"type": "input", "name": "fn1", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 108, "value": 1},
+                "event": {"type": "input", "name": "fn1", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 109, "value": 1},
+                "event": {"type": "input", "name": "fn2", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 109, "value": 0},
+                "event": {"type": "input", "name": "fn2", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 110, "value": 1},
+                "event": {"type": "input", "name": "fn2", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 111, "value": 1},
+                "event": {"type": "input", "name": "fn2", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 112, "value": 1},
+                "event": {"type": "input", "name": "fn3", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 112, "value": 0},
+                "event": {"type": "input", "name": "fn3", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 113, "value": 1},
+                "event": {"type": "input", "name": "fn3", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 114, "value": 1},
+                "event": {"type": "input", "name": "fn3", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 115, "value": 1},
+                "event": {"type": "input", "name": "top1", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 115, "value": 0},
+                "event": {"type": "input", "name": "top1", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 116, "value": 1},
+                "event": {"type": "input", "name": "top1", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 117, "value": 1},
+                "event": {"type": "input", "name": "top1", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 118, "value": 1},
+                "event": {"type": "input", "name": "top2", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 118, "value": 0},
+                "event": {"type": "input", "name": "top2", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 119, "value": 1},
+                "event": {"type": "input", "name": "top2", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 120, "value": 1},
+                "event": {"type": "input", "name": "top2", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 121, "value": 1},
+                "event": {"type": "input", "name": "top3", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 121, "value": 0},
+                "event": {"type": "input", "name": "top3", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 122, "value": 1},
+                "event": {"type": "input", "name": "top3", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 123, "value": 1},
+                "event": {"type": "input", "name": "top3", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 124, "value": 1},
+                "event": {"type": "input", "name": "mod1", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 124, "value": 0},
+                "event": {"type": "input", "name": "mod1", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 125, "value": 1},
+                "event": {"type": "input", "name": "mod1", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 126, "value": 1},
+                "event": {"type": "input", "name": "mod1", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 127, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 127, "value": 0},
+                "event": {"type": "input", "name": "mod2", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 128, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 129, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "long"}
+            }
+        ]
+    },
+    {
+        "name": "PEK Button",
+        "type": "evdev",
+        "debug": true,
+        "device": "/dev/input/event1",
+        "mappings": [
+            {
+                "input": {"type": 1, "code": 116, "value": 1},
+                "event": {"type": "input", "name": "fn4", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 116, "value": 0},
+                "event": {"type": "input", "name": "fn4", "action": "up"}
+            }
+        ]
+    },
+    {
+        "name": "Encoder",
+        "type": "evdev",
+        "debug": true,
+        "device": "/dev/input/event0",
+        "mappings": [
+            {
+                "input": {"type": 2, "code": 0, "value": 1},
+                "event": {"type": "input", "name": "encoder", "action": "up", "value": 1}
+            },
+            {
+                "input": {"type": 2, "code": 0, "value": -1},
+                "event": {"type": "input", "name": "encoder", "action": "down", "value": -1}
+            }
+        ]
+    }
+]

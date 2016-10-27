@@ -1,0 +1,7 @@
+__pycache__
+*.pyc
+.cache
+.eggs
+build/
+src/mgurdy.egg-info/
+*.so
