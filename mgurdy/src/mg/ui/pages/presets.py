@@ -60,7 +60,7 @@ class PresetsPage(ListPage):
         page = ChoicePage(self.edit_choice_callback, items=(
             ('move', 'Move'),
             ('rename', 'Rename'),
-            ('replace', 'Replace'),
+            ('replace', 'Overwrite'),
             ('delete', 'Delete'),
         ))
         self.menu.push(page)
