@@ -107,6 +107,10 @@ class Slider(Page):
         self.prevts = time.time()
         self.prevdir = 0
 
+    @property
+    def reverse_direction(self):
+        return False
+
     def show(self, **kwargs):
         self.prevts = time.time()
         self.prevdir = 0
@@ -114,9 +118,10 @@ class Slider(Page):
 
     def handle(self, ev):
         if ev.name == Key.encoder:
-            inc = ev.value
-            if self.state.chien_sens_reverse:
-                inc *= -1
+            event_value = ev.value
+            if self.reverse_direction:
+                event_value *= -1
+            inc = event_value
             if self.prevdir == inc:
                 diff = ev.ts - self.prevts
                 if diff < 30000:
@@ -124,7 +129,7 @@ class Slider(Page):
                 elif diff < 50000:
                     inc *= 2
             self.prevts = ev.ts
-            self.prevdir = ev.value
+            self.prevdir = event_value
             val = self.get_value() + inc
             val = max(self.minval, min(self.maxval, val))
             self.set_value(val)

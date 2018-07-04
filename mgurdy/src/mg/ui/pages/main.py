@@ -134,6 +134,10 @@ class ChienThresholdPage(Slider):
     maxval = 100
     idle_timeout = 5
 
+    @property
+    def reverse_direction(self):
+        return self.state.chien_sens_reverse
+
     def handle_state_event(self, name, data):
         self.render()
 
