@@ -172,6 +172,7 @@ struct mg_key {
     int velocity;
     int state;  // current state of key: active or inactive
     int action; // if the key has changed state since last reading 
+    int active_since;
 
     int debounce; // only used for debouncing
 };

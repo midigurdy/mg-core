@@ -105,6 +105,9 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
             /* Key stays active */
             if (key->state == KEY_ACTIVE) {
                 key->debounce = 0;
+                if (key->active_since < mg->state.base_note_delay) {
+                    key->active_since++;
+                }
             }
             else {
                 key->debounce++;
@@ -113,6 +116,7 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
                 if (key->debounce > on_count) {
                     key->state = KEY_ACTIVE;
                     key->action = KEY_PRESSED;
+                    key->active_since = 0;
                     /* Key on velocity is the maximum of all pressure values 
                      * seen during debounce period */
                     key->velocity = key->max_pressure * mg->key_calib[i].velocity_adjust;
@@ -132,6 +136,7 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
                 if (key->debounce > off_count) {
                     key->state = KEY_INACTIVE;
                     key->action = KEY_RELEASED;
+                    key->active_since = 0;
                     /* Key off velocity is the last pressure value before
                      * going into inactive state */
                     key->velocity = key->smoothed_pressure * mg->key_calib[i].velocity_adjust;
@@ -169,7 +174,6 @@ static void update_melody_model(struct mg_core *mg)
 
     int midi_note;
     int expression = 0;
-    int global_pressure = 0;
 
     static int prev_highest_key = -1;
     static int prev_expression = 0;
@@ -182,25 +186,6 @@ static void update_melody_model(struct mg_core *mg)
         if (mg->slow_keys[i].state == KEY_ACTIVE) {
             active_slow_keys[active_slow_count++] = i;
         }
-    }
-
-    /* Pitch bend is calculated from the combined pressure of all keys. It is
-     * the same for all strings, so calculate it here only once.
-     *
-     * Taking the average seems to a bit too easy, but it works well enough for now...
-     * */
-    for (i = 0; i < active_count; i++) {
-        global_pressure += mg->keys[active_keys[i]].smoothed_pressure;
-    }
-    if (active_count) {
-        global_pressure = 0x2000 + (
-                mg->state.pitchbend_factor *
-                multimap(global_pressure / active_count,
-                    mg->state.pressure_to_pitch.ranges,
-                    mg->state.pressure_to_pitch.count));
-    }
-    else {
-        global_pressure = 0x2000;
     }
 
     /* Expression is also the same for all melody strings, calculate here only once. */
@@ -250,33 +235,46 @@ static void update_melody_model(struct mg_core *mg)
 
                     note = &model->notes[midi_note];
                     note->channel = st->channel;
+
                     if (st->mode == MG_MODE_GENERIC) {
                         note->velocity = 120;
                         note->pressure = 0;
+                        model->pitch = 0x2000 + (
+                                mg->state.pitchbend_factor *
+                                multimap(key->smoothed_pressure,
+                                    mg->state.pressure_to_pitch.ranges,
+                                    mg->state.pressure_to_pitch.count));
                     }
                     else if (st->mode == MG_MODE_KEYBOARD) {
                         note->velocity = multimap(key->velocity,
                                 mg->state.keyvel_to_notevel.ranges,
                                 mg->state.keyvel_to_notevel.count);
                         note->pressure = 0;
+                        model->pitch = 0x2000;  // no pitch bend in keyboard mode
                     }
                     else {  // MG_MODE_MIDIGURDY
-                        /* In standard (non-polyphonic) MIDIGURDY mode, a
-                         * pressed key is sent with the velocity of 124 if the 
-                         * current highest key is higher than the previously pressed key.
-                         * If the current pressed key is lower than the previous one,
-                         * a velocity of (124 - prev_key + current_key), to enable velocity
-                         * switching. And if the previous expression was below the threshold
-                         * (i.e.) the crank just started to turn, also set velocity to minimum (100)
+                        /* If the key for the note we're enabling has recently been pressed,
+                         * then use the key velocity to determine the note velocity
+                         * (27 values,from 101 to 127).
+                         *
+                         * If the key for the note we're enabling was already pressed for longer,
+                         * then use the velocity 100.
                          */
-                        if (prev_expression < MG_MELODY_EXPRESSION_THRESHOLD) {
-                            note->velocity = 100;
+                        if (key->active_since < mg->state.base_note_delay) {
+                            note->velocity = multimap(key->velocity,
+                                    mg->state.keyvel_to_notevel.ranges,
+                                    mg->state.keyvel_to_notevel.count);
                         } else {
-                            note->velocity = 125;
+                            note->velocity = 100;
                         }
                         note->pressure = multimap(key->smoothed_pressure,
                                 mg->state.pressure_to_poly.ranges,
                                 mg->state.pressure_to_poly.count);
+                        model->pitch = 0x2000 + (
+                                mg->state.pitchbend_factor *
+                                multimap(key->smoothed_pressure,
+                                    mg->state.pressure_to_pitch.ranges,
+                                    mg->state.pressure_to_pitch.count));
                     }
                 }
             }
@@ -296,18 +294,20 @@ static void update_melody_model(struct mg_core *mg)
                         note->channel = st->channel;
                         if (st->mode == MG_MODE_MIDIGURDY) {
                             if (prev_expression < MG_MELODY_EXPRESSION_THRESHOLD) {
-                                note->velocity = 100;
+                                note->velocity = 79;
                             }
-                            else if (key_num < prev_highest_key) {
-                                note->velocity = 125 - prev_highest_key - 1;
-                            } else {
-                                note->velocity = 100;
+                            else {
+                                note->velocity = 99 + prev_highest_key;
+                                if (note->velocity < 80) {
+                                    note->velocity = 80;
+                                }
                             }
                         } else {
                             note->velocity = 64; // FIXME: is this a good default for generic?
                         }
                         note->pressure = 0; // no key, no pressure...
                         model->active_notes[model->note_count++] = midi_note;
+                        model->pitch = 0x2000; // no key, no pitch bend!
                     }
                 }
             }
@@ -336,6 +336,7 @@ static void update_melody_model(struct mg_core *mg)
 
                 note = &model->notes[midi_note];
                 note->channel = st->channel;
+
                 if (st->mode == MG_MODE_GENERIC) {
                     note->velocity = 120;
                     note->pressure = 0;
@@ -354,17 +355,9 @@ static void update_melody_model(struct mg_core *mg)
                             mg->state.pressure_to_poly.ranges,
                             mg->state.pressure_to_poly.count);
                 }
-            }
-        }
 
-        /* No pitch bend for keyboard mode */
-        if (st->mode != MG_MODE_KEYBOARD) {
-            /* Pitch bend values also should be adjusted smoothly */
-            if (model->pitch != global_pressure)
-                model->pitch = mg_smooth(global_pressure, model->pitch, 0.9);
-        }
-        else {
-            model->pitch = 0x2000;
+                model->pitch = 0x2000;  // no pitch bend in polyphonic mode for now
+            }
         }
     }
 
