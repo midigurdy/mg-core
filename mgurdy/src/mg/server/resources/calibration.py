@@ -1,5 +1,5 @@
 from flask import request
-from flask_restful import abort
+from flask_restful import abort, Resource
 
 from mg.input import calibration
 from mg import db
@@ -25,3 +25,11 @@ class Keyboard(StateResource):
         db.delete_key_calibration()
         calibration.commit_keys(calibration.default_keys())
         return self.get()
+
+
+class Wheel(Resource):
+    def get(self):
+        from mg.mglib import mgcore
+        return {
+            'gain': mgcore.get_wheel_gain()
+        }

@@ -34,5 +34,6 @@ api.add_resource(config.ImportExportView, '/config')
 api.add_resource(misc.MiscView, '/misc')
 
 api.add_resource(calibration.Keyboard, '/calibrate/keyboard')
+api.add_resource(calibration.Wheel, '/calibrate/wheel')
 
 api.add_resource(SystemInfo, '/info')
