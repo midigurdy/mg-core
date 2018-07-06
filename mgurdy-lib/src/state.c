@@ -63,14 +63,14 @@ static struct mg_map default_keyvel_to_notevel = {
 static struct mg_map default_keyvel_to_tangent = {
     .count = 2,
     .ranges = {
-        {0, 20}, {MG_KEYVEL_MAX, 63}
+        {0, 0}, {MG_KEYVEL_MAX, 63}
     }
 };
 
 static struct mg_map default_keyvel_to_keynoise = {
     .count = 2,
     .ranges = {
-        {0, 20}, {MG_KEYVEL_MAX, 127}
+        {0, 0}, {MG_KEYVEL_MAX, 127}
     }
 };
 
