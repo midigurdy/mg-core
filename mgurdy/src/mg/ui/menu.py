@@ -78,7 +78,10 @@ class Menu:
         if evt.name == 'state:locked':
             self.push(MessagePage(evt.data['message'], modal=True))
         elif evt.name == 'state:unlocked':
-            self.pop()
+            if evt.data and evt.data.get('goto_home', False):
+                self.goto('home')
+            else:
+                self.pop()
         page = self.current_page()
         page.handle_state_event(evt.name, evt.data)
 

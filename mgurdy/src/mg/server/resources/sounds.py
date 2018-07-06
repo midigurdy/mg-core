@@ -59,7 +59,7 @@ class SoundFontUploadView(StateResource):
             abort(400, message=str(e))
 
         if overwrite:
-            with self.state.lock('Loading...'):
+            with self.state.lock('Loading...', goto_home=True):
                 signals.emit('sound:changed', {'id': filename})
         else:
             signals.emit('sound:added', {'id': filename})
@@ -90,7 +90,7 @@ class SoundFontView(StateResource):
             os.remove(filepath)
         except Exception as e:
             return abort(500, message=str(e))
-        with self.state.lock('Loading...'):
+        with self.state.lock('Loading...', goto_home=True):
             signals.emit('sound:deleted', {'id': id})
         return None, 204
 

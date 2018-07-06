@@ -42,7 +42,7 @@ class State(EventEmitter):
             self.power = PowerState()
 
     @contextmanager
-    def lock(self, message=None):
+    def lock(self, message=None, goto_home=False):
         self._lock.acquire()
         if message is not None:
             signals.emit('state:locked', {'message': message})
@@ -51,7 +51,7 @@ class State(EventEmitter):
         finally:
             self._lock.release()
             if message is not None:
-                signals.emit('state:unlocked')
+                signals.emit('state:unlocked', {'goto_home': goto_home})
 
     def attr_by_path(self, path):
         names = path.split('.')
