@@ -89,7 +89,6 @@ class WebSocketQueue:
             names = list(self.pending.keys())
             for name in names:
                 (ts, data) = self.pending[name]
-                print('checking pending', name, ts, data)
                 if now - ts > self.throttle_timeout:
                     self.handle_event(name, data, force=True)
                     del self.pending[name]
