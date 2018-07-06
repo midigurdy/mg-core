@@ -38,6 +38,7 @@ def start(args):
     for key in ('webroot_dir', 'http_port', 'input_config'):
         setattr(settings, key, getattr(args, key))
     settings.set_data_dir(args.data_dir)
+    settings.create_dirs()
 
     from mg.fluidsynth.api import FluidSynth
     from mg.state import State

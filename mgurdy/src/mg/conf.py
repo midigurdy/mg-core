@@ -18,6 +18,11 @@ class Settings:
         self.config_dir = os.path.join(data_dir, 'config')
         self.upload_dir = os.path.join(data_dir, 'uploads')
 
+    def create_dirs(self):
+        for path in (self.sound_dir, self.config_dir, self.upload_dir):
+            if not os.path.exists(path):
+                os.makedirs(path)
+
     @property
     def input_config_file(self):
         return os.path.join(self.config_dir, '{}.json'.format(
