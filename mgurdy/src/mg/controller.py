@@ -52,8 +52,7 @@ class SynthController(EventListener):
         self.state = state
 
     def synth_gain_changed(self, gain, **kwargs):
-        gain = (gain / (127 / 3.0))
-        self.fluid.set_gain(gain)
+        self.set_synth_gain(gain)
 
     def pitchbend_range_changed(self, pitchbend_range, **kwargs):
         mgcore.set_pitchbend_range(pitchbend_range)
@@ -114,6 +113,7 @@ class SynthController(EventListener):
 
     def active_preset_changed(self, **kwargs):
         self.configure_all_voices()
+        self.set_synth_gain(self.state.synth.gain)
 
     def sound_changed(self, id, **kwargs):
         # if the changed sound is currently in use, clear all sounds
@@ -232,6 +232,10 @@ class SynthController(EventListener):
             self.fluid.set_channel_volume(9, volume)
         else:
             mgcore.set_string_params([(string, 'volume', volume)])
+
+    def set_synth_gain(self, gain):
+        gain = (gain / (127 / 3.0))
+        self.fluid.set_gain(gain)
 
 
 class SystemController(EventListener):
