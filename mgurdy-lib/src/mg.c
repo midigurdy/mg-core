@@ -123,8 +123,6 @@ int mg_initialize()
         return 0;
     }
 
-    printf("Initializing mgcore\n");
-
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&mg_core.mutex, &attr);
@@ -238,8 +236,8 @@ int mg_set_string(struct mg_string_config *configs)
                 mg_string_set_volume(st, c->val);
                 break;
             case MG_PARAM_CHANNEL:
-                printf("string %d channel: %d\n", snum, c->val);
-                printf("channel %d\n", c->val);
+                // printf("string %d channel: %d\n", snum, c->val);
+                // printf("channel %d\n", c->val);
                 break;
             case MG_PARAM_BASE_NOTE:
                 mg_string_set_base_note(st, c->val);
@@ -262,7 +260,7 @@ int mg_set_string(struct mg_string_config *configs)
                 mg_string_set_chien_threshold(st, c->val);
                 break;
             case MG_PARAM_ATTACK:
-                printf("string %d attack key: %d\n", snum, c->val);
+                // printf("string %d attack key: %d\n", snum, c->val);
                 break;
             case MG_PARAM_NOTE_ENABLE:
                 mg_string_set_fixed_note(st, c->val, 127);
@@ -345,7 +343,7 @@ int mg_set_mapping(const struct mg_map *src, int idx)
         dst->count = src->count;
         memcpy(dst->ranges, src->ranges, sizeof(src->ranges));
     } else {
-        printf("failed to set mapping with 0 range (%d)\n", src->count);
+        fprintf(stderr, "failed to set mapping with 0 range (%d)\n", src->count);
     }
 
     return mg_state_unlock(&mg_core.state);

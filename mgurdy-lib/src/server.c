@@ -87,7 +87,7 @@ void *mg_server_thread(void *args)
         return NULL;
     }
 
-    printf("starting websocket server...\n");
+    // printf("starting websocket server...\n");
 
     while(!mg->should_stop) {
         lws_service(_context, 1000);
@@ -156,13 +156,11 @@ static int _wheel_callback(struct lws *wsi, enum lws_callback_reasons reason,
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED:
             _wheel_client_count++;
-            printf("wheel websocket connection established: %d\n",
-                    _wheel_client_count);
+            // printf("wheel websocket connection established: %d\n", _wheel_client_count);
             break;
         case LWS_CALLBACK_CLOSED:
             _wheel_client_count--;
-            printf("wheel websocket connection closed: %d\n",
-                    _wheel_client_count);
+            // printf("wheel websocket connection closed: %d\n", _wheel_client_count);
             break;
         case LWS_CALLBACK_SERVER_WRITEABLE:
             if (_wheel_buf_count) {
@@ -242,13 +240,11 @@ static int _keys_callback(struct lws *wsi, enum lws_callback_reasons reason,
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED:
             _keys_client_count++;
-            printf("keys websocket connection established: %d\n",
-                    _keys_client_count);
+            // printf("keys websocket connection established: %d\n", _keys_client_count);
             break;
         case LWS_CALLBACK_CLOSED:
             _keys_client_count--;
-            printf("keys websocket connection closed: %d\n",
-                    _keys_client_count);
+            // printf("keys websocket connection closed: %d\n", _keys_client_count);
             break;
         case LWS_CALLBACK_SERVER_WRITEABLE:
             if (_keys_buf_count) {
