@@ -2,6 +2,7 @@ from flask import request
 from flask_restful import abort
 
 from mg.schema import PresetSchema
+from mg.signals import signals
 
 from .base import StateResource
 
@@ -35,5 +36,7 @@ class InstrumentView(StateResource):
         errors = PresetSchema().validate(data)
         if errors:
             abort(400, errors=errors)
-        self.state.from_preset_dict(data, partial=False)
+        with signals.suppress():
+            self.state.from_preset_dict(data, partial=False)
+        signals.emit('active:preset:changed')
         return self.get()

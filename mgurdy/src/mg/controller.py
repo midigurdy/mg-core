@@ -114,6 +114,9 @@ class SynthController(EventListener):
     def active_preset_changed(self, **kwargs):
         self.configure_all_voices()
         self.set_synth_gain(self.state.synth.gain)
+        mgcore.set_pitchbend_range(self.state.pitchbend_range)
+        mgcore.set_string_params(self.chien_threshold_configs())
+        self.set_reverb_volume(self.state.reverb_volume)
 
     def sound_changed(self, id, **kwargs):
         # if the changed sound is currently in use, clear all sounds
@@ -156,7 +159,6 @@ class SynthController(EventListener):
                     configs.append((string, 'all_notes_off', 0))
                     configs.append((string, 'note_on', int(voice.base_note)))
             mgcore.set_string_params(configs)
-            mgcore.set_pitchbend_range(self.state.pitchbend_range)
             self.fluid.unload_unused_soundfonts()
         finally:
             mgcore.resume_midi_output()
@@ -264,6 +266,8 @@ class SystemController(EventListener):
 
     def active_preset_changed(self, **kwargs):
         self.update_string_leds()
+        self.set_volume(self.state.main_volume)
+        self.set_brightness(self.state.ui.brightness)
 
     def active_preset_voice_muted_changed(self, **kwargs):
         self.update_string_leds()

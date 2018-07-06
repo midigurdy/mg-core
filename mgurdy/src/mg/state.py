@@ -84,7 +84,9 @@ class State(EventEmitter):
             log.error('Preset {} not found!'.format(preset_id))
             return
         with self.lock():
-            self.from_preset_dict(preset.get_data())
+            with signals.suppress():
+                self.from_preset_dict(preset.get_data())
+            signals.emit('active:preset:changed')
             self.last_preset_number = preset.number
 
     # FIXME: database access should not happen in this class!

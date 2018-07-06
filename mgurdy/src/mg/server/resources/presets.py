@@ -56,7 +56,6 @@ class LoadPresetView(StateResource):
         preset = get_object_or_404(Preset, Preset.id == id)
         with self.state.lock('Loading preset...', goto_home=True):
             self.state.load_preset(preset.id)
-            signals.emit('active:preset:changed')
         return None, 204
 
 
