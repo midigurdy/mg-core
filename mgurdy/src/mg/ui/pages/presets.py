@@ -79,7 +79,6 @@ class PresetsPage(ListPage):
     def replace_preset(self):
         preset = self.get_cursor_item()
         self.state.save_preset(preset_id=preset.id)
-        self.menu.pop()
         self.menu.message('Preset replaced', popup=True, timeout=1)
 
     def new_preset_show(self):

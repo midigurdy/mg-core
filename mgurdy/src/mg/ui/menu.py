@@ -28,7 +28,11 @@ class Menu:
         with self.page_lock:
             page = self.current_page()
             if not page or not page.idle_timeout:
+                print('idle: exiting, page: {}, page.idle_timeout: {}'.format(page, page.idle_timeout if page else None))
                 return
+
+            print('idle now: {}, last_input: {}, page timeout: {}, page: {}'.format(
+                time.time(), self.last_input_time, page.idle_timeout, page))
 
             if time.time() - self.last_input_time > page.idle_timeout:
                 page.timeout()
@@ -149,10 +153,9 @@ class Menu:
                 return
 
     def message(self, message, timeout=0, popup=False, modal=False, font_size=3):
-        page = MessagePage(message, modal, font_size)
+        page = MessagePage(message, modal, font_size, timeout)
         if timeout:
             self.last_input_time = time.time()
-            page.idle_timeout = timeout
         if popup:
             self.push(page)
         else:
