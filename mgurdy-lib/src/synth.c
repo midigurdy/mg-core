@@ -175,7 +175,6 @@ static void update_melody_model(struct mg_core *mg)
     int midi_note;
     int expression = 0;
 
-    static int prev_highest_key = -1;
     static int prev_expression = 0;
 
     /* Find all currently active keys. */
@@ -313,11 +312,6 @@ static void update_melody_model(struct mg_core *mg)
             }
             else {
                     mg_string_clear_notes(st);
-            }
-            if (key_num >= 0) {
-                prev_highest_key = key_num;
-            } else {
-                prev_highest_key = -1;
             }
         }
         /* In polyphonic mode, multiple notes can play at the same time. Go
