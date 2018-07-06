@@ -60,6 +60,20 @@ static struct mg_map default_keyvel_to_notevel = {
     }
 };
 
+static struct mg_map default_keyvel_to_tangent = {
+    .count = 2,
+    .ranges = {
+        {0, 20}, {MG_KEYVEL_MAX, 63}
+    }
+};
+
+static struct mg_map default_keyvel_to_keynoise = {
+    .count = 2,
+    .ranges = {
+        {0, 20}, {MG_KEYVEL_MAX, 127}
+    }
+};
+
 
 /**
  * Sets all state fields, structs and lists to their initial values
@@ -87,6 +101,8 @@ int mg_state_init(struct mg_state *state)
     mg_reset_mapping_ranges(MG_MAP_SPEED_TO_TROMPETTE_VOLUME);
     mg_reset_mapping_ranges(MG_MAP_SPEED_TO_CHIEN);
     mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_NOTEVEL);
+    mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_TANGENT);
+    mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_KEYNOISE);
     
     return 0;
 }
@@ -232,6 +248,10 @@ struct mg_map *mg_state_get_mapping(struct mg_state *state, int idx)
             return &state->speed_to_chien;
         case MG_MAP_KEYVEL_TO_NOTEVEL:
             return &state->keyvel_to_notevel;
+        case MG_MAP_KEYVEL_TO_TANGENT:
+            return &state->keyvel_to_tangent;
+        case MG_MAP_KEYVEL_TO_KEYNOISE:
+            return &state->keyvel_to_keynoise;
         default:
             fprintf(stderr, "Invalid mapping index: %d\n", idx);
             return NULL;
@@ -256,6 +276,10 @@ struct mg_map *mg_state_get_default_mapping(int idx)
             return &default_speed_to_chien;
         case MG_MAP_KEYVEL_TO_NOTEVEL:
             return &default_keyvel_to_notevel;
+        case MG_MAP_KEYVEL_TO_TANGENT:
+            return &default_keyvel_to_tangent;
+        case MG_MAP_KEYVEL_TO_KEYNOISE:
+            return &default_keyvel_to_keynoise;
         default:
             fprintf(stderr, "Invalid mapping index: %d\n", idx);
             return NULL;

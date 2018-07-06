@@ -124,6 +124,8 @@ struct mg_state {
     struct mg_map speed_to_trompette_volume;
     struct mg_map speed_to_chien;
     struct mg_map keyvel_to_notevel;
+    struct mg_map keyvel_to_tangent;
+    struct mg_map keyvel_to_keynoise;
 
     pthread_mutex_t mutex; /* protects access to this structure */
 };
@@ -307,6 +309,8 @@ enum mg_map_enum {
     MG_MAP_SPEED_TO_TROMPETTE_VOLUME,
     MG_MAP_SPEED_TO_CHIEN,
     MG_MAP_KEYVEL_TO_NOTEVEL,
+    MG_MAP_KEYVEL_TO_TANGENT,
+    MG_MAP_KEYVEL_TO_KEYNOISE,
 };
 
 struct mg_string_config {

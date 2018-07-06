@@ -25,6 +25,8 @@ def test_start_stop(mg):
     'speed_to_trompette_volume',
     'speed_to_chien',
     'keyvel_to_notevel',
+    'keyvel_to_tangent',
+    'keyvel_to_keynoise',
 ])
 def test_set_get_and_reset_ranges(mg, name):
     default = mg.get_mapping_ranges(name)

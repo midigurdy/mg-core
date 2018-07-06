@@ -26,7 +26,7 @@ def test_get_instrument_state(client, state):
     rv = client.get('/api/instrument')
 
     expected = {
-        'main': {'gain': 50, 'volume': 120},
+        'main': {'gain': 50, 'volume': 120, 'pitchbend_range': 0},
         'chien': {'threshold': 50},
         'tuning': {'coarse': 0, 'fine': 0},
         'reverb': {'volume': 25, 'panning': 64},

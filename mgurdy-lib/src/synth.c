@@ -261,15 +261,18 @@ static void update_melody_model(struct mg_core *mg)
                          * then use the velocity 100.
                          */
                         if (key->active_since < mg->state.base_note_delay) {
-                            note->velocity = multimap(key->velocity,
-                                    mg->state.keyvel_to_notevel.ranges,
-                                    mg->state.keyvel_to_notevel.count);
+                            note->velocity = 64 + multimap(key->velocity,
+                                    mg->state.keyvel_to_tangent.ranges,
+                                    mg->state.keyvel_to_tangent.count);
                         } else {
-                            note->velocity = 100;
+                            note->velocity = 32;
                         }
+                        /*
                         note->pressure = multimap(key->smoothed_pressure,
                                 mg->state.pressure_to_poly.ranges,
                                 mg->state.pressure_to_poly.count);
+                        */
+                        note->pressure = 0;
                         model->pitch = 0x2000 + (
                                 mg->state.pitchbend_factor *
                                 multimap(key->smoothed_pressure,
@@ -294,13 +297,10 @@ static void update_melody_model(struct mg_core *mg)
                         note->channel = st->channel;
                         if (st->mode == MG_MODE_MIDIGURDY) {
                             if (prev_expression < MG_MELODY_EXPRESSION_THRESHOLD) {
-                                note->velocity = 79;
+                                note->velocity = 1;
                             }
                             else {
-                                note->velocity = 99 + prev_highest_key;
-                                if (note->velocity < 80) {
-                                    note->velocity = 80;
-                                }
+                                note->velocity = 32;
                             }
                         } else {
                             note->velocity = 64; // FIXME: is this a good default for generic?
@@ -348,9 +348,9 @@ static void update_melody_model(struct mg_core *mg)
                     note->pressure = 0;
                 }
                 else { // MG_MODE_MIDIGURDY
-                    note->velocity = multimap(key->velocity,
-                            mg->state.keyvel_to_notevel.ranges,
-                            mg->state.keyvel_to_notevel.count);
+                    note->velocity = 64 + multimap(key->velocity,
+                            mg->state.keyvel_to_tangent.ranges,
+                            mg->state.keyvel_to_tangent.count);
                     note->pressure = multimap(key->smoothed_pressure,
                             mg->state.pressure_to_poly.ranges,
                             mg->state.pressure_to_poly.count);

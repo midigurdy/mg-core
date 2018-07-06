@@ -117,14 +117,42 @@ MAPPINGS = {
     },
     'keyvel_to_notevel': {
         'idx': lib.MG_MAP_KEYVEL_TO_NOTEVEL,
-        'name': 'Key Hit Velocity to MIDI Note Velocity',
+        'name': 'Key Hit Velocity to Keyboard Volume',
         'src': {
             'name': 'Key Velocity',
             'min': 0,
             'max': 3000,
         },
         'dst': {
-            'name': 'MIDI Note Velocity',
+            'name': 'Keyboard Volume',
+            'min': 0,
+            'max': 127,
+        },
+    },
+    'keyvel_to_tangent': {
+        'idx': lib.MG_MAP_KEYVEL_TO_TANGENT,
+        'name': 'Key Hit Velocity to Tangent Hit Volume',
+        'src': {
+            'name': 'Key Velocity',
+            'min': 0,
+            'max': 3000,
+        },
+        'dst': {
+            'name': 'Tangent Hit Volume',
+            'min': 0,
+            'max': 63,
+        },
+    },
+    'keyvel_to_keynoise': {
+        'idx': lib.MG_MAP_KEYVEL_TO_KEYNOISE,
+        'name': 'Key Hit Velocity to Keynoise Volume',
+        'src': {
+            'name': 'Key Velocity',
+            'min': 0,
+            'max': 3000,
+        },
+        'dst': {
+            'name': 'Keynoise Volume',
             'min': 0,
             'max': 127,
         },

@@ -199,8 +199,8 @@ static void sync_melody_keynoise_notes(struct mg_core *mg)
         }
         
         velocity = multimap(velocity,
-                mg->state.keyvel_to_notevel.ranges,
-                mg->state.keyvel_to_notevel.count);
+                mg->state.keyvel_to_keynoise.ranges,
+                mg->state.keyvel_to_keynoise.count);
 
         if (velocity == 0)
             continue;  // no need to send these...
