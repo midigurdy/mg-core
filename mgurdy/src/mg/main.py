@@ -33,6 +33,9 @@ def main():
 
 
 def start(args):
+    prctl.set_proctitle('mg-main')
+    prctl.set_name('mg-main')
+
     configure_logging(debug=args.debug)
 
     for key in ('webroot_dir', 'http_port', 'input_config'):
@@ -124,9 +127,6 @@ def start(args):
 
     menu.goto('home')
     input_manager.start()
-
-    prctl.set_proctitle('mg-main')
-    prctl.set_name('mg-main')
 
     event_handler.mainloop()
 
