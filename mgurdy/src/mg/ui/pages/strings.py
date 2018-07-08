@@ -218,6 +218,9 @@ class SoundPopupItem(PopupItem):
         self.start_scroll()
 
     def update_scroll(self):
+        if not self.do_scroll:
+            self.stop_scroll()
+            return
         d = self.menu.display
         if self.x_offset > self.text_width - self.width and self.diff != -1:
             self.diff = -1
