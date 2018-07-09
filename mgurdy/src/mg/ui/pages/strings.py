@@ -421,10 +421,12 @@ class TreeSoundListPage(ListPage):
 
     def show_sounds(self, sf):
         items = []
-        for i, sound in enumerate(sf.sounds):
+        i = 1
+        for sound in sf.sounds:
             if ((sf.mode == 'generic' and not self.limit_to_type) or
                     (sf.mode == 'midigurdy' and sound.type == self.voice.type)):
-                items.append((i + 1, sf, sound))
+                items.append((i, sf, sound))
+                i += 1
         self.set_items(items)
 
         cursor_pos = 0
