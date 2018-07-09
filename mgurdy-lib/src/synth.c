@@ -389,6 +389,7 @@ static void update_drone_model(struct mg_core *mg)
          * the volme to zero and go to next string. */
         if (st->muted || mg->halt_midi_output) {
             model->volume = 0;
+            mg_string_clear_notes(st);
             continue;
         }
 
@@ -477,6 +478,7 @@ static void update_trompette_model(struct mg_core *mg)
          * the volme to zero and go to next string. */
         if (st->muted || mg->halt_midi_output) {
             model->volume = 0;
+            mg_string_clear_notes(st);
             continue;
         }
 
