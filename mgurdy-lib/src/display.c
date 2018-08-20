@@ -14,9 +14,9 @@
 #include "mg.h"
 
 
-static void draw_ft_bitmap(struct mg_image *img, FT_Bitmap *bitmap,
+static void draw_ft_bitmap(int width, int height, char *buffer, FT_Bitmap *bitmap,
         int x, int y, int color, int start_x, int max_x);
-static void puts_line(struct mg_image *img, int face_id,
+static void puts_line(int img_width, int img_height, char *img_data, FT_Face face,
         const char *text, int textlen, int x, int y, int color, int max_width, int x_offset);
 static void bline(struct mg_image *img, int x0, int y0, int x1, int y1, int c);
 static void hline(struct mg_image *img, int x0, int x1, int y, int c);
@@ -84,7 +84,7 @@ int mg_image_load_font(struct mg_image *img, const char *filename)
 }
 
 
-static void draw_ft_bitmap(struct mg_image *img, FT_Bitmap *bitmap,
+static void draw_ft_bitmap(int width, int height, char *buffer, FT_Bitmap *bitmap,
         int x, int y, int color, int start_x, int max_x)
 {
     int row;
@@ -103,16 +103,16 @@ static void draw_ft_bitmap(struct mg_image *img, FT_Bitmap *bitmap,
             for(i=7; i>=0; i--, ix++, bit++) {
                 if (bit == bitmap->width)
                     break;
-                if (ix < 0 || ix < start_x || (max_x > 0 && ix > max_x) || iy < 0 || ix >= img->width ||
-                        iy >= img->height)
+                if (ix < 0 || ix < start_x || (max_x > 0 && ix > max_x) || iy < 0 || ix >= width ||
+                        iy >= height)
                     continue;
                 if (color) {
-                    img->data[iy * img->width + ix] |=
+                    buffer[iy * width + ix] |=
                         (b & (1 << i)) ? 1 : 0;
                 }
                 else {
                     if (b & (1 << i)) {
-                        img->data[iy * img->width + ix] &= 0;
+                        buffer[iy * width + ix] &= 0;
                     }
 
                 }
@@ -122,15 +122,14 @@ static void draw_ft_bitmap(struct mg_image *img, FT_Bitmap *bitmap,
 }
 
 
-static void puts_line(struct mg_image *img, int face_id,
+static void puts_line(int img_width, int img_height, char *img_data, FT_Face face,
         const char *text, int textlen, int x, int y, int color, int max_width, int x_offset)
 {
     int i;
     int start_x;
     int max_x = 0;
 
-    FT_GlyphSlot slot = img->ft.faces[face_id]->glyph;
-    FT_Face face = img->ft.faces[face_id];
+    FT_GlyphSlot slot = face->glyph;
 
     start_x = x;
     if (max_width > 0)
@@ -140,7 +139,8 @@ static void puts_line(struct mg_image *img, int face_id,
         if (FT_Load_Char(face, (unsigned char) text[i],
                     FT_LOAD_RENDER | FT_LOAD_MONOCHROME))
             return;
-        draw_ft_bitmap(img, &slot->bitmap, x - slot->bitmap_left, y, color, start_x, max_x);
+        draw_ft_bitmap(img_width, img_height, img_data, &slot->bitmap,
+                x - slot->bitmap_left, y, color, start_x, max_x);
         x += slot->advance.x >> 6;
     }
 }
@@ -201,7 +201,8 @@ void mg_image_puts(struct mg_image *img, int face_id, const char *text,
                 line_x += ((longest_line - textlen) * char_w);
             }
 
-            puts_line(img, face_id, line, textlen, line_x, y, color, max_width, x_offset);
+            puts_line(img->width, img->height, img->data, face,
+                    line, textlen, line_x, y, color, max_width, x_offset);
         }
 
         y += char_h;
