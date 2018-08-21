@@ -39,8 +39,11 @@ class PillowDisplay(BaseDisplay):
     def rect(self, x1, y1, x2, y2, color=1, fill=None):
         self.draw.rectangle(((x1, y1), (x2, y2)), outline=color, fill=fill)
 
-    def clear(self):
-        self.draw.rectangle(((0, 0), (self.width, self.height)), fill=0)
+    def clear(self, x1=-1, y1=-1, x2=-1, y2=-1):
+        if -1 not in (x1, y1, x2, y2):
+            self.draw.rectangle(((x1, y1), (x2, y2)), fill=0)
+        else:
+            self.draw.rectangle(((0, 0), (self.width, self.height)), fill=0)
 
     def update(self):
         self.output.seek(0)

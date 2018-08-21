@@ -282,15 +282,15 @@ class MGCore:
 
 
 class MGImage:
-    def __init__(self, width, height, mmap_filename=None):
-        self.img = lib.mg_image_create(width, height)
+    def __init__(self, width, height, mmap_filename=None, filename=None):
+        self.img = lib.mg_image_create(width, height, filename.encode() if filename else ffi.NULL)
         if mmap_filename:
             ret = lib.mg_image_mmap_file(self.img, mmap_filename.encode())
             if ret != 0:
                 raise RuntimeError('Unable to mmap image to %s' % mmap_filename)
 
-    def clear(self):
-        lib.mg_image_clear(self.img)
+    def clear(self, x1=-1, y1=-1, x2=-1, y2=-1):
+        lib.mg_image_clear(self.img, x1, y1, x2, y2)
 
     def point(self, x, y, color):
         lib.mg_image_point(self.img, x, y, color)
@@ -321,6 +321,10 @@ class MGImage:
 
         lib.mg_image_puts(self.img, font, text.encode('latin-1'),
                           x, y, color, spacing, align_id, anchor_id, max_width, x_offset)
+
+    def scrolltext(self, x, y, width, text, font, color, initial_delay=0, shift_delay=0, end_delay=0):
+        lib.mg_image_scrolltext(self.img, font, text.encode('latin-1'),
+                                x, y, width, color, initial_delay, shift_delay, end_delay)
 
     def get_image_data(self):
         """

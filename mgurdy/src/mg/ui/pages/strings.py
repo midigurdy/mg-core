@@ -1,7 +1,7 @@
 from .base import PopupItem, ListPage, Deck, ConfigList, ValueListItem
 
 from mg.input import Action, Key
-from mg.utils import midi2percent, midi2note, PeriodicTimer
+from mg.utils import midi2percent, midi2note
 
 
 # used to synchronize the state of the voice param pages, so that the same parameter
@@ -181,19 +181,6 @@ class ModeItem(ValueListItem):
 
 
 class SoundPopupItem(PopupItem):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.x = 0
-        self.y = 0
-        self.diff = 1
-        self.text_width = 0
-        self.width = 0
-        self.display = 0
-        self.x_offset = 0
-        self.scroll_wait = 0
-        self.do_scroll = False
-        self.timer = None
-
     def get_label(self):
         if self.page.voice.soundfont_id:
             sound = self.page.voice.get_sound()
@@ -210,57 +197,7 @@ class SoundPopupItem(PopupItem):
 
     def render_on(self, display, x, y, width):
         name = self.get_label()
-        display.puts(x, y, name, max_width=width, x_offset=-self.x_offset)
-        self.x = x
-        self.y = y
-        self.width = width
-        self.text_width = len(name) * 6
-        self.start_scroll()
-
-    def update_scroll(self):
-        if not self.do_scroll:
-            self.stop_scroll()
-            return
-        d = self.menu.display
-        if self.x_offset > self.text_width - self.width and self.diff != -1:
-            self.diff = -1
-            self.scroll_wait = 10
-        if self.x_offset < 0 and self.diff != 1:
-            self.diff = 1
-            self.scroll_wait = 10
-        self.scroll_wait -= 1
-        if self.scroll_wait > 0:
-            return
-        self.x_offset += self.diff
-        with self.menu.page_lock:
-            d.rect(self.x, self.y, self.x + self.width, self.y + 11, color=0, fill=0)
-            self.render_on(d, self.x, self.y, self.width)
-            d.update()
-
-    def hide(self):
-        self.stop_scroll()
-
-    def show(self):
-        self.do_scroll = True
-        self.start_scroll()
-
-    def start_scroll(self):
-        with self.menu.page_lock:
-            if not self.do_scroll:
-                return
-            if self.timer is not None or self.text_width <= self.width:
-                return
-            self.x_offset = 0
-            self.scroll_wait = 10
-            self.timer = PeriodicTimer(0.08, self.update_scroll)
-            self.timer.start()
-
-    def stop_scroll(self):
-        with self.menu.page_lock:
-            self.do_scoll = False
-            if self.timer:
-                self.timer.stop()
-                self.timer = None
+        display.scrolltext(x, y, width, name, initial_delay=500, shift_delay=25, end_delay=500)
 
 
 class SoundListPage(ListPage):

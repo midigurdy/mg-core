@@ -336,19 +336,34 @@ extern int mg_reset_mapping_ranges(int idx);
 
 
 struct mg_image {
+    char *filename;
     int width;
     int height;
     int size;
     char *data;
     struct mg_image_ft ft;
     char *membuf;
+
+    pthread_mutex_t mutex;
+
+    char *scroll_data;
+    int scroll_x;
+    int scroll_y;
+    int scroll_width;
+    int scroll_height;
+    int scroll_text_width;
+    int scroll_offset;
+    int scroll_end_delay_ms;
+    pthread_t scroll_pth;
+    int scroll_timerfd;
+    int scroll_step;
 };
 
 
-extern struct mg_image *mg_image_create(int width, int height);
+extern struct mg_image *mg_image_create(int width, int height, const char *filename);
 extern int mg_image_mmap_file(struct mg_image *img, const char *filename);
 extern void mg_image_destroy(struct mg_image *img);
-extern void mg_image_clear(struct mg_image *img);
+extern void mg_image_clear(struct mg_image *img, int x0, int y0, int x1, int y1);
 extern void mg_image_line(struct mg_image *img, int x0, int y0, int x1, int y1, int c);
 extern void mg_image_point(struct mg_image *img, int x, int y, int c);
 extern char *mg_image_data(struct mg_image *img);
@@ -357,6 +372,9 @@ extern void mg_image_puts(struct mg_image *img, int face_id,
         const char *text, int x, int y, int color,
         int line_spacing, int align, int anchor,
         int max_width, int x_offset);
+extern void mg_image_scrolltext(struct mg_image *img, int face_id, const char *text,
+        int x, int y, int width, int color,
+        int initial_delay_ms, int shift_delay_ms, int end_delay_ms);
 
 extern void mg_image_rect(struct mg_image *img, int x0, int y0, int x1, int y1,
         int c, int fill);

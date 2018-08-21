@@ -14,11 +14,12 @@ class MGDisplay(BaseDisplay):
         super().__init__(width, height)
         self.filename = filename
         self.img = MGImage(self.width, self.height,
-                           mmap_filename=self.filename if mmap else None)
+                           mmap_filename=self.filename if mmap else None,
+                           filename=self.filename)
         self._load_bdf_fonts()
 
-    def clear(self):
-        self.img.clear()
+    def clear(self, x1=-1, y1=-1, x2=-1, y2=-1):
+        self.img.clear(x1, y1, x2, y2)
 
     def point(self, x, y, color=1):
         self.img.point(x, y, color)
@@ -40,6 +41,9 @@ class MGDisplay(BaseDisplay):
              max_width=0, x_offset=0):
         self.img.puts(x, y, text, self.fonts[self.font_id], color, spacing,
                       align, anchor, max_width, x_offset)
+
+    def scrolltext(self, x, y, width, text, color=1, initial_delay=0, shift_delay=0, end_delay=0):
+        self.img.scrolltext(x, y, width, text, self.fonts[self.font_id], color, initial_delay, shift_delay, end_delay)
 
     def get_image_data(self):
         self.img.get_image_data()

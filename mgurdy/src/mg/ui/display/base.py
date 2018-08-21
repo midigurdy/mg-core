@@ -70,6 +70,13 @@ class BaseDisplay:
         be 'left' (or None), 'right' or 'center'.
         """
 
+    def scrolltext(self, x, y, width, text, color=1, initial_delay=0, shift_delay=0, end_delay=0):
+        """
+        Write the supplied string onto the display, but bounded in a 'scrollbox'
+        that cuts of the text at the specified width and uses a timer to
+        scroll the text to the end and back to the beginning.
+        """
+
     def point(self, x, y, color=1):
         """
         Draw a single pixel
@@ -85,7 +92,7 @@ class BaseDisplay:
         Draw a rectangle
         """
 
-    def clear(self):
+    def clear(self, x1=-1, y1=-1, x2=-1, y2=-1):
         """
         Clear the display
         """

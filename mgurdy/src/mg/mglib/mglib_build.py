@@ -88,17 +88,12 @@ int mg_get_mapping(struct mg_map *dst, int idx);
 int mg_set_mapping(const struct mg_map *src, int idx);
 int mg_reset_mapping_ranges(int idx);
 
-struct mg_image {
-    int width;
-    int height;
-    int size;
-    char *data;
-};
+struct mg_image;
 
-struct mg_image *mg_image_create(int width, int height);
+struct mg_image *mg_image_create(int width, int height, const char *filename);
 int mg_image_mmap_file(struct mg_image *img, const char *filename);
 void mg_image_destroy(struct mg_image *img);
-void mg_image_clear(struct mg_image *img);
+void mg_image_clear(struct mg_image *img, int x0, int y0, int x1, int y1);
 void mg_image_line(struct mg_image *img, int x0, int y0, int x1, int y1, int c);
 void mg_image_point(struct mg_image *img, int x, int y, int c);
 char *mg_image_data(struct mg_image *img);
@@ -110,6 +105,9 @@ void mg_image_puts(struct mg_image *img, int face_id,
 void mg_image_rect(struct mg_image *img, int x0, int y0, int x1, int y1,
                    int c, int fill);
 int mg_image_write(struct mg_image *img, const char *filename);
+void mg_image_scrolltext(struct mg_image *img, int face_id, const char *text,
+        int x, int y, int width, int color,
+        int initial_delay_ms, int shift_delay_ms, int end_delay_ms);
 
 int mg_calibrate_set_key(int key, float pressure_adjust,
                          float velocity_adjust);

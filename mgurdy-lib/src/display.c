@@ -3,9 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/timerfd.h>
 #include <unistd.h>
 
 #include <ft2build.h>
@@ -22,33 +24,254 @@ static void bline(struct mg_image *img, int x0, int y0, int x1, int y1, int c);
 static void hline(struct mg_image *img, int x0, int x1, int y, int c);
 static void vline(struct mg_image *img, int x, int y0, int y1, int c);
 static void convert_8bpp_to_1bpp(struct mg_image *img, char *buf);
+static void copy_buffer(const char *src, int src_width, int src_height, int src_x, int src_y, 
+                        char *dst, int dst_width, int dst_height, int dst_x, int dst_y,
+                        int width, int height);
+static void clear_scrolltext(struct mg_image *img);
+static void *scroll_thread(void *args);
+static void set_timer(int fd, int initial_ms, int interval_ms);
 
 
-struct mg_image *mg_image_create(int width, int height)
+static void *scroll_thread(void *args)
+{
+    int ret;
+    u_int64_t val;
+    struct mg_image *img = args;
+
+    ret = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    if (ret) {
+        printf("Unable to set cancel state for scroller thread\n");
+        pthread_exit(NULL);
+    }
+
+    while(1) {
+        ret = read(img->scroll_timerfd, &val, sizeof(u_int64_t));
+        if (ret != sizeof(u_int64_t)) {
+            perror("Scroll thread exiting!");
+            pthread_exit(NULL);
+        }
+
+        pthread_mutex_lock(&img->mutex);
+        if (img->scroll_data) {
+            int reset_timer = 0;
+
+            img->scroll_offset += img->scroll_step;
+            if (img->scroll_offset + img->scroll_width >= img->scroll_text_width) {
+                img->scroll_offset = img->scroll_text_width - img->scroll_width;
+                img->scroll_step *= -1;
+                reset_timer = 1;
+            } else if (img->scroll_offset < 0) {
+                img->scroll_offset = 0;
+                img->scroll_step *= -1;
+                reset_timer = 1;
+            }
+
+            if (reset_timer && img->scroll_end_delay_ms) {
+                set_timer(img->scroll_timerfd, img->scroll_end_delay_ms, -1);
+            }
+
+            copy_buffer(img->scroll_data, img->scroll_text_width, img->scroll_height, img->scroll_offset, 0,
+                    img->data, img->width, img->height, img->scroll_x, img->scroll_y,
+                    img->scroll_width, img->scroll_height);
+
+            if (img->membuf || img->filename) {
+                mg_image_write(img, img->filename);
+            }
+
+        }
+        pthread_mutex_unlock(&img->mutex);
+    }
+}
+
+
+struct mg_image *mg_image_create(int width, int height, const char *filename)
 {
     int err;
-    struct mg_image *img = malloc(sizeof *img);
+    pthread_mutexattr_t attr;
+    struct mg_image *img;
+
+    img = malloc(sizeof *img);
+    if (img == NULL) {
+        perror("Out of memory\n");
+        return NULL;
+    }
+    memset(img, 0, sizeof(*img));
+
+    if (filename) {
+        img->filename = strdup(filename);
+    }
 
     img->width = width;
     img->height = height;
     img->size = width * height;
     img->data = malloc(img->size * sizeof(char));
-    img->membuf = NULL;
-    img->ft.face_count = 0;
-    mg_image_clear(img);
+    if (img->data == NULL) {
+        perror("Out of memory\n");
+        goto exit_err;
+    }
+    memset(img->data, 0, img->size * sizeof(char));
 
     err = FT_Init_FreeType(&img->ft.library);
     if (err) {
-        printf("Error initializing FreeType library!\n");
+        perror("Error initializing FreeType library!\n");
+        goto exit_err;
+    }
+
+    img->scroll_timerfd = timerfd_create(CLOCK_REALTIME, 0);
+    if (img->scroll_timerfd < 0) {
+        perror("Unable to create timer");
+        goto exit_err;
+    }
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    err = pthread_mutex_init(&img->mutex, &attr);
+    pthread_mutexattr_destroy(&attr);
+    if (err) {
+        perror("Error initializing image mutex!\n");
+        goto exit_err;
+    }
+
+    err = pthread_create(&img->scroll_pth, NULL, scroll_thread, img);
+    if (err) {
+        perror("Unable to start scroller thread");
+        goto exit_err;
     }
 
     return img;
+
+exit_err:
+    pthread_mutex_destroy(&img->mutex);
+    free(img->filename);
+    free(img->data);
+    free(img);
+    return NULL;
+}
+
+
+void mg_image_scrolltext(struct mg_image *img, int face_id, const char *text,
+        int x, int y, int width, int color,
+        int initial_delay_ms, int shift_delay_ms, int end_delay_ms)
+{
+    int char_width = 0;
+    int text_width = 0;
+    int text_height = 0;
+    int buf_size;
+
+    pthread_mutex_lock(&img->mutex);
+
+    clear_scrolltext(img);
+
+    FT_Face face = img->ft.faces[face_id];
+
+    /* the fonts supported by this function all have a single size */
+    if (face->available_sizes) {
+        char_width = face->available_sizes[0].width;
+        text_height = face->available_sizes[0].height;
+    }
+
+    text_width = strlen(text) * char_width;
+    if (text_width <= width) {
+        mg_image_puts(img, face_id, text, x, y, color, 0, 0, 0, 0, 0);
+        goto exit;
+    }
+    buf_size = text_width * text_height;
+    img->scroll_data = malloc(buf_size * sizeof(char));
+    if (img->scroll_data == NULL) {
+        goto exit;
+    }
+    memset(img->scroll_data, 0, buf_size * sizeof(char));
+
+    /* render the text into a dedicated buffer once, then use that buffer
+     * during scrolling */
+    puts_line(text_width, text_height, img->scroll_data, face,
+            text, strlen(text), 0, 0, color, 0, 0);
+
+    img->scroll_x = x;
+    img->scroll_y = y;
+    img->scroll_width = width;
+    img->scroll_height = text_height;
+    img->scroll_text_width = text_width;
+    img->scroll_offset = 0;
+    img->scroll_step = 1;
+    img->scroll_end_delay_ms = end_delay_ms;
+
+    /* Write the initially visible text into the image */
+    copy_buffer(img->scroll_data, img->scroll_text_width, img->scroll_height, 0, 0,
+            img->data, img->width, img->height, img->scroll_x, img->scroll_y,
+            img->scroll_width, img->scroll_height);
+
+    /* Start the scroll timer */
+    if (shift_delay_ms) {
+        set_timer(img->scroll_timerfd, initial_delay_ms ? initial_delay_ms : shift_delay_ms, shift_delay_ms);
+    }
+
+exit:
+    pthread_mutex_unlock(&img->mutex);
+}
+
+static void set_timer(int fd, int initial_ms, int interval_ms)
+{
+    struct itimerspec itimer;
+    if (timerfd_gettime(fd, &itimer)) {
+        printf("unable to get time from timerfd!\n");
+        return;
+    }
+    if (initial_ms >= 0) {
+        itimer.it_value.tv_sec = initial_ms / 1000;
+        itimer.it_value.tv_nsec = (initial_ms % 1000) * 1000 * 1000;
+    }
+    if (interval_ms >= 0) {
+        itimer.it_interval.tv_sec = interval_ms / 1000;
+        itimer.it_interval.tv_nsec = (interval_ms % 1000) * 1000 * 1000;
+    }
+    if (timerfd_settime(fd, 0, &itimer, NULL)) {
+        printf("Unable to set timerfd\n");
+    }
+}
+
+static void clear_scrolltext(struct mg_image *img)
+{
+    /* clear timer */
+    struct itimerspec itimer;
+    itimer.it_value.tv_sec = 0;
+    itimer.it_value.tv_nsec = 0;
+    itimer.it_interval.tv_sec = 0;
+    itimer.it_interval.tv_nsec = 0;
+    timerfd_settime(img->scroll_timerfd, 0, &itimer, NULL);
+
+    free(img->scroll_data);
+    img->scroll_data = NULL;
+}
+
+static void copy_buffer(const char *src, int src_width, int src_height, int src_x, int src_y, 
+                        char *dst, int dst_width, int dst_height, int dst_x, int dst_y,
+                        int width, int height)
+{
+    int row, col;
+    int src_idx, dst_idx;
+
+    for (row = 0; row < height; row++) {
+        for (col = 0; col < width; col++) {
+            if ((row + dst_y < dst_height && col + dst_x < dst_width) &&
+                (row + src_y < src_height && col + src_x < src_width)) {
+                dst_idx = (row + dst_y) * dst_width + col + dst_x;
+                src_idx = (row + src_y) * src_width + col + src_x;
+                dst[dst_idx] = src[src_idx];
+            }
+        }
+    }
 }
 
 
 void mg_image_destroy(struct mg_image *img)
 {
     int i;
+
+    pthread_mutex_lock(&img->mutex);
+
+    pthread_cancel(img->scroll_pth);
+    pthread_join(img->scroll_pth, NULL);
 
     for (i=0; i<img->ft.face_count; i++) {
         FT_Done_Face(img->ft.faces[i]);
@@ -58,7 +281,15 @@ void mg_image_destroy(struct mg_image *img)
         munmap(img->membuf, img->size / 8);
     }
 
+    free(img->filename);
+    free(img->scroll_data);
     free(img->data);
+    pthread_mutex_unlock(&img->mutex);
+
+    if (pthread_mutex_destroy(&img->mutex)) {
+        printf("Unable to destroy mutex!\n");
+    }
+
     free(img);
 }
 
@@ -68,18 +299,26 @@ int mg_image_load_font(struct mg_image *img, const char *filename)
     int err;
     int id = img->ft.face_count;
 
+    pthread_mutex_lock(&img->mutex);
+
     if (img->ft.face_count == MG_IMAGE_MAX_FONTS) {
         printf("Maximum fonts reached for image!\n");
-        return -1;
+        id = -1;
+        goto exit;
     }
 
     err = FT_New_Face(img->ft.library, filename, 0, &img->ft.faces[id]);
     if (err) {
         printf("Error loading font %s: %d\n", filename, err);
-        return -1;
+        id = -1;
+        goto exit;
     }
 
     img->ft.face_count++;
+
+exit:
+    pthread_mutex_unlock(&img->mutex);
+
     return id;
 }
 
@@ -162,6 +401,8 @@ void mg_image_puts(struct mg_image *img, int face_id, const char *text,
     char *tmp;
     char *tok;
 
+    pthread_mutex_lock(&img->mutex);
+
     FT_Face face = img->ft.faces[face_id];
 
     /* the fonts supported by this function all have a single size */
@@ -213,12 +454,24 @@ void mg_image_puts(struct mg_image *img, int face_id, const char *text,
     }
 
     free(input);
+
+    pthread_mutex_unlock(&img->mutex);
 }
 
 
-void mg_image_clear(struct mg_image *img)
+void mg_image_clear(struct mg_image *img, int x0, int y0, int x1, int y1)
 {
-    memset(img->data, 0, img->size * sizeof(char));
+    pthread_mutex_lock(&img->mutex);
+
+    clear_scrolltext(img);
+    if (x0 >=0 && y0 >=0 && x1 >= 0 && y1 >= 0) {
+        mg_image_rect(img, x0, y0, x1, y1, 0, 0);
+    }
+    else {
+        memset(img->data, 0, img->size * sizeof(char));
+    }
+
+    pthread_mutex_unlock(&img->mutex);
 }
 
 
@@ -264,12 +517,16 @@ static void vline(struct mg_image *img, int x, int y0, int y1, int c)
 
 void mg_image_line(struct mg_image *img, int x0, int y0, int x1, int y1, int c)
 {
+    pthread_mutex_lock(&img->mutex);
+
     if (x0 == x1)
         vline(img, x0, y0, y1, c);
     else if (y0 == y1)
         hline(img, x0, x1, y0, c);
     else
         bline(img, x0, y0, x1, y1, c);
+
+    pthread_mutex_unlock(&img->mutex);
 }
 
 
@@ -277,6 +534,9 @@ void mg_image_rect(struct mg_image *img, int x0, int y0, int x1, int y1,
         int c, int fill)
 {
     int x, y, xmax, ymax, ix, iy;
+
+    pthread_mutex_lock(&img->mutex);
+
     if (fill > -1) {
         x = (x0 > x1) ? x1 : x0;
         xmax = (x0 > x1) ? x0 : x1;
@@ -296,6 +556,8 @@ void mg_image_rect(struct mg_image *img, int x0, int y0, int x1, int y1,
         hline(img, x1, x0, y1, c);
         vline(img, x0, y1, y0, c);
     }
+
+    pthread_mutex_unlock(&img->mutex);
 }
 
 
@@ -304,8 +566,13 @@ void mg_image_rect(struct mg_image *img, int x0, int y0, int x1, int y1,
 void mg_image_point(struct mg_image *img, int x, int y, int c)
 {
     int idx = y * img->width + x;
+
+    pthread_mutex_lock(&img->mutex);
+
     if (idx < img->size)
         img->data[idx] = c;
+
+    pthread_mutex_unlock(&img->mutex);
 }
 
 /**
@@ -337,44 +604,55 @@ static void convert_8bpp_to_1bpp(struct mg_image *img, char *buf)
 int mg_image_mmap_file(struct mg_image *img, const char *filename)
 {
     int fd;
+    int ret = -1;
     char *mm;
+
+    pthread_mutex_lock(&img->mutex);
 
     fd = open(filename, O_RDWR);
     if (fd < 0) {
         perror("Unable to open output file");
-        return -1;
+        goto exit;
     }
 
     mm = (char *) mmap(0, img->size / 8, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (mm == MAP_FAILED) {
         perror("Failed to map framebuffer device to memory");
-        return -1;
+        goto exit;
     }
 
     img->membuf = mm;
 
-    return 0;
+    ret = 0;
+
+exit:
+    pthread_mutex_unlock(&img->mutex);
+
+    return ret;
 }
 
 
 int mg_image_write(struct mg_image *img, const char *filename)
 {
     int fd = -1;
-    int ret = 0;
-    char *buf;
+    int ret = -1;
+    char *buf = NULL;
+
+    pthread_mutex_lock(&img->mutex);
 
     // If this image has a memory mapped output file, just convert
     // into the buffer and exit.
     if (img->membuf != NULL) {
         convert_8bpp_to_1bpp(img, img->membuf);
-        return 0;
+        ret = 0;
+        goto exit;
     }
 
     // Otherwise convert to new buffer and write to output file
     buf = malloc((img->size / 8) * sizeof(char));
     if (buf == NULL) {
         perror("Out of memory");
-        return -1;
+        goto exit;
     }
 
     convert_8bpp_to_1bpp(img, buf);
@@ -382,7 +660,6 @@ int mg_image_write(struct mg_image *img, const char *filename)
     fd = open(filename, O_WRONLY);
     if (fd < 0) {
         perror("Unable to open output file");
-        ret = -1;
         goto exit;
     }
 
@@ -391,8 +668,12 @@ int mg_image_write(struct mg_image *img, const char *filename)
         perror("Unable to write file");
     }
 
-    close(fd);
 exit:
+    if (fd != -1) {
+        close(fd);
+    }
     free(buf);
+    pthread_mutex_unlock(&img->mutex);
+
     return ret;
 }

@@ -430,7 +430,7 @@ class ConfigList(Page):
         if not self.x_offset:
             d.clear()
         else:
-            d.rect(self.x_offset, 0, 127, 31, fill=0, color=0)
+            d.clear(self.x_offset, 0, 127, 31)
         d.font_size(self.font_size)
         self.render_items()
         if self.scrollbar:
@@ -534,7 +534,7 @@ class ListPage(Page):
         if not self.x_offset:
             d.clear()
         else:
-            d.rect(self.x_offset, 0, 127, 31, fill=0, color=0)
+            d.clear(self.x_offset, 0, 127, 31)
         d.font_size(self.font_size)
         self.render_items()
         if self.scrollbar:
