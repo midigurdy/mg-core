@@ -11,7 +11,10 @@ setup(
     package_dir={'': 'src'},
     package_data={
         'mg.ui.display': ['fonts/*.bdf'],
-        'mg': ['data/config/input.json'],
+        'mg': [
+            'data/config/input.json',
+            'data/config/default_midi.json'
+        ],
     },
     include_package_data=True,
     scripts=[
