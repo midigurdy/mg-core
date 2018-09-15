@@ -2,11 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name="mgurdy",
-    version="0.0.4",
+    version="1.1.3",
     author="Marcus Weseloh",
     author_email="marcus@weseloh.cc",
     description="The main MidiGurdy program",
-    license="GPL2",
+    license="GPL3",
     packages=find_packages('src'),
     package_dir={'': 'src'},
     package_data={
