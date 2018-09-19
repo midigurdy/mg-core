@@ -6,7 +6,14 @@ display = Display(128, 32, '/tmp/mgimage', mmap=False)
 with display as d:
     d.font_size(3)
     d.puts(0, 0, "test")
-    d.scrolltext(10, 10, 32, "0123456789abdcefghij", shift_delay=10)
+    d.scrolltext(10, 10, 50, "0123456789abdcefghij", shift_delay=20)
+
+time.sleep(3)
+
+with display as d:
+    d.font_size(3)
+    d.puts(0, 0, "test")
+    d.scrolltext(10, 20, 50, "0123456789abdcefghij", shift_delay=20)
 
 time.sleep(3)
 
