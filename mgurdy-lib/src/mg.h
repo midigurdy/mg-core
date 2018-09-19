@@ -347,10 +347,12 @@ struct mg_image {
     pthread_mutex_t mutex;
 
     char *scroll_data;
+    int scroll_enable;
     int scroll_x;
     int scroll_y;
     int scroll_width;
     int scroll_height;
+    char *scroll_text;
     int scroll_text_width;
     int scroll_offset;
     int scroll_end_delay_ms;

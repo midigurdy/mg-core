@@ -27,6 +27,7 @@ static void convert_8bpp_to_1bpp(struct mg_image *img, char *buf);
 static void copy_buffer(const char *src, int src_width, int src_height, int src_x, int src_y, 
                         char *dst, int dst_width, int dst_height, int dst_x, int dst_y,
                         int width, int height);
+static void stop_scrolltext(struct mg_image *img);
 static void clear_scrolltext(struct mg_image *img);
 static void *scroll_thread(void *args);
 static void set_timer(int fd, int initial_ms, int interval_ms);
@@ -52,7 +53,7 @@ static void *scroll_thread(void *args)
         }
 
         pthread_mutex_lock(&img->mutex);
-        if (img->scroll_data) {
+        if (img->scroll_enable && img->scroll_data) {
             int reset_timer = 0;
 
             img->scroll_offset += img->scroll_step;
@@ -160,7 +161,12 @@ void mg_image_scrolltext(struct mg_image *img, int face_id, const char *text,
 
     pthread_mutex_lock(&img->mutex);
 
-    clear_scrolltext(img);
+    /* If a call to scrolltext comes in and scrolling is already enabled, then caller has requested
+     * multiple scrolling texts on the same screen. As this is currently not supported, clear the
+     * previous scrolling config and only keep the last one */
+    if (img->scroll_enable) {
+        clear_scrolltext(img);
+    }
 
     FT_Face face = img->ft.faces[face_id];
 
@@ -175,35 +181,64 @@ void mg_image_scrolltext(struct mg_image *img, int face_id, const char *text,
         mg_image_puts(img, face_id, text, x, y, color, 0, 0, 0, 0, 0);
         goto exit;
     }
-    buf_size = text_width * text_height;
-    img->scroll_data = malloc(buf_size * sizeof(char));
-    if (img->scroll_data == NULL) {
-        goto exit;
-    }
-    memset(img->scroll_data, 0, buf_size * sizeof(char));
 
-    /* render the text into a dedicated buffer once, then use that buffer
-     * during scrolling */
-    puts_line(text_width, text_height, img->scroll_data, face,
-            text, strlen(text), 0, 0, color, 0, 0);
+    /* Check if we have an identical scrolling config from a previous render. If so, then
+     * simply reuse the previous config and continue where we left off earlier, otherwise
+     * set up a new scroller config */
+    if (img->scroll_text == NULL
+            || strcmp(img->scroll_text, text) != 0
+            || img->scroll_width != width
+            || img->scroll_height != text_height
+            || img->scroll_text_width != text_width)
+    {
+        clear_scrolltext(img);
+
+        buf_size = text_width * text_height;
+        img->scroll_data = malloc(buf_size * sizeof(char));
+        if (img->scroll_data == NULL) {
+            clear_scrolltext(img);
+            goto exit;
+        }
+        img->scroll_text = strdup(text);
+        if (img->scroll_text == NULL) {
+            clear_scrolltext(img);
+            goto exit;
+        }
+        memset(img->scroll_data, 0, buf_size * sizeof(char));
+
+        /* render the text into a dedicated buffer once, then use that buffer
+        * during scrolling */
+        puts_line(text_width, text_height, img->scroll_data, face,
+                text, strlen(text), 0, 0, color, 0, 0);
+
+        img->scroll_width = width;
+        img->scroll_height = text_height;
+        img->scroll_text_width = text_width;
+        img->scroll_offset = 0;
+        img->scroll_step = 1;
+        img->scroll_end_delay_ms = end_delay_ms;
+
+        if (!initial_delay_ms) {
+            initial_delay_ms = shift_delay_ms;
+        }
+    }
+    else {
+        initial_delay_ms = shift_delay_ms;
+    }
 
     img->scroll_x = x;
     img->scroll_y = y;
-    img->scroll_width = width;
-    img->scroll_height = text_height;
-    img->scroll_text_width = text_width;
-    img->scroll_offset = 0;
-    img->scroll_step = 1;
-    img->scroll_end_delay_ms = end_delay_ms;
 
     /* Write the initially visible text into the image */
-    copy_buffer(img->scroll_data, img->scroll_text_width, img->scroll_height, 0, 0,
+    copy_buffer(img->scroll_data, img->scroll_text_width, img->scroll_height, img->scroll_offset, 0,
             img->data, img->width, img->height, img->scroll_x, img->scroll_y,
             img->scroll_width, img->scroll_height);
 
+    img->scroll_enable = 1;
+
     /* Start the scroll timer */
     if (shift_delay_ms) {
-        set_timer(img->scroll_timerfd, initial_delay_ms ? initial_delay_ms : shift_delay_ms, shift_delay_ms);
+        set_timer(img->scroll_timerfd, initial_delay_ms, shift_delay_ms);
     }
 
 exit:
@@ -230,18 +265,33 @@ static void set_timer(int fd, int initial_ms, int interval_ms)
     }
 }
 
-static void clear_scrolltext(struct mg_image *img)
+/* Stops the scrolling but leaves the scroller configuration in place. Used to resume
+ * scrolling in cases when simply the x/y position of the scrollbox has changed from the
+ * previous image write */
+static void stop_scrolltext(struct mg_image *img)
 {
-    /* clear timer */
     struct itimerspec itimer;
+
+    img->scroll_enable = 0;
+
+    /* clear timer */
     itimer.it_value.tv_sec = 0;
     itimer.it_value.tv_nsec = 0;
     itimer.it_interval.tv_sec = 0;
     itimer.it_interval.tv_nsec = 0;
     timerfd_settime(img->scroll_timerfd, 0, &itimer, NULL);
+}
+
+/* Stop and clear all scroll configuration */
+static void clear_scrolltext(struct mg_image *img)
+{
+    stop_scrolltext(img);
 
     free(img->scroll_data);
     img->scroll_data = NULL;
+
+    free(img->scroll_text);
+    img->scroll_text = NULL;
 }
 
 static void copy_buffer(const char *src, int src_width, int src_height, int src_x, int src_y, 
@@ -463,7 +513,8 @@ void mg_image_clear(struct mg_image *img, int x0, int y0, int x1, int y1)
 {
     pthread_mutex_lock(&img->mutex);
 
-    clear_scrolltext(img);
+    stop_scrolltext(img);
+
     if (x0 >=0 && y0 >=0 && x1 >= 0 && y1 >= 0) {
         mg_image_rect(img, x0, y0, x1, y1, 0, 0);
     }
@@ -639,6 +690,12 @@ int mg_image_write(struct mg_image *img, const char *filename)
     char *buf = NULL;
 
     pthread_mutex_lock(&img->mutex);
+
+    /* Previous image clear has stopped scrolling and no new scroll width has been created.
+     * So get rid of the old config now */
+    if (img->scroll_data != NULL && !img->scroll_enable) {
+        clear_scrolltext(img);
+    }
 
     // If this image has a memory mapped output file, just convert
     // into the buffer and exit.
