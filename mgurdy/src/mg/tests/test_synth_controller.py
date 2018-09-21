@@ -14,7 +14,15 @@ def ctrl():
         "synth.dynamic-sample-loading": 1,
     })
     fluid.start()
+
+    fluid.ladspa.add_effect('sympa', '../../mg-effects/build/sympathetic.so', mix=True)
+    fluid.ladspa.link_effect('sympa', 'Input', 'Reverb:Send')
+    fluid.ladspa.link_effect('sympa', 'Output Left', 'Main:L')
+    fluid.ladspa.link_effect('sympa', 'Output Right', 'Main:R')
+    fluid.ladspa.activate()
+
     yield SynthController(fluid, State())
+
     fluid.stop()
 
 

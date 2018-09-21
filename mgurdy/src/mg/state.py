@@ -26,6 +26,7 @@ class State(EventEmitter):
 
             self.main_volume = 0
             self.reverb_volume = 0
+            self.reverb_panning = 0
             self.coarse_tune = 0
             self.fine_tune = 0
             self.chien_threshold = 0
@@ -114,6 +115,7 @@ class State(EventEmitter):
         self.last_preset_number = 0
         self.main_volume = 120
         self.reverb_volume = 25
+        self.reverb_panning = 64
         self.coarse_tune = 0
         self.fine_tune = 0
         self.chien_threshold = 50
@@ -144,7 +146,7 @@ class State(EventEmitter):
             },
             'reverb': {
                 'volume': self.reverb_volume,
-                'panning': 64,  # FIXME!
+                'panning': self.reverb_panning,
             },
         }
 
@@ -166,6 +168,7 @@ class State(EventEmitter):
 
         reverb = data.get('reverb', {})
         _set(self, 'reverb_volume', reverb, 'volume', 25, partial)
+        _set(self, 'reverb_panning', reverb, 'panning', 64, partial)
 
     def to_misc_dict(self):
         return {

@@ -1,6 +1,7 @@
 from threading import Thread, Event, Timer
 import logging
 import time
+import math
 import prctl
 
 MIDI_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -28,6 +29,21 @@ def midi2note(val, with_octave=True):
     else:
         octave = '({}{}) '.format('+' if octave > 0 else '', octave)
     return '{}{:2}'.format(octave, note)
+
+
+def balance2amp(val, channel):
+    """
+    Implements a similar balance volume curve as the balance control in fluidsynth
+    """
+    val = val - 64
+
+    if (channel == 'left' and val < 0) or (channel == 'right' and val > 0):
+        return 1
+
+    if (channel == 'left' and val >= 63) or (channel == 'right' and val <= -64):
+        return 0
+
+    return 1 - math.sin(abs(val) / 64 * math.pi / 2)
 
 
 def scale(value, from_min, from_max, to_min, to_max):

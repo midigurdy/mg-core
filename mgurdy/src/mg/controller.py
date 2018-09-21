@@ -31,6 +31,7 @@ class SynthController(EventListener):
         'sound:deleted',
         'synth:gain:changed',
         'reverb_volume:changed',
+        'reverb_panning:changed',
         'active:preset:voice:muted:changed',
         'active:preset:voice:volume:changed',
         'coarse_tune:changed',
@@ -68,6 +69,9 @@ class SynthController(EventListener):
 
     def reverb_volume_changed(self, reverb_volume, **kwargs):
         self.set_reverb_volume(reverb_volume)
+
+    def reverb_panning_changed(self, reverb_panning, **kwargs):
+        self.set_reverb_panning(reverb_panning)
 
     def active_preset_voice_muted_changed(self, **kwargs):
         mgcore.set_string_params(self.string_mute_configs())
@@ -117,6 +121,7 @@ class SynthController(EventListener):
         mgcore.set_pitchbend_range(self.state.pitchbend_range)
         mgcore.set_string_params(self.chien_threshold_configs())
         self.set_reverb_volume(self.state.reverb_volume)
+        self.set_reverb_panning(self.state.reverb_panning)
 
     def sound_changed(self, id, **kwargs):
         # if the changed sound is currently in use, clear all sounds
@@ -228,6 +233,10 @@ class SynthController(EventListener):
             self.fluid.ladspa.mix_effect('sympa', level)
             if not self.fluid.ladspa.is_active():
                 self.fluid.ladspa.activate()
+
+    def set_reverb_panning(self, panning):
+        self.fluid.ladspa.set_control('sympa', 'Wet Left', utils.balance2amp(panning, 'left'))
+        self.fluid.ladspa.set_control('sympa', 'Wet Right', utils.balance2amp(panning, 'right'))
 
     def set_string_volume(self, string, volume):
         if string == 'keynoise1':
