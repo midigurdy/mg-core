@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, Response
 from flask_restful import Resource, abort
 
 from playhouse.flask_utils import get_object_or_404
@@ -30,6 +30,12 @@ class PresetListView(Resource):
 class PresetView(Resource):
     def get(self, id):
         preset = get_object_or_404(Preset, Preset.id == id)
+        if request.args.get('dl', False):
+            filename = '{} - {}.json'.format(preset.number, preset.name)
+            return Response(
+                Preset.data_schema.dumps(preset.to_dict()).data,
+                mimetype='application/json',
+                headers={'Content-Disposition': 'attachment;filename={}'.format(filename)})
         return preset.to_dict()
 
     def put(self, id):
