@@ -76,10 +76,10 @@ class Deck(Page):
         self.active_page = self.pages[self.page_index]
         self.active_page.init(self.menu, self.state)
         self.active_page.show(render=False)
-        self.render()
 
     def next_child(self):
         self.show_child(self.page_index + 1)
+        self.render()
 
     def render(self):
         if self.active_page:
