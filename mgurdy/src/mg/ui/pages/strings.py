@@ -197,7 +197,7 @@ class SoundPopupItem(PopupItem):
 
     def render_on(self, display, x, y, width):
         name = self.get_label()
-        display.scrolltext(x, y, width, name, initial_delay=500, shift_delay=25, end_delay=500)
+        display.scrolltext(x, y, width, name, initial_delay=500, shift_delay=80, end_delay=500)
 
 
 class SoundListPage(ListPage):
