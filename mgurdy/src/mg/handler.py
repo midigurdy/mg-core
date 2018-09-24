@@ -159,5 +159,4 @@ class StateActionHandler:
         """
         voice = self.state.preset.voice_by_number(string_number)
         if voice:
-            with self.state.lock():
-                voice.muted = not voice.muted
+            voice.muted = not voice.muted
