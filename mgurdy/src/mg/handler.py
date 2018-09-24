@@ -6,6 +6,7 @@ import threading
 import time
 
 from mg.conf import settings
+from mg.db import Preset
 from mg.input import Action, Key
 from mg.input.midi import MidiInput
 
@@ -146,9 +147,10 @@ class StateActionHandler:
         self.state = state
         self.menu = menu
 
-    def load_preset(self, preset_id):
+    def load_preset(self, preset_number):
+        preset = Preset.get(Preset.number == int(preset_number))
         with self.menu.lock_state('Loading preset...'):
-            self.state.load_preset(preset_id)
+            self.state.load_preset(preset.id)
 
     def toggle_string_mute(self, string_number):
         """
