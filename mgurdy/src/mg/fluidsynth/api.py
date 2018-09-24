@@ -163,6 +163,9 @@ class FluidSynth(object):
     def set_channel_volume(self, channel, volume):
         self._send_cc(channel, 7, volume)
 
+    def set_channel_panning(self, channel, panning):
+        self._send_cc(channel, 8, panning)
+
     def set_pitch_bend_range(self, channel, semitones):
         ret = lib.fluid_synth_pitch_wheel_sens(self.synth, channel, semitones)
         if ret != lib.FLUID_OK:

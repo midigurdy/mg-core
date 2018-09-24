@@ -96,7 +96,10 @@ class SynthController(EventListener):
         mgcore.set_string_params([(sender.string, 'polyphonic', int(sender.polyphonic))])
 
     def active_preset_voice_panning_changed(self, panning, sender, **kwargs):
-        mgcore.set_string_params([(sender.string, 'panning', sender.panning)])
+        if sender.string == 'keynoise1':
+            self.fluid.set_channel_panning(9, panning)
+        else:
+            mgcore.set_string_params([(sender.string, 'panning', sender.panning)])
 
     def coarse_tune_changed(self, **kwargs):
         mgcore.set_string_params(self.base_note_configs())
