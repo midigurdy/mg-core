@@ -77,7 +77,7 @@ class SynthController(EventListener):
         mgcore.set_string_params(self.string_mute_configs())
 
     def active_preset_voice_volume_changed(self, volume, sender, **kwargs):
-        self.set_string_volume(sender.string, volume)
+        self.set_voice_volume(sender, volume)
 
     def active_preset_voice_base_note_changed(self, **kwargs):
         mgcore.set_string_params(self.base_note_configs())
@@ -97,7 +97,7 @@ class SynthController(EventListener):
 
     def active_preset_voice_panning_changed(self, panning, sender, **kwargs):
         if sender.string == 'keynoise1':
-            self.fluid.set_channel_panning(9, panning)
+            self.fluid.set_channel_panning(sender.channel, panning)
         else:
             mgcore.set_string_params([(sender.string, 'panning', sender.panning)])
 
@@ -144,9 +144,13 @@ class SynthController(EventListener):
             if clear_sounds:
                 self.fluid.clear_all_channel_sounds()
                 self.fluid.unload_unused_soundfonts()
+
+            # setup melody, drone and trompette voices
             configs = []
             for voice in self.state.preset.voices:
                 string = voice.string
+                if string == 'keynoise1':
+                    continue
 
                 if not voice.get_sound():
                     self.fluid.clear_channel_sound(voice.channel)
@@ -167,6 +171,17 @@ class SynthController(EventListener):
                     configs.append((string, 'all_notes_off', 0))
                     configs.append((string, 'note_on', int(voice.base_note)))
             mgcore.set_string_params(configs)
+
+            # setup keynoise voice
+            voice = self.state.preset.keynoise[0]
+            if not voice.get_sound():
+                self.fluid.clear_channel_sound(voice.channel)
+            else:
+                self.fluid.set_channel_volume(voice.channel, voice.volume)
+                self.fluid.set_channel_panning(voice.channel, voice.panning)
+                self.fluid.set_channel_sound(voice.channel, voice.soundfont_id,
+                                             voice.bank, voice.program)
+
             self.fluid.unload_unused_soundfonts()
         finally:
             mgcore.resume_midi_output()
@@ -241,11 +256,11 @@ class SynthController(EventListener):
         self.fluid.ladspa.set_control('sympa', 'Wet Left', utils.balance2amp(panning, 'left'))
         self.fluid.ladspa.set_control('sympa', 'Wet Right', utils.balance2amp(panning, 'right'))
 
-    def set_string_volume(self, string, volume):
-        if string == 'keynoise1':
-            self.fluid.set_channel_volume(9, volume)
+    def set_voice_volume(self, voice, volume):
+        if voice.string == 'keynoise1':
+            self.fluid.set_channel_volume(voice.channel, volume)
         else:
-            mgcore.set_string_params([(string, 'volume', volume)])
+            mgcore.set_string_params([(voice.string, 'volume', volume)])
 
     def set_synth_gain(self, gain):
         gain = (gain / (127 / 3.0))
