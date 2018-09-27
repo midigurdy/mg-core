@@ -154,6 +154,28 @@ class StateActionHandler:
             return
         with self.menu.lock_state('Loading preset...'):
             self.state.load_preset(preset.id)
+
+    def load_next_preset(self, evt):
+        number = self.state.last_preset_number + 1
+        try:
+            preset = Preset.get(Preset.number == number)
+        except Preset.DoesNotExist:
+            try:
+                preset = Preset.select().order_by(Preset.number).get()
+            except Preset.DoesNotExist:
+                return
+        with self.menu.lock_state('Loading preset...'):
+            self.state.load_preset(preset.id)
+
+    def load_prev_preset(self, evt):
+        number = self.state.last_preset_number - 1
+        try:
+            preset = Preset.get(Preset.number == number)
+        except Preset.DoesNotExist:
+            try:
+                preset = Preset.select().order_by(Preset.number.desc()).get()
+            except Preset.DoesNotExist:
+                return
         with self.menu.lock_state('Loading preset...'):
             self.state.load_preset(preset.id)
 
