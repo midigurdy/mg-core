@@ -5,49 +5,53 @@
         {
             "input": {
                 "name": "control_change",
-                "arg1": 7,
-                "modifier": "arg2"
+                "arg1": 7
             },
             "event": {
                 "type": "state_change",
                 "name": "main_volume",
-                "value": "arg2"
+                "expr": {
+                    "value": "midi.arg2"
+                }
             }
         },
         {
             "input": {
                 "name": "control_change",
-                "arg1": 27,
-                "modifier": "arg2"
+                "arg1": 27
             },
             "event": {
                 "type": "state_change",
                 "name": "preset.melody.0.volume",
-                "value": "arg2"
+                "expr": {
+                    "value": "midi.arg2"
+                }
             }
         },
         {
             "input": {
                 "name": "program_change",
-                "condition": "arg1 range 10 98",
-                "modifier": "arg1 minus 9"
+                "cond": "midi.arg1 > 9 and midi.arg1 < 100"
             },
             "event": {
                 "type": "state_action",
                 "name": "load_preset",
-                "value": "arg1"
+                "expr": {
+                    "value": "midi.arg1 - 9"
+                }
             }
         },
         {
             "input": {
                 "name": "program_change",
-                "condition": "arg1 range 0 9",
-                "modifier": "arg1"
+                "cond": "midi.arg1 < 10"
             },
             "event": {
                 "type": "state_action",
                 "name": "toggle_string_mute",
-                "value": "arg1"
+                "expr": {
+                    "value": "midi.arg1"
+                }
             }
         }
     ]

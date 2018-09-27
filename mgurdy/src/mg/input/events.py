@@ -5,7 +5,7 @@ from mg.exceptions import InvalidInputMapError
 
 class Event:
     @classmethod
-    def from_mapping(self, entry):
+    def from_mapping(cls, entry):
         entry = dict(entry)
         etype = entry.pop('type')
         if etype == 'input':
@@ -85,7 +85,7 @@ class StateChangeEvent(Event):
 class StateActionEvent(Event):
     type = 'state_action'
 
-    def __init__(self, name, value):
+    def __init__(self, name, value=None):
         self.name = name
         self.value = value
 

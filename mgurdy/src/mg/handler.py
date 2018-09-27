@@ -60,7 +60,7 @@ class EventHandler:
         if not method:
             log.error('Invalid state_action "{}"'.format(evt.name))
         else:
-            method(evt.value)
+            method(evt)
 
     def handle_mdev_event(self, evt):
         if evt.subsystem != 'midi':
@@ -146,16 +146,23 @@ class StateActionHandler:
         self.state = state
         self.menu = menu
 
-    def load_preset(self, preset_number):
-        preset = Preset.get(Preset.number == int(preset_number))
+    def load_preset(self, evt):
+        preset_number = int(evt.value)
+        try:
+            preset = Preset.get(Preset.number == preset_number)
+        except Preset.DoesNotExist:
+            return
+        with self.menu.lock_state('Loading preset...'):
+            self.state.load_preset(preset.id)
         with self.menu.lock_state('Loading preset...'):
             self.state.load_preset(preset.id)
 
-    def toggle_string_mute(self, string_number):
+    def toggle_string_mute(self, evt):
         """
         Toggle the string muted state, strings identified by string number:
             1-3: melody, 4-6: drone, 7-9: trompette, 10: keynoise
         """
+        string_number = int(evt.value)
         voice = self.state.preset.voice_by_number(string_number)
         if voice:
             voice.muted = not voice.muted

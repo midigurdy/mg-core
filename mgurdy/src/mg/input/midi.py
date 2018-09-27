@@ -51,50 +51,32 @@ class MidiMessage:
 
 
 class MidiInputEvent:
-    def __init__(self, name=None, event=None, channel=None, arg1=None, arg2=None,
-                 condition=None, modifier=None):
-        self.event = event
+    def __init__(self, name=None, event=None, channel=None, arg1=None, arg2=None, cond=None):
         self.name = name
         self.channel = channel
         self.arg1 = arg1
         self.arg2 = arg2
-        self.condition = self.parse_condition_expr(condition) if condition else None
-        self.modifier = self.parse_modifier_expr(modifier) if modifier else None
+        self.input_cond = self.parse_input_cond(cond) if cond else None
+        self.event_expr = self.parse_event_expr(event.pop('expr')) if 'expr' in event else None
+        self.event = event
 
-    def parse_condition_expr(self, expr):
-        toks = expr.split()
-        attr = toks[0]
-        checker = getattr(self, '%s_condition' % toks[1])
-        args = toks[2:]
-        return lambda x: checker(getattr(x, attr), *args)
+    def parse_input_cond(self, code):
+        try:
+            return eval('lambda midi: {}'.format(code), None, None)
+        except:
+            LOG.exception('Error in input condition')
+            return None
 
-    def parse_modifier_expr(self, expr):
-        toks = expr.split()
-        attr = toks[0]
-        if len(toks) > 1:
-            modifier = getattr(self, '%s_modifier' % toks[1])
-            args = toks[2:]
-            return lambda x: modifier(getattr(x, attr), *args)
-        else:
-            return lambda x: getattr(x, attr)
-
-    def midi_percent_modifier(self, val):
-        val = int(val)
-        if val < 0:
-            val = 0
-        if val > 127:
-            val = 127
-        return int(val / 127.0 * 100)
-
-    def plus_modifier(self, val, arg):
-        return int(val) + int(arg)
-
-    def minus_modifier(self, val, arg):
-        return int(val) - int(arg)
-
-    def range_condition(self, val, start, end):
-        val = int(val)
-        return val >= int(start) and val <= int(end)
+    def parse_event_expr(self, event_expr):
+        try:
+            expressions = {}
+            for key, code in event_expr.items():
+                expr = eval('lambda midi: {}'.format(code), None, None)
+                expressions[key] = expr
+            return expressions
+        except:
+            LOG.exception('Error in event expression')
+            return None
 
     def matches_input(self, inp):
         if self.name is not None and inp.name != self.name:
@@ -105,15 +87,16 @@ class MidiInputEvent:
             return False
         if self.arg2 is not None and inp.arg2 != self.arg2:
             return False
-        if self.condition is not None and not self.condition(inp):
+        if self.input_cond is not None and not self.input_cond(inp):
             return False
         return True
 
     def create_event(self, inp):
-        event = Event.from_mapping(self.event)
-        if self.modifier is not None:
-            event.value = self.modifier(inp)
-        return event
+        event = dict(self.event)
+        if self.event_expr:
+            for key, expr in self.event_expr.items():
+                event[key] = expr(inp)
+        return Event.from_mapping(event)
 
 
 class MidiInput(InputDevice):
