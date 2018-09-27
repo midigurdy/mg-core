@@ -1,4 +1,5 @@
 from .base import ListPage, TextInputPage, ChoicePage
+from .main import MessagePage
 
 from mg.input import Key
 from mg.signals import signals
@@ -16,7 +17,7 @@ class PresetsPage(ListPage):
 
     def show(self, from_child=None, render=True, **kwargs):
         self.load_presets()
-        if not from_child:
+        if not from_child or isinstance(from_child, MessagePage):
             self.set_cursor(self.state.last_preset_number - 1)
         else:
             self.set_cursor(self.cursor)
