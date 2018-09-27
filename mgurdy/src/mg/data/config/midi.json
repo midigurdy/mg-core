@@ -1,7 +1,6 @@
 {
     "name": "Default MIDI Input",
     "type": "midi",
-    "debug": true,
     "mappings": [
         {
             "input": {

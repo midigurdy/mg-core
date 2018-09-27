@@ -1,11 +1,10 @@
 import json
 import logging
-import os
 import subprocess
 import threading
 import time
 
-from mg.conf import settings
+from mg.conf import find_config_file
 from mg.db import Preset
 from mg.input import Action, Key
 from mg.input.midi import MidiInput
@@ -67,12 +66,12 @@ class EventHandler:
         if evt.subsystem != 'midi':
             return
         if evt.action == 'add' and evt.source == 'external':
-            filename = os.path.join(settings.dist_config_dir, 'default_midi.json')
+            filename = find_config_file('midi.json')
             try:
                 with open(filename, 'rb') as f:
                     config = json.load(f)
             except:
-                log.exception('Unable to open default midi device config')
+                log.exception('Unable to open midi device config')
                 return
             config['device'] = evt.device
             inp = MidiInput.from_config(config)

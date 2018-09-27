@@ -9,7 +9,7 @@ class Settings:
         self.set_data_dir('/data')
         self.http_port = 80
         self.webroot_dir = '/srv/www'
-        self.input_config = 'input'
+        self.input_config = 'input.json'
         self.debug = False
 
     def set_data_dir(self, data_dir):
@@ -24,11 +24,6 @@ class Settings:
                 os.makedirs(path)
 
     @property
-    def input_config_file(self):
-        return os.path.join(self.config_dir, '{}.json'.format(
-            self.input_config))
-
-    @property
     def dist_data_dir(self):
         return os.path.join(os.path.dirname(__file__), 'data')
 
@@ -38,3 +33,13 @@ class Settings:
 
 
 settings = Settings()
+
+
+def find_config_file(name):
+    path = os.path.join(settings.config_dir, name)
+    if os.path.isfile(path):
+        return path
+
+    path = os.path.join(settings.dist_config_dir, name)
+    if os.path.isfile(path):
+        return path

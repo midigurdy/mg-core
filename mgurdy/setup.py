@@ -13,7 +13,7 @@ setup(
         'mg.ui.display': ['fonts/*.bdf'],
         'mg': [
             'data/config/input.json',
-            'data/config/default_midi.json'
+            'data/config/midi.json'
         ],
     },
     include_package_data=True,

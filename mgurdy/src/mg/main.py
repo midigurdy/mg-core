@@ -4,14 +4,14 @@ import argparse
 import prctl
 
 from mg.utils import background_task
-from mg.conf import settings
+from mg.conf import settings, find_config_file
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--uitest', action='store_true')
     parser.add_argument('--noui', action='store_true')
-    parser.add_argument('--input-config', default='input')
+    parser.add_argument('--input-config', default='input.json')
     parser.add_argument('--dump-midi', action='store_true')
     parser.add_argument('--debug-fs', action='store_true')
     parser.add_argument('--debug', action='store_true')
@@ -211,11 +211,7 @@ def start_ui(state, ui_test, no_ui):
     menu.goto('home')
 
     input_manager = InputManager(event_queue)
-    # try to load custom config, fallback to default config in package
-    config_filename = settings.input_config_file
-    if not os.path.isfile(config_filename):
-        config_filename = os.path.join(settings.dist_config_dir, '{}.json'.format(
-            settings.input_config))
+    config_filename = find_config_file(settings.input_config)
     input_manager.load_config(config_filename)
     input_manager.register(MdevInput('/tmp/mgurdy', 'mdev Input Handler'))
 
