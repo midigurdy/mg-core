@@ -56,7 +56,10 @@ class State(EventEmitter):
 
     def attr_by_path(self, path):
         names = path.split('.')
-        obj = self.obj_by_path('.'.join(names[:-1]))
+        if len(names) > 1:
+            obj = self.obj_by_path('.'.join(names[:-1]))
+        else:
+            obj = self
         if obj:
             return {'obj': obj, 'attr': names[-1]}
 
