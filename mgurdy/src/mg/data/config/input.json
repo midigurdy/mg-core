@@ -135,35 +135,35 @@
             },
             {
                 "input": {"type": 1, "code": 124, "value": 1},
-                "event": {"type": "input", "name": "mod2", "action": "down"}
-            },
-            {
-                "input": {"type": 1, "code": 124, "value": 0},
-                "event": {"type": "input", "name": "mod2", "action": "up"}
-            },
-            {
-                "input": {"type": 1, "code": 125, "value": 1},
-                "event": {"type": "input", "name": "mod2", "action": "short"}
-            },
-            {
-                "input": {"type": 1, "code": 126, "value": 1},
-                "event": {"type": "input", "name": "mod2", "action": "long"}
-            },
-            {
-                "input": {"type": 1, "code": 127, "value": 1},
                 "event": {"type": "input", "name": "mod1", "action": "down"}
             },
             {
-                "input": {"type": 1, "code": 127, "value": 0},
+                "input": {"type": 1, "code": 124, "value": 0},
                 "event": {"type": "input", "name": "mod1", "action": "up"}
             },
             {
-                "input": {"type": 1, "code": 128, "value": 1},
+                "input": {"type": 1, "code": 125, "value": 1},
                 "event": {"type": "input", "name": "mod1", "action": "short"}
             },
             {
-                "input": {"type": 1, "code": 129, "value": 1},
+                "input": {"type": 1, "code": 126, "value": 1},
                 "event": {"type": "input", "name": "mod1", "action": "long"}
+            },
+            {
+                "input": {"type": 1, "code": 127, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "down"}
+            },
+            {
+                "input": {"type": 1, "code": 127, "value": 0},
+                "event": {"type": "input", "name": "mod2", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 128, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 129, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "long"}
             }
         ]
     },
