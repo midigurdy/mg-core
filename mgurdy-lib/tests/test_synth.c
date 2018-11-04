@@ -35,7 +35,7 @@ static void test_synth_update_all_muted(void **state)
     for (i = 0; i < 3; i++) {
         assert_int_equal(mg->state.melody[i].model.note_count, 0);
         assert_int_equal(mg->state.drone[i].model.note_count, 0);
-        assert_int_equal(mg->state.chien[i].model.note_count, 0);
+        assert_int_equal(mg->state.trompette[i].model.note_count, 0);
     }
 }
 
@@ -47,7 +47,7 @@ static void test_synth_update_all_unmuted_with_wheel_and_keys(void **state)
     for (i = 0; i < 3; i++) {
         mg->state.melody[i].muted = 0;
         mg->state.drone[i].muted = 0;
-        mg->state.chien[i].muted = 0;
+        mg->state.trompette[i].muted = 0;
     }
 
     mg->keys[1].pressure = 100;
@@ -61,7 +61,7 @@ static void test_synth_update_all_unmuted_with_wheel_and_keys(void **state)
     for (i = 0; i < 3; i++) {
         assert_int_equal(mg->state.melody[i].model.note_count, 1);
         assert_int_equal(mg->state.drone[i].model.note_count, 0);
-        assert_int_equal(mg->state.chien[i].model.note_count, 0);
+        assert_int_equal(mg->state.trompette[i].model.note_count, 0);
     }
 }
 
