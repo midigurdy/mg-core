@@ -18,6 +18,6 @@ int ary_indexof(int val, int ary[], int size);
 int ary_remove(int val, int src[], int dst[], int size);
 void ary_print(int ary[], int size);
 
-int mg_smooth(int val, int prev, double factor);
+int mg_smooth(int val, int prev, float factor);
 
 #endif

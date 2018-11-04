@@ -184,12 +184,12 @@ void ary_print(int ary[], int size)
 }
 
 
-int mg_smooth(int val, int prev, double factor)
+int mg_smooth(int val, int prev, float factor)
 {
     if (val == prev)
         return val;
 
-    double add = (1 - factor) * val + (val > prev ? 1 : 0);
+    float add = (1 - factor) * (val - prev);
 
-    return (factor * prev) + add;
+    return prev + add + (val > prev ? 1 : 0);
 }
