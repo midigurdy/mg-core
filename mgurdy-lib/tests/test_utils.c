@@ -142,13 +142,14 @@ static void test_smooth_reaches_upper_bound(void **state)
     static int val = 0;
     static int prev = 0;
     static int equal_count = 0;
+    static int bound_count = 0;
 
     for(;;) {
         val = mg_smooth(8000, val, 0.9);
         printf("val: %d\n", val);
         if (val == 8000) {
-            equal_count++;
-            if (equal_count > 10)
+            bound_count++;
+            if (bound_count > 10)
                 break;
         }
         if (prev == val) {
@@ -169,13 +170,14 @@ static void test_smooth_reaches_lower_bound(void **state)
     static int val = 8000;
     static int prev = 0;
     static int equal_count = 0;
+    static int bound_count = 0;
 
     for(;;) {
         val = mg_smooth(0, val, 0.9);
         printf("val: %d\n", val);
         if (val == 0) {
-            equal_count++;
-            if (equal_count > 10)
+            bound_count++;
+            if (bound_count > 10)
                 break;
         }
         if (prev == val) {
