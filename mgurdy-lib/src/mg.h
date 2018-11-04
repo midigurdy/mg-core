@@ -227,9 +227,6 @@ struct mg_core {
     /* key sensor data */
     struct mg_key keys[KEY_COUNT];
 
-    /* key sensor data with higher debounce count */
-    struct mg_key slow_keys[KEY_COUNT];
-
     /* key calibration data */
     struct mg_key_calib key_calib[KEY_COUNT];
 

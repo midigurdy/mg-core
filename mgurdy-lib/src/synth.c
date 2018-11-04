@@ -26,7 +26,6 @@ static void update_trompette_model(struct mg_core *mg);
 void mg_synth_update(struct mg_core *mg)
 {
     debounce_keys(mg, mg->keys, mg->state.key_on_debounce, mg->state.key_off_debounce);
-    debounce_keys(mg, mg->slow_keys, mg->state.key_on_debounce, mg->state.key_off_debounce);
 
     calc_wheel_speed(mg);
 
@@ -160,9 +159,6 @@ static void update_melody_model(struct mg_core *mg)
     int active_keys[KEY_COUNT + 1];
     int active_count = 0;
 
-    int active_slow_keys[KEY_COUNT + 1];
-    int active_slow_count = 0;
-
     int key_num = -1;
 
     struct mg_key *key;
@@ -181,9 +177,6 @@ static void update_melody_model(struct mg_core *mg)
     for (i = 0; i < KEY_COUNT; i++) {
         if (mg->keys[i].state == KEY_ACTIVE) {
             active_keys[active_count++] = i;
-        }
-        if (mg->slow_keys[i].state == KEY_ACTIVE) {
-            active_slow_keys[active_slow_count++] = i;
         }
     }
 
@@ -320,9 +313,9 @@ static void update_melody_model(struct mg_core *mg)
         else {
             mg_string_clear_notes(st);
 
-            for (i = 0; i < active_slow_count; i++) {
-                key_num = active_slow_keys[i];
-                key = &mg->slow_keys[key_num];
+            for (i = 0; i < active_count; i++) {
+                key_num = active_keys[i];
+                key = &mg->keys[key_num];
 
                 midi_note = st->base_note + key_num + 1;
                 if (midi_note > 127) midi_note = 127;

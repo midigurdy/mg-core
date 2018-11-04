@@ -47,7 +47,6 @@ int mg_sensors_init(struct mg_core *mg)
 
     /* initialize the keys to default values */
     memset(mg->keys, 0, sizeof(struct mg_key) * KEY_COUNT);
-    memset(mg->slow_keys, 0, sizeof(struct mg_key) * KEY_COUNT);
 
     /* Set initial key calibration values */
     for (i = 0; i < KEY_COUNT; i++) {
@@ -126,7 +125,6 @@ static int mg_sensors_read_keys(struct mg_core *mg)
     int rd, num, i;
     struct input_event ev[10];
     struct mg_key *key;
-    struct mg_key *slow_key;
     int val;
     int idx;
 
@@ -151,7 +149,6 @@ static int mg_sensors_read_keys(struct mg_core *mg)
             idx = ev[i].code;
 
             key = &mg->keys[idx];
-            slow_key = &mg->slow_keys[idx];
 
             val = ev[i].value * mg->key_calib[idx].pressure_adjust;
 
@@ -159,11 +156,6 @@ static int mg_sensors_read_keys(struct mg_core *mg)
             key->pressure = val;
             key->max_pressure = MAX(val, key->max_pressure);
             key->smoothed_pressure = mg_smooth(val, key->smoothed_pressure, 0.9);
-
-            slow_key->raw_pressure = ev[i].value;
-            slow_key->pressure = val;
-            slow_key->max_pressure = key->max_pressure;
-            slow_key->smoothed_pressure = key->smoothed_pressure;
 
             count++;
         }

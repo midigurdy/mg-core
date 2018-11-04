@@ -127,7 +127,7 @@ static int mg_worker_run(struct mg_core *mg)
     /* report to attached clients */
     position_to_websockets(mg);
     if (mg_server_key_client_count()) {
-        mg_server_report_keys(mg->slow_keys);
+        mg_server_report_keys(mg->keys);
     }
 
     return 0;

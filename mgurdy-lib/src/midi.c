@@ -187,7 +187,7 @@ static void sync_melody_keynoise_notes(struct mg_core *mg)
     int velocity;
 
     for (i = 0; i < KEY_COUNT; i++) {
-        key = &mg->slow_keys[i];
+        key = &mg->keys[i];
 
         if (!key->action)
             continue;
