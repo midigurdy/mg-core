@@ -225,7 +225,7 @@ static int mg_sensors_read_wheel(struct mg_core *mg)
                 mg->wheel.position = (16383 - ev[i].value);
             }
             /* distance */
-            if (ev[i].type == 3 && ev[i].code == 1) {
+            else if (ev[i].type == 3 && ev[i].code == 1) {
                 _dist = ev[i].value;
             }
             /* time since last reading */
