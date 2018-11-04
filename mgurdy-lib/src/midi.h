@@ -7,10 +7,6 @@
 #define MG_CC_VOLUME (7)
 #define MG_CC_PANNING (8)  // uses balance control
 #define MG_CC_EXPRESSION (11)
-#define MG_CC_FILTER_CUTOFF_MSB (16)
-#define MG_CC_FILTER_CUTOFF_LSB (48)
-#define MG_CC_FILTER_RESONANCE_MSB (17)
-#define MG_CC_FILTER_RESONANCE_LSB (49)
 #define MG_CC_ALL_SOUNDS_OFF (0x78)
 #define MG_CC_ALL_CTRL_OFF (0x79)
 

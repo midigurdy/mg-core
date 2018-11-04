@@ -56,8 +56,6 @@ struct mg_voice {
     int volume;
     int panning;
     int pressure;
-    int filter_cutoff;
-    int filter_resonance;
 
     struct mg_note notes[NUM_NOTES];
     int active_notes[NUM_NOTES];

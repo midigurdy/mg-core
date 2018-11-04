@@ -52,8 +52,7 @@ void mg_midi_sync(struct mg_core *mg)
  * Update a melody voice.
  *
  * Melody voices send the common Note On/Off, Panning, Expression and Volume
- * messages, but also Pitch Bend, High-Pass Filter Cuttoff and Resonance and
- * Poly Pressure (via sync_notes).
+ * messages, but also Pitch Bend and Poly Pressure (via sync_notes).
  */
 static void sync_melody_voice(struct mg_core *mg, struct mg_string *st)
 {

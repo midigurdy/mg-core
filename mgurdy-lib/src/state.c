@@ -320,8 +320,6 @@ void mg_state_reset_model_voice(struct mg_voice *voice)
     voice->volume = 127;
     voice->panning = 64;
     voice->pressure = 0;
-    voice->filter_cutoff = 0;
-    voice->filter_resonance = 0;
 
     for (i = 0; i < NUM_NOTES; i++) {
         voice->notes[i].channel = -1;
@@ -341,8 +339,6 @@ void mg_state_reset_synth_voice(struct mg_voice *voice)
     voice->volume = -1;
     voice->panning = -1;
     voice->pressure = -1;
-    voice->filter_cutoff = 0;
-    voice->filter_resonance = 0;
 
     for (i = 0; i < NUM_NOTES; i++) {
         voice->notes[i].channel = -1;
