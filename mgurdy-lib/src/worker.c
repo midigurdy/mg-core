@@ -10,8 +10,8 @@
 #include "server.h"
 #include "synth.h"
 #include "utils.h"
-#include "midi.h"
 #include "state.h"
+#include "output.h"
 
 #include "worker.h"
 
@@ -99,6 +99,7 @@ static int mg_worker_run(struct mg_core *mg)
 {
     int ret;
     int err;
+    static int count = 0;
 
     /* read any pending sensor values */
     ret = mg_sensors_read(mg);
@@ -116,8 +117,10 @@ static int mg_worker_run(struct mg_core *mg)
 
     mg_synth_update(mg);
 
-    /* synchronize internal state with external synths */
-    mg_midi_sync(mg);
+    /* synchronize internal state with outputs */
+    if (!mg->halt_midi_output) {
+        mg_output_all_sync(mg);
+    }
 
     err = mg_state_unlock(&mg->state);
     if (err) {
@@ -128,6 +131,13 @@ static int mg_worker_run(struct mg_core *mg)
     position_to_websockets(mg);
     if (mg_server_key_client_count()) {
         mg_server_report_keys(mg->keys);
+    }
+
+    if (count < 1000) {
+        count ++;
+    } else {
+        count = 0;
+        // mg_midi_stats();
     }
 
     return 0;

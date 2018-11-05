@@ -12,5 +12,6 @@ void mg_midi_cc(struct mg_core *mg, int channel, int control, int value);
 void mg_midi_pitch_bend(struct mg_core *mg, int channel, int pitch);
 void mg_midi_channel_pressure(struct mg_core *mg, int channel, int pressure);
 void mg_midi_key_pressure(struct mg_core *mg, int channel, int note, int pressure);
+void mg_midi_stats(void);
 
 #endif

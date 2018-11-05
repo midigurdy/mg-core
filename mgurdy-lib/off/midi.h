@@ -14,8 +14,6 @@
 
 
 void mg_midi_sync(struct mg_core *mg);
-void mg_midi_reset_all(struct mg_core *mg);
-void mg_midi_reset_string(struct mg_core *mg, struct mg_string *st);
 
 
 #endif

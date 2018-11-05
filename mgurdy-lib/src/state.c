@@ -307,7 +307,6 @@ static void reset_string(struct mg_string *string, int channel)
     string->fixed_note_count = 0;
 
     mg_state_reset_model_voice(&string->model);
-    mg_state_reset_synth_voice(&string->synth);
 }
 
 
@@ -330,7 +329,7 @@ void mg_state_reset_model_voice(struct mg_voice *voice)
 }
 
 
-void mg_state_reset_synth_voice(struct mg_voice *voice)
+void mg_state_reset_output_voice(struct mg_voice *voice)
 {
     int i;
 

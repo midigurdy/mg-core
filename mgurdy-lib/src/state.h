@@ -7,7 +7,7 @@ int mg_state_lock(struct mg_state *state);
 int mg_state_unlock(struct mg_state *state);
 int mg_state_init(struct mg_state *state);
 void mg_state_reset_model_voice(struct mg_voice *voice);
-void mg_state_reset_synth_voice(struct mg_voice *voice);
+void mg_state_reset_output_voice(struct mg_voice *voice);
 
 void mg_string_clear_notes(struct mg_string *st);
 void mg_string_set_base_note(struct mg_string *st, int base_note);

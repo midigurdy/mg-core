@@ -1,0 +1,42 @@
+{
+    "name": "MIDI Input",
+    "type": "midi",
+    "mappings": [
+        {
+            "input": {
+                "name": "control_change",
+                "arg1": 7,
+                "modifier": "arg2"
+            },
+            "event": {
+                "type": "state_change",
+                "name": "main_volume",
+                "value": "arg2"
+            }
+        },
+        {
+            "input": {
+                "name": "program_change",
+                "channel": 1
+            },
+            "event": {
+                "type": "state_action",
+                "name": "load_preset",
+                "value": "arg1"
+            }
+        },
+        {
+            "input": {
+                "name": "program_change",
+                "channel": 2,
+                "condition": "arg1 range 0 9"
+            },
+            "event": {
+                "type": "state_action",
+                "name": "toggle_string_mute",
+                "value": "arg1"
+            }
+        }
+    ]
+}
+

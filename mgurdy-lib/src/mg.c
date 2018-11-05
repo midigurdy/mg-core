@@ -2,12 +2,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include "mg.h"
 #include "server.h"
 #include "state.h"
 #include "worker.h"
-#include "midi.h"
+#include "output.h"
+#include "output_fluid.h"
 
 
 static struct mg_core mg_core;
@@ -40,6 +43,16 @@ int mg_start(fluid_synth_t *fluid)
     mg_core.should_stop = 0;
     mg_core.halt_midi_output = 0;
 
+    struct mg_output *output;
+    output = new_fluid_output(&mg_core);
+    if (output == NULL) {
+        fprintf(stderr, "Unable to create FluidSynth output\n");
+        err = -1;
+        goto cleanup_core;
+    }
+    mg_core.outputs[MG_OUTPUT_FLUID] = output;
+    mg_core.output_count++;
+    mg_output_enable(output, 1);
     err = pthread_create(&mg_core.worker_pth, NULL, mg_worker_thread,
             &mg_core);
     if (err) {
@@ -132,6 +145,11 @@ int mg_initialize()
     pthread_mutexattr_destroy(&attr);
 
     mg_state_init(&mg_core.state);
+
+    mg_core.midi_out_fp = open("/dev/snd/midiC3D0", O_WRONLY | O_NONBLOCK);
+    if (mg_core.midi_out_fp < 0) {
+        printf("Error opening MIDI device!\n");
+    }
 
     mg_core.initialized = 1;
 
@@ -272,7 +290,7 @@ int mg_set_string(struct mg_string_config *configs)
                 mg_string_clear_fixed_notes(st);
                 break;
             case MG_PARAM_RESET:
-                mg_midi_reset_string(&mg_core, st);
+                mg_output_all_reset_string(&mg_core, st);
                 break;
             case MG_PARAM_MODE:
                 if (c->val >= 0 && c->val <= 2) {
@@ -309,8 +327,9 @@ int mg_halt_midi_output(int halted)
     }
 
     mg_core.halt_midi_output = halted;
-    if (!halted) {
-        mg_midi_reset_all(&mg_core);
+
+    if (halted) {
+        mg_output_all_reset(&mg_core);
     }
 
     return mg_state_unlock(&mg_core.state);

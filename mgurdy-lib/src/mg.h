@@ -33,6 +33,25 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
+#define MG_OUTPUT_COUNT (2)
+#define MG_OUTPUT_FLUID (0)
+#define MG_OUTPUT_MIDI (1)
+
+
+#define MG_OUTPUT_STREAM_MAX (10)
+#define MG_STREAM_SENDER_MAX (10)
+
+
+#define MG_CC_VOLUME (7)
+#define MG_CC_PANNING (8)  // uses balance control
+#define MG_CC_EXPRESSION (11)
+#define MG_CC_ALL_SOUNDS_OFF (0x78)
+#define MG_CC_ALL_CTRL_OFF (0x79)
+
+
+struct mg_output;
+struct mg_stream;
+
 
 /* Used to store variable mapping ranges */
 struct mg_map {
@@ -62,6 +81,65 @@ struct mg_voice {
     int note_count;
 };
 
+
+/* Callback that gets called before an output is removed from the core. */
+typedef void (mg_output_close_t)(struct mg_output *output);
+
+/* Callback functions to write note on and off messages to an output. They should return
+ * the number of tokens required to write the messages. */
+typedef int (mg_output_noteon_t)(struct mg_output *output, int channel, int note, int velocity);
+typedef int (mg_output_noteoff_t)(struct mg_output *output, int channel, int note);
+typedef int (mg_output_reset_t)(struct mg_output *output, int channel);
+
+/* Callback functions that take care of syncing the mg_voice value with the output. They
+ * should compare the attribute they are interesting in on src and dst, only write
+ * to the output if those numbers differ and update the dst structure after a new value
+ * was sent. If a transfer occured, return the number of tokens used during that transfer, or 0 if
+ * no data was transmitted. */
+typedef int (mg_output_send_t)(struct mg_output *output, struct mg_stream *stream);
+
+
+struct mg_stream {
+    struct mg_string *string;
+    struct mg_voice dst;
+
+    /* For rate limiting */
+    int tokens; /* the current contents of the token bucket */
+    int max_tokens; /* maximal number of tokens allowed in the bucket */
+    int tokens_percent; /* percentage of tokens that this stream received on each tick */
+    int tokens_per_tick; /* pre-calculated number of tokens this stream received on each tick */
+
+    /* List of message sender callbacks that handle all messages except note on / off */
+    mg_output_send_t *sender[MG_STREAM_SENDER_MAX];
+    int sender_count;
+    int sender_idx; /* round-robin message sending index */
+
+    int enabled;
+};
+
+
+struct mg_output {
+    struct mg_stream *stream[MG_OUTPUT_STREAM_MAX];
+    int stream_count;
+
+    /* Total number of tokens added to the (enabled) stream buckets per tick.
+     * Set to 0 to disable rate-limiting. */
+    int tokens_per_tick;
+
+    int enabled;
+
+    /* callbacks that actually write to the output streams */
+    mg_output_noteon_t *noteon;
+    mg_output_noteoff_t *noteoff;
+    mg_output_reset_t *reset;
+
+    /* Optional callback to close an output and do any cleanup tasks */
+    mg_output_close_t *close;
+
+    void *data; /* optional output private data */
+};
+
+
 /* Combines two mg_voice structs to record the internal and external state of a
  * single string. The modelling keeps the internal view of the string in
  * 'model', the external (synth) state in 'synth'. The difference between model
@@ -69,6 +147,7 @@ struct mg_voice {
  */
 struct mg_string {
     int channel; /* MIDI channel */
+
     int base_note;
     int muted;
     int volume;
@@ -90,11 +169,9 @@ struct mg_string {
     int fixed_notes[NUM_NOTES];
     int fixed_note_count;
 
-    /* the intended state of the synthesizer voice */
+    /* the intended state of the synthesizer voice, output streams
+     * reference and read this structure but will never modify it */
     struct mg_voice model;
-
-    /* the current state of the synthesizer voice */
-    struct mg_voice synth;
 };
 
 /* The internal and external state of the instrument. Contains the collection of
@@ -210,6 +287,10 @@ struct mg_core {
     /* created by Python program and passed when starting the core */
     fluid_synth_t *fluid;
 
+    /* list of midi outputs */
+    struct mg_output *outputs[MG_OUTPUT_COUNT];
+    int output_count;
+
     /* protects access to the fields above */
     pthread_mutex_t mutex;
 
@@ -232,6 +313,8 @@ struct mg_core {
     int chien_speed;
 
     int initialized;
+
+    int midi_out_fp;  
 };
 
 
