@@ -11,6 +11,7 @@
 #include "worker.h"
 #include "output.h"
 #include "output_fluid.h"
+#include "output_midi.h"
 
 
 static struct mg_core mg_core;
@@ -53,6 +54,19 @@ int mg_start(fluid_synth_t *fluid)
     mg_core.outputs[MG_OUTPUT_FLUID] = output;
     mg_core.output_count++;
     mg_output_enable(output, 1);
+
+    if (mg_core.midi_out_fp >= 0) {
+        output = new_midi_output(&mg_core);
+        if (output == NULL) {
+            fprintf(stderr, "Unable to create MIDI output\n");
+            err = -1;
+            goto cleanup_core;
+        }
+        mg_core.outputs[MG_OUTPUT_MIDI] = output;
+        mg_core.output_count++;
+        mg_output_enable(output, 1);
+    }
+
     err = pthread_create(&mg_core.worker_pth, NULL, mg_worker_thread,
             &mg_core);
     if (err) {
@@ -146,7 +160,7 @@ int mg_initialize()
 
     mg_state_init(&mg_core.state);
 
-    mg_core.midi_out_fp = open("/dev/snd/midiC3D0", O_WRONLY | O_NONBLOCK);
+    mg_core.midi_out_fp = open("/dev/snd/midiC1D0", O_WRONLY | O_NONBLOCK);
     if (mg_core.midi_out_fp < 0) {
         printf("Error opening MIDI device!\n");
     }
