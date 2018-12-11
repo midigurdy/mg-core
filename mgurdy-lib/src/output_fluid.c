@@ -5,6 +5,7 @@
 static int add_melody_stream(struct mg_output *output, struct mg_string *string);
 static int add_trompette_stream(struct mg_output *output, struct mg_string *string);
 static int add_drone_stream(struct mg_output *output, struct mg_string *string);
+static int add_keynoise_stream(struct mg_output *output, struct mg_string *string);
 
 static int mg_output_fluid_noteon(struct mg_output *output, int channel, int note, int velocity);
 static int mg_output_fluid_noteoff(struct mg_output *output, int channel, int note);
@@ -40,7 +41,8 @@ struct mg_output *new_fluid_output(struct mg_core *mg)
           add_trompette_stream(output, &mg->state.trompette[2]) &&
           add_drone_stream(output, &mg->state.drone[0]) &&
           add_drone_stream(output, &mg->state.drone[1]) &&
-          add_drone_stream(output, &mg->state.drone[2])))
+          add_drone_stream(output, &mg->state.drone[2]) &&
+          add_keynoise_stream(output, &mg->state.keynoise)))
     {
         mg_output_delete(output);
         return NULL;
@@ -107,6 +109,23 @@ static int add_drone_stream(struct mg_output *output, struct mg_string *string)
     return 1;
 }
 
+static int add_keynoise_stream(struct mg_output *output, struct mg_string *string)
+{
+    struct mg_stream *stream = mg_output_stream_new(string, 0);
+    if (stream == NULL) {
+        return 0;
+    }
+
+    stream->sender[stream->sender_count++] = mg_output_fluid_volume;
+    stream->sender[stream->sender_count++] = mg_output_fluid_balance;
+
+    output->stream[output->stream_count++] = stream;
+
+    stream->enabled = 1;
+
+    return 1;
+}
+
 static int mg_output_fluid_noteon(struct mg_output *output, int channel, int note, int velocity)
 {
     fluid_synth_noteon((fluid_synth_t *)output->data, channel, note, velocity);
@@ -115,7 +134,11 @@ static int mg_output_fluid_noteon(struct mg_output *output, int channel, int not
 
 static int mg_output_fluid_noteoff(struct mg_output *output, int channel, int note)
 {
-    fluid_synth_noteoff((fluid_synth_t *)output->data, channel, note);
+    /* Don't send note off events for the keynoise channel. Samples on that channel are never supposed
+     * to loop anyway */
+    if (channel != MG_KEYNOISE) {
+        fluid_synth_noteoff((fluid_synth_t *)output->data, channel, note);
+    }
     return 0;
 }
 

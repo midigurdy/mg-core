@@ -87,6 +87,7 @@ int mg_state_init(struct mg_state *state)
         reset_string(&state->drone[i], 3 + i);  // channels 3 - 5
         reset_string(&state->trompette[i], 6 + i);  // channels 6 - 8
     }
+    reset_string(&state->keynoise, 9);
 
     state->pitchbend_factor = 0.5; // 100 cents of default bend range
 

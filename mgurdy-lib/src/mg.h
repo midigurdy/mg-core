@@ -185,6 +185,7 @@ struct mg_state {
     struct mg_string melody[3];
     struct mg_string drone[3];
     struct mg_string trompette[3];
+    struct mg_string keynoise;
 
     float pitchbend_factor;
 

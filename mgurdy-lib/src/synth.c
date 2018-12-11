@@ -18,6 +18,7 @@ static void calc_wheel_speed(struct mg_core *mg);
 static void update_melody_model(struct mg_core *mg);
 static void update_drone_model(struct mg_core *mg);
 static void update_trompette_model(struct mg_core *mg);
+static void update_keynoise_model(struct mg_core *mg);
 
 
 /* Main entry point, called regularly by worker thread. Takes sensor readings
@@ -32,6 +33,7 @@ void mg_synth_update(struct mg_core *mg)
     update_melody_model(mg);
     update_trompette_model(mg);
     update_drone_model(mg);
+    update_keynoise_model(mg);
 }
 
 
@@ -493,4 +495,53 @@ static void update_trompette_model(struct mg_core *mg)
             model->active_notes[model->note_count++] = midi_note;
         }
     }
+}
+
+static void update_keynoise_model(struct mg_core *mg)
+{
+    int i;
+    struct mg_key *key;
+    int midi_note;
+    int velocity;
+    struct mg_string *st = &mg->state.keynoise;
+    struct mg_voice *model = &st->model;
+    struct mg_note *note;
+
+    model->panning = st->panning;
+    model->volume = st->volume;
+
+    mg_string_clear_notes(st);
+
+    for (i = 0; i < KEY_COUNT; i++) {
+        key = &mg->keys[i];
+
+        if (!key->action)
+            continue;
+
+        velocity = key->velocity;
+
+        if (velocity < 0) {
+            velocity = 0;
+        }
+        
+        velocity = multimap(velocity,
+                mg->state.keyvel_to_keynoise.ranges,
+                mg->state.keyvel_to_keynoise.count);
+
+        if (velocity == 0)
+            continue;  // no need to send these...
+
+        /* Key on noise always uses the note range 60 - 83, key off noise 30 - 53 */
+        if (key->action == KEY_PRESSED)
+            midi_note = 60 + i;
+        else
+            midi_note = 30 + i;
+
+        model->active_notes[model->note_count++] = midi_note;
+
+        note = &model->notes[midi_note];
+        note->channel = st->channel;
+        note->velocity = velocity;
+    }
+
 }
