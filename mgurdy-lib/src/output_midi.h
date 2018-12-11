@@ -3,6 +3,6 @@
 
 #include "output.h"
 
-struct mg_output *new_midi_output(struct mg_core *mg);
+struct mg_output *new_midi_output(struct mg_core *mg, const char *device);
 
 #endif

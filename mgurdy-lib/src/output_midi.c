@@ -1,6 +1,8 @@
 #include <unistd.h>
 #include <stdint.h>
 #include "output.h"
+#include <fcntl.h>
+#include <sys/stat.h>
 
 static int add_melody_stream(struct mg_output *output, struct mg_string *string, int tokens_percent);
 static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int tokens_percent);
@@ -36,26 +38,43 @@ static int mg_midi_write(struct mg_output *output, uint8_t *buffer, size_t size)
 
 struct mg_midi_info {
     int fp;
+    char *device;
 };
 
 
-struct mg_output *new_midi_output(struct mg_core *mg)
+struct mg_output *new_midi_output(struct mg_core *mg, const char *device)
 {
     struct mg_output *output;
     struct mg_midi_info *info;
+    int fp;
+
+    fp = open(device, O_WRONLY | O_NONBLOCK);
+    if (fp < 0) {
+        fprintf(stderr, "Error opening MIDI device\n");
+        return NULL;
+    }
     
     output = mg_output_new();
     if (output == NULL) {
+        close(fp);
         return NULL;
     }
 
     info = malloc(sizeof(struct mg_midi_info));
     if (info == NULL) {
         mg_output_delete(output);
+        close(fp);
         return NULL;
     }
 
-    info->fp = mg->midi_out_fp;
+    info->fp = fp;
+    info->device = strdup(device);
+    if (info->device == NULL) {
+        fprintf(stderr, "Out of memory\n");
+        mg_output_delete(output);
+        close(fp);
+        return NULL;
+    }
 
     output->data = info;
     output->close = mg_output_midi_close;
@@ -78,9 +97,16 @@ struct mg_output *new_midi_output(struct mg_core *mg)
 
 static void mg_output_midi_close(struct mg_output *output)
 {
-    if (output->data) {
-        free(output->data);
-    }
+    struct mg_midi_info *info = output->data;
+
+    if (info == NULL)
+        return;
+
+    close(info->fp);
+    free(info->device);
+    free(info);
+
+    output->data = NULL;
 }
 
 

@@ -5,6 +5,7 @@
 static void mg_output_sync(struct mg_output *output);
 static void mg_output_add_tokens(struct mg_output *output);
 static void mg_output_calculate_tokens_per_tick(struct mg_output *output);
+static int mg_output_next_id(void);
 
 static void mg_output_stream_sync(struct mg_output *output, struct mg_stream *stream);
 static void mg_output_stream_reset(struct mg_output *output, struct mg_stream *stream);
@@ -24,6 +25,8 @@ struct mg_output *mg_output_new(void)
 
     memset(output, 0, sizeof(struct mg_output));
 
+    output->id = mg_output_next_id();
+
     return output;
 }
 
@@ -38,6 +41,14 @@ void mg_output_delete(struct mg_output *output)
     }
 
     free(output);
+}
+
+// FIXME: add a more rubust way to generate the output id!
+int mg_output_next_id(void)
+{
+    static int output_id = 0;
+
+    return output_id++;
 }
 
 struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_percent)

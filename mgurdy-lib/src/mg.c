@@ -55,18 +55,6 @@ int mg_start(fluid_synth_t *fluid)
     mg_core.output_count++;
     mg_output_enable(output, 1);
 
-    if (mg_core.midi_out_fp >= 0) {
-        output = new_midi_output(&mg_core);
-        if (output == NULL) {
-            fprintf(stderr, "Unable to create MIDI output\n");
-            err = -1;
-            goto cleanup_core;
-        }
-        mg_core.outputs[MG_OUTPUT_MIDI] = output;
-        mg_core.output_count++;
-        mg_output_enable(output, 1);
-    }
-
     err = pthread_create(&mg_core.worker_pth, NULL, mg_worker_thread,
             &mg_core);
     if (err) {
@@ -160,11 +148,6 @@ int mg_initialize()
 
     mg_state_init(&mg_core.state);
 
-    mg_core.midi_out_fp = open("/dev/snd/midiC1D0", O_WRONLY | O_NONBLOCK);
-    if (mg_core.midi_out_fp < 0) {
-        printf("Error opening MIDI device!\n");
-    }
-
     mg_core.initialized = 1;
 
     return 0;
@@ -252,7 +235,7 @@ int mg_set_string(struct mg_string_config *configs)
         else if (snum >= MG_DRONE1 && snum <= MG_DRONE3)
             st = &s->drone[snum - MG_DRONE1];
         else if (snum == MG_KEYNOISE) {
-            continue;
+            st = &s->keynoise;
         }
         else {
             fprintf(stderr, "Invalid string specified: %d\n", c->string);
@@ -321,6 +304,71 @@ int mg_set_string(struct mg_string_config *configs)
 
 exit:
     return mg_state_unlock(s);
+}
+
+int mg_add_midi_output(const char *device)
+{
+    int ret;
+
+    ret = mg_state_lock(&mg_core.state);
+    if (ret) {
+        fprintf(stderr, "Unable to get state lock!\n");
+        return ret;
+    }
+
+    if (mg_core.output_count >= MG_OUTPUT_COUNT) {
+        fprintf(stderr, "Maximum output count reached\n");
+        ret = -1;
+        goto exit;
+    }
+
+    struct mg_output *output;
+    output = new_midi_output(&mg_core, device);
+    if (output == NULL) {
+        ret = -1;
+        goto exit;
+    }
+
+    mg_core.outputs[mg_core.output_count++] = output;
+    mg_output_enable(output, 1);
+
+    ret = output->id;
+
+exit:
+    mg_state_unlock(&mg_core.state);
+    return ret;
+}
+
+
+int mg_remove_midi_output(int output_id)
+{
+    int err;
+    int output_idx;
+    struct mg_output *output = NULL;
+
+    err = mg_state_lock(&mg_core.state);
+    if (err) {
+        fprintf(stderr, "Unable to get state lock!\n");
+        return err;
+    }
+
+    // find the output by id
+    for (output_idx = 0; output_idx < mg_core.output_count; output_idx++) {
+        output = mg_core.outputs[output_idx];
+        if (output->id == output_id)
+            break;
+    }
+
+    if (output_idx < mg_core.output_count) {
+        mg_output_delete(output);
+        // fill the gap by moving following outputs up one slot
+        for (output_idx++; output_idx < mg_core.output_count; output_idx++) {
+            mg_core.outputs[output_idx - 1] = mg_core.outputs[output_idx];
+        }
+        mg_core.output_count--;
+    }
+
+    return mg_state_unlock(&mg_core.state);
 }
 
 

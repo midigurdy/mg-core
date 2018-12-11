@@ -33,10 +33,8 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
-#define MG_OUTPUT_COUNT (2)
+#define MG_OUTPUT_COUNT (5)
 #define MG_OUTPUT_FLUID (0)
-#define MG_OUTPUT_MIDI (1)
-
 
 #define MG_OUTPUT_STREAM_MAX (10)
 #define MG_STREAM_SENDER_MAX (10)
@@ -119,6 +117,8 @@ struct mg_stream {
 
 
 struct mg_output {
+    int id;
+
     struct mg_stream *stream[MG_OUTPUT_STREAM_MAX];
     int stream_count;
 
@@ -314,8 +314,6 @@ struct mg_core {
     int chien_speed;
 
     int initialized;
-
-    int midi_out_fp;  
 };
 
 
@@ -413,6 +411,8 @@ extern int mg_get_mapping(struct mg_map *dst, int idx);
 extern int mg_set_mapping(const struct mg_map *src, int idx);
 extern int mg_reset_mapping_ranges(int idx);
 
+extern int mg_add_midi_output(const char *device);
+extern int mg_remove_midi_output(int output_id);
 
 struct mg_image {
     char *filename;
