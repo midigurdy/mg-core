@@ -88,6 +88,9 @@ int mg_get_mapping(struct mg_map *dst, int idx);
 int mg_set_mapping(const struct mg_map *src, int idx);
 int mg_reset_mapping_ranges(int idx);
 
+int mg_add_midi_output(const char *device);
+int mg_remove_midi_output(int output_id);
+
 struct mg_image;
 
 struct mg_image *mg_image_create(int width, int height, const char *filename);

@@ -164,6 +164,8 @@ class MGCore:
     def __init__(self):
         self.synth = None
         self.started = False
+        self.outputs = {}
+
         if lib.mg_initialize():
             raise RuntimeError('Unable to initialize mgcore')
 
@@ -276,6 +278,22 @@ class MGCore:
                                         float(data['pressure']),
                                         float(data['velocity'])) != 0:
                 raise RuntimeError('Unable to set key calib data!')
+
+    def add_midi_output(self, device):
+        if device in self.outputs:
+            return self.outputs[device]
+        output_id = lib.mg_add_midi_output(device)
+        if output_id < 0:
+            raise RuntimeError('Unable to add MIDI output')
+        self.outputs[device] = output_id
+        return output_id
+
+    def remove_midi_output(self, device):
+        if device not in self.outputs:
+            raise RuntimeError('MIDI output %s not found' % device)
+        if lib.mg_remove_midi_output(self.outputs[device]):
+            raise RuntimeError('Unable to remove MIDI output')
+        del self.outputs[device]
 
     def __del__(self):
         self.stop()
