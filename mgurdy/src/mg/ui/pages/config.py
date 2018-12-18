@@ -140,6 +140,41 @@ class Spacer(ValueListItem):
         return ''
 
 
+class MIDIPortItem(ValueListItem):
+    minval = 0
+    maxval = 1
+
+    def __init__(self, port):
+        super().__init__()
+        self.port = port
+
+    @property
+    def label(self):
+        return self.port.name
+
+    def set_value(self, val):
+        with self.state.lock():
+            self.port.enabled = bool(val)
+
+    def get_value(self):
+        return int(self.port.enabled)
+
+    def format_value(self, value):
+        return 'On' if value else 'Off'
+
+
+class MIDIPage(ConfigList):
+    @property
+    def idle_timeout(self):
+        return self.state.ui.timeout
+
+    def timeout(self):
+        self.menu.goto('home')
+
+    def get_items(self):
+        return [MIDIPortItem(port) for port in self.state.midi.ports]
+
+
 class ConfigPage(ConfigList):
     @property
     def idle_timeout(self):
@@ -158,6 +193,7 @@ class ConfigPage(ConfigList):
                 'Keynoise',
                 voice_name='preset.keynoise.0',
                 sync_state=False)),
+            PopupItem('MIDI...', MIDIPage()),
             Spacer(),
             BrightnessItem(),
             DisplayTimeoutItem(),

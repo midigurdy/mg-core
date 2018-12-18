@@ -19,11 +19,10 @@ class EventHandler:
 
     It dispatches events to the relevant subsystems based on the event type.
     """
-    def __init__(self, queue, state, menu, input_manager):
+    def __init__(self, queue, state, menu):
         self.state = state
         self.queue = queue
         self.menu = menu
-        self.input_manager = input_manager
         self.mod_keys = 0
         self.poweroff_timer = None
         self.state_action_handler = StateActionHandler(self.state, self.menu)
@@ -65,19 +64,10 @@ class EventHandler:
     def handle_mdev_event(self, evt):
         if evt.subsystem != 'midi':
             return
-        if evt.action == 'add' and evt.source == 'external':
-            filename = find_config_file('midi.json')
-            try:
-                with open(filename, 'rb') as f:
-                    config = json.load(f)
-            except:
-                log.exception('Unable to open midi device config')
-                return
-            config['device'] = evt.device
-            inp = MidiInput.from_config(config)
-            self.input_manager.register(inp)
-        elif evt.action == 'remove' and evt.source == 'external':
-            self.input_manager.unregister(evt.device)
+        if evt.action == 'add':
+            self.state.midi.add_port(evt.device, evt.device, 'inout')
+        elif evt.action == 'remove':
+            self.state.midi.remove_port(evt.device)
 
     def poweroff_prompt(self):
         from mg.ui.pages.main import PoweroffPage

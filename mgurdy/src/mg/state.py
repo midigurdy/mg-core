@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from contextlib import contextmanager
 import threading
 import logging
@@ -41,6 +42,8 @@ class State(EventEmitter):
             self.ui = UIState()
             self.synth = SynthState()
             self.power = PowerState()
+
+            self.midi = MIDIState()
 
     @contextmanager
     def lock(self, message=None, goto_home=False):
@@ -376,6 +379,43 @@ class VoiceState(EventEmitter):
 
     def is_silent(self):
         return self.muted or not self.soundfont_id or self.base_note < 0
+
+
+class MIDIPortState(EventEmitter):
+    def __init__(self):
+        super().__init__(name, device, direction, prefix='midi:port')
+        with signals.suppress():
+            self.name = 'Unnamed'
+            self.device = None
+            self.direction = None
+            self.enabled = False
+
+
+class MIDIState(EventEmitter):
+    def __init__(self):
+        super().__init__(prefix='midi')
+        with signals.suppress():
+            self.ports = OrderedDict()
+
+    def get_ports(self):
+        return list(self.ports.values())
+
+    def add_port(self, name, device, direction):
+        if device in self.ports:
+            raise RuntimeError('Port for MIDI device {} already registered'.format(device))
+        port = MIDIPortState(name, device, direction)
+        self.ports[device] = port
+        signals.emit('midi:port:added', {'port': port})
+
+    def remove_port(self, device):
+        port = self.ports.pop(device, None)
+        if port:
+            signals.emit('midi:port:removed', {'port': port})
+
+    def get_port_by_device(self, device):
+        for port in self.ports:
+            if port.device == device:
+                return port
 
 
 class PresetState(EventEmitter):

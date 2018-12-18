@@ -2,6 +2,7 @@ import logging
 
 import alsaaudio
 
+from mg.conf import find_config_file
 from mg.mglib import mgcore
 from mg.signals import EventListener
 
@@ -343,3 +344,35 @@ class SystemController(EventListener):
         if self._mixer is None:
             self._mixer = alsaaudio.Mixer(ALSA_MIXER)
         return self._mixer
+
+
+class MIDIController(EventListener):
+    events = (
+        'midi:port:enabled:changed',
+    )
+
+    def __init__(self, state, input_manager):
+        self.state = state
+        self.input_manager = input_manager
+
+    def midi_port_enabled_changed(self, enabled, sender, **kwargs):
+        if enabled:
+            mgcore.remove_midi_output(sender.device)
+            self._add_midi_input(sender.device)
+        else:
+            mgcore.add_midi_output(sender.device)
+            self.input_manager.unregister(sender.device)
+
+    def _add_midi_input(self, device):
+        filename = find_config_file('midi.json')
+        try:
+            with open(filename, 'rb') as f:
+                config = json.load(f)
+        except:
+            log.exception('Unable to open midi device config')
+            return
+        config['device'] = device
+        inp = MidiInput.from_config(config)
+        self.input_manager.register(inp)
+
+

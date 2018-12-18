@@ -65,6 +65,9 @@ def start(args):
     system_ctrl.set_string_led(2, 0)
     system_ctrl.set_string_led(3, 0)
 
+    midi_ctrl = MidiController(input_manager)
+    midi_ctrl.start_listening()
+
     menu.message('Starting synthesizer')
     start_fluidsynth(
         fluid,
@@ -215,7 +218,7 @@ def start_ui(state, ui_test, no_ui):
     input_manager.load_config(config_filename)
     input_manager.register(MdevInput('/tmp/mgurdy', 'mdev Input Handler'))
 
-    event_handler = EventHandler(event_queue, state, menu, input_manager)
+    event_handler = EventHandler(event_queue, state, menu)
 
     return menu, input_manager, event_handler
 
