@@ -4,6 +4,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <pthread.h>
 
 #include "mg.h"
 #include "server.h"
@@ -15,6 +16,7 @@
 
 
 static struct mg_core mg_core;
+static void *mg_delete_output_worker(void *arg);
 
 
 /* Public API functions */
@@ -309,28 +311,30 @@ exit:
 int mg_add_midi_output(const char *device)
 {
     int ret;
+    struct mg_output *output;
+
+    output = new_midi_output(&mg_core, device);
+    if (output == NULL) {
+        return -1;
+    }
+
+    mg_output_enable(output, 1);
 
     ret = mg_state_lock(&mg_core.state);
     if (ret) {
         fprintf(stderr, "Unable to get state lock!\n");
+        mg_output_delete(output);
         return ret;
     }
 
     if (mg_core.output_count >= MG_OUTPUT_COUNT) {
         fprintf(stderr, "Maximum output count reached\n");
-        ret = -1;
-        goto exit;
-    }
-
-    struct mg_output *output;
-    output = new_midi_output(&mg_core, device);
-    if (output == NULL) {
+        mg_output_delete(output);
         ret = -1;
         goto exit;
     }
 
     mg_core.outputs[mg_core.output_count++] = output;
-    mg_output_enable(output, 1);
 
     ret = output->id;
 
@@ -359,8 +363,8 @@ int mg_remove_midi_output(int output_id)
             break;
     }
 
+    // remove output from output list
     if (output_idx < mg_core.output_count) {
-        mg_output_delete(output);
         // fill the gap by moving following outputs up one slot
         for (output_idx++; output_idx < mg_core.output_count; output_idx++) {
             mg_core.outputs[output_idx - 1] = mg_core.outputs[output_idx];
@@ -368,7 +372,34 @@ int mg_remove_midi_output(int output_id)
         mg_core.output_count--;
     }
 
-    return mg_state_unlock(&mg_core.state);
+    mg_state_unlock(&mg_core.state);
+
+    // delete the output in a one-shot background thread
+    pthread_t pth;
+
+    if (pthread_create(&pth, NULL, mg_delete_output_worker, output)) {
+        perror("Unable to start output removal thread");
+        return -1;
+    }
+
+    if (pthread_detach(pth)) {
+        perror("Unable to detach output removal thread");
+    }
+
+    return 0;
+}
+
+
+/* Background thread to delete and free any output resources. This needs to run in a separate (detached)
+ * thread because calling close on some system resources (e.g. a disappeared USB MIDI connection) sometimes
+ * takes a few seconds to complete. */
+static void *mg_delete_output_worker(void *arg)
+{
+    struct mg_output *output = arg;
+
+    mg_output_delete(output);
+
+    return NULL;
 }
 
 
