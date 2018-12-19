@@ -282,7 +282,7 @@ class MGCore:
     def add_midi_output(self, device):
         if device in self.outputs:
             return self.outputs[device]
-        output_id = lib.mg_add_midi_output(device)
+        output_id = lib.mg_add_midi_output(device.encode())
         if output_id < 0:
             raise RuntimeError('Unable to add MIDI output')
         self.outputs[device] = output_id

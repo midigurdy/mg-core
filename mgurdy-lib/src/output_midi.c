@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <stdint.h>
+#include <errno.h>
 #include "output.h"
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -102,7 +103,9 @@ static void mg_output_midi_close(struct mg_output *output)
     if (info == NULL)
         return;
 
+    printf("closing fp\n");
     close(info->fp);
+    printf("done\n");
     free(info->device);
     free(info);
 
@@ -287,7 +290,7 @@ static int mg_midi_write(struct mg_output *output, uint8_t *buffer, size_t size)
 
     ret = write(info->fp, buffer, size);
     if (ret != size) {
-        printf("MIDI write returned %d\n", ret);
+        output->failed = 1;
         return -1;
     }
 

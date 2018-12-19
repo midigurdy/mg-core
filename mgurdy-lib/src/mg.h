@@ -127,6 +127,7 @@ struct mg_output {
     int tokens_per_tick;
 
     int enabled;
+    int failed;
 
     /* callbacks that actually write to the output streams */
     mg_output_noteon_t *noteon;

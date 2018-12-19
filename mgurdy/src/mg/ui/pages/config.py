@@ -154,25 +154,42 @@ class MIDIPortItem(ValueListItem):
 
     def set_value(self, val):
         with self.state.lock():
-            self.port.enabled = bool(val)
+            self.port.enabled = (val == 1)
 
     def get_value(self):
-        return int(self.port.enabled)
+        return 1 if self.port.enabled else 0
 
     def format_value(self, value):
         return 'On' if value else 'Off'
 
 
 class MIDIPage(ConfigList):
+    state_events = [
+        'midi:port:added',
+        'midi:port:removed',
+    ]
+
     @property
     def idle_timeout(self):
         return self.state.ui.timeout
+
+    def handle_state_event(self, name, data):
+        print('midipage event', name, data)
+        for item in self.visible_items:
+            item.hide()
+        self.visible_items = []
+        self.deactivate_active_item()
+        self.set_pos(0)
+        self.set_items(self.get_items())
+        for item in self.items:
+            item.init(self.menu, self.state)
+        self.render()
 
     def timeout(self):
         self.menu.goto('home')
 
     def get_items(self):
-        return [MIDIPortItem(port) for port in self.state.midi.ports]
+        return [MIDIPortItem(port) for port in self.state.midi.get_ports()] or [Spacer()]
 
 
 class ConfigPage(ConfigList):

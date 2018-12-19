@@ -45,7 +45,7 @@ def start(args):
 
     from mg.fluidsynth.api import FluidSynth
     from mg.state import State
-    from mg.controller import SynthController, SystemController
+    from mg.controller import SynthController, SystemController, MIDIController
 
     state = State()
 
@@ -65,7 +65,7 @@ def start(args):
     system_ctrl.set_string_led(2, 0)
     system_ctrl.set_string_led(3, 0)
 
-    midi_ctrl = MidiController(input_manager)
+    midi_ctrl = MIDIController(input_manager)
     midi_ctrl.start_listening()
 
     menu.message('Starting synthesizer')

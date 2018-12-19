@@ -36,6 +36,10 @@ void mg_output_delete(struct mg_output *output)
 
     if (output == NULL) return;
 
+    if (output->close) {
+        output->close(output);
+    }
+
     for(i = 0; i < output->stream_count; i++) {
         free(output->stream[i]);
     }
@@ -75,7 +79,7 @@ void mg_output_all_sync(struct mg_core *mg)
 
     for (i = 0; i < mg->output_count; i++) {
         output = mg->outputs[i];
-        if (output->enabled) {
+        if (output->enabled && !output->failed) {
             mg_output_add_tokens(output);
             mg_output_sync(output);
         }

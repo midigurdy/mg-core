@@ -86,12 +86,18 @@ class InputManager(threading.Thread):
         for key, mask in self.selector.select(timeout=1):
             inp = key.data
             while True:
-                result = inp.read()
+                try:
+                    result = inp.read()
+                except OSError as e:
+                    if e.errno == 19:  # ENODEV
+                        self.unregister(inp.filename)
+                    raise e
                 if not result:
                     break
                 for entry in result:
                     event = inp.map(entry)
                     if event:
+                        print('inp', inp, event)
                         self.queue.put(event)
                     elif inp.debug:
                         LOG.debug('Missing mapping in %s for %s' % (

@@ -382,12 +382,12 @@ class VoiceState(EventEmitter):
 
 
 class MIDIPortState(EventEmitter):
-    def __init__(self):
-        super().__init__(name, device, direction, prefix='midi:port')
+    def __init__(self, name, device, direction):
+        super().__init__(prefix='midi:port')
         with signals.suppress():
-            self.name = 'Unnamed'
-            self.device = None
-            self.direction = None
+            self.name = name
+            self.device = device
+            self.direction = direction
             self.enabled = False
 
 

@@ -1,3 +1,4 @@
+import json
 import logging
 
 import alsaaudio
@@ -5,6 +6,7 @@ import alsaaudio
 from mg.conf import find_config_file
 from mg.mglib import mgcore
 from mg.signals import EventListener
+from mg.input.midi import MidiInput
 
 from . import utils
 
@@ -348,19 +350,26 @@ class SystemController(EventListener):
 
 class MIDIController(EventListener):
     events = (
+        'midi:port:removed',
         'midi:port:enabled:changed',
     )
 
-    def __init__(self, state, input_manager):
-        self.state = state
+    def __init__(self, input_manager):
         self.input_manager = input_manager
+
+    def midi_port_removed(self, port, **kwargs):
+        if port.enabled:
+            print('removing midi out')
+            mgcore.remove_midi_output(port.device)
+            print('done removing midi out')
+            self.input_manager.unregister(port.device)
 
     def midi_port_enabled_changed(self, enabled, sender, **kwargs):
         if enabled:
-            mgcore.remove_midi_output(sender.device)
+            mgcore.add_midi_output(sender.device)
             self._add_midi_input(sender.device)
         else:
-            mgcore.add_midi_output(sender.device)
+            mgcore.remove_midi_output(sender.device)
             self.input_manager.unregister(sender.device)
 
     def _add_midi_input(self, device):
