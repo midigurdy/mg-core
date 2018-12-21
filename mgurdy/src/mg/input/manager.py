@@ -4,6 +4,7 @@ import selectors
 import logging
 import threading
 import prctl
+from errno import ENODEV
 
 from mg.exceptions import InvalidInputMapError
 
@@ -37,6 +38,7 @@ class InputManager(threading.Thread):
             LOG.warn('No handler registered for input "%s"' % filename)
             return
         self.selector.unregister(inp.fd)
+        inp.close()
         del self.inputs[filename]
 
     def load_config(self, filename):
@@ -89,7 +91,7 @@ class InputManager(threading.Thread):
                 try:
                     result = inp.read()
                 except OSError as e:
-                    if e.errno == 19:  # ENODEV
+                    if e.errno == ENODEV:
                         self.unregister(inp.filename)
                     raise e
                 if not result:
@@ -97,7 +99,6 @@ class InputManager(threading.Thread):
                 for entry in result:
                     event = inp.map(entry)
                     if event:
-                        print('inp', inp, event)
                         self.queue.put(event)
                     elif inp.debug:
                         LOG.debug('Missing mapping in %s for %s' % (
