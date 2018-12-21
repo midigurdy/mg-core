@@ -100,10 +100,29 @@ class MidiInputEvent:
 
 
 class MidiInput(InputDevice):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, port, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.port = port
         self.parser = MidiParser()
         self.mappings = []
+
+    @classmethod
+    def from_config(cls, config, port):
+        inp = MidiInput(
+            port,
+            name=config['device'],
+            filename=config['device'],
+            debug=bool(config.get('debug')))
+        inp.set_mappings(config['mappings'])
+        return inp
+
+    def open(self):
+        self.port.open('r')
+        self.fd = self.port.fileno()
+        return self.fd
+
+    def close(self):
+        self.port.close()
 
     def set_mappings(self, mappings):
         self.mappings = []
@@ -123,7 +142,7 @@ class MidiInput(InputDevice):
     def read(self):
         messages = []
         while True:
-            data = self.fd.read(BUFFER_SIZE)
+            data = self.port.read(BUFFER_SIZE)
             if not data:
                 break
             messages.extend(self.parser.parse(data))

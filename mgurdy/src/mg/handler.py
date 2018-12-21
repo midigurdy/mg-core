@@ -1,13 +1,10 @@
-import json
 import logging
 import subprocess
 import threading
 import time
 
-from mg.conf import find_config_file
 from mg.db import Preset
 from mg.input import Action, Key
-from mg.input.midi import MidiInput
 
 
 log = logging.getLogger('eventhandler')
@@ -64,10 +61,8 @@ class EventHandler:
     def handle_mdev_event(self, evt):
         if evt.subsystem != 'midi':
             return
-        if evt.action == 'add':
-            self.state.midi.add_port(evt.device, evt.device, 'inout')
-        elif evt.action == 'remove':
-            self.state.midi.remove_port(evt.device)
+        if evt.action in ('add', 'remove'):
+            self.state.midi.update_port_states()
 
     def poweroff_prompt(self):
         from mg.ui.pages.main import PoweroffPage

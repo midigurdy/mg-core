@@ -357,22 +357,23 @@ class MIDIController(EventListener):
     def __init__(self, input_manager):
         self.input_manager = input_manager
 
-    def midi_port_removed(self, port, **kwargs):
-        if port.enabled:
+    def midi_port_removed(self, port_state, **kwargs):
+        if port_state.enabled:
             print('removing midi out')
-            mgcore.remove_midi_output(port.device)
+            #mgcore.remove_midi_output(port_state.port.device)
             print('done removing midi out')
-            self.input_manager.unregister(port.device)
+            self.input_manager.unregister(port_state.port.device)
 
     def midi_port_enabled_changed(self, enabled, sender, **kwargs):
+        port_state = sender
         if enabled:
-            mgcore.add_midi_output(sender.device)
-            self._add_midi_input(sender.device)
+            #mgcore.add_midi_output(port_state.port.device)
+            self._add_midi_input(port_state.port)
         else:
-            mgcore.remove_midi_output(sender.device)
-            self.input_manager.unregister(sender.device)
+            #mgcore.remove_midi_output(port_state.port)
+            self.input_manager.unregister(port_state.port.device)
 
-    def _add_midi_input(self, device):
+    def _add_midi_input(self, port):
         filename = find_config_file('midi.json')
         try:
             with open(filename, 'rb') as f:
@@ -380,8 +381,6 @@ class MIDIController(EventListener):
         except:
             log.exception('Unable to open midi device config')
             return
-        config['device'] = device
-        inp = MidiInput.from_config(config)
+        config['device'] = port.device
+        inp = MidiInput.from_config(config, port=port)
         self.input_manager.register(inp)
-
-

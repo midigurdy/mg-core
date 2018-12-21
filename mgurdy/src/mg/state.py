@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from contextlib import contextmanager
 import threading
 import logging
@@ -7,6 +6,7 @@ from mg.signals import EventEmitter, signals
 from mg.utils import PeriodicTimer
 from mg.db import Preset
 from mg.sf2 import SoundFont
+from mg.alsa.api import RawMIDI
 
 
 log = logging.getLogger('state')
@@ -382,12 +382,10 @@ class VoiceState(EventEmitter):
 
 
 class MIDIPortState(EventEmitter):
-    def __init__(self, name, device, direction):
+    def __init__(self, port):
         super().__init__(prefix='midi:port')
         with signals.suppress():
-            self.name = name
-            self.device = device
-            self.direction = direction
+            self.port = port
             self.enabled = False
 
 
@@ -395,27 +393,31 @@ class MIDIState(EventEmitter):
     def __init__(self):
         super().__init__(prefix='midi')
         with signals.suppress():
-            self.ports = OrderedDict()
+            self.port_states = None
 
-    def get_ports(self):
-        return list(self.ports.values())
+    def get_port_states(self):
+        if self.port_states is None:
+            with signals.suppress():
+                self.port_states = {}
+                self.update_port_states()
+        return sorted(self.port_states.values(), key=lambda s: s.port.id)
 
-    def add_port(self, name, device, direction):
-        if device in self.ports:
-            raise RuntimeError('Port for MIDI device {} already registered'.format(device))
-        port = MIDIPortState(name, device, direction)
-        self.ports[device] = port
-        signals.emit('midi:port:added', {'port': port})
+    def update_port_states(self):
+        ports = {p.id: p for p in RawMIDI().get_ports()}
+        to_add = [pid for pid in ports if pid not in self.port_states]
+        to_remove = [pid for pid in self.port_states if pid not in ports]
 
-    def remove_port(self, device):
-        port = self.ports.pop(device, None)
-        if port:
-            signals.emit('midi:port:removed', {'port': port})
+        for pid in to_remove:
+            port_state = self.port_states.pop(pid, None)
+            signals.emit('midi:port:removed', {'port_state': port_state})
 
-    def get_port_by_device(self, device):
-        for port in self.ports:
-            if port.device == device:
-                return port
+        for pid in to_add:
+            port_state = MIDIPortState(ports[pid])
+            self.port_states[pid] = port_state
+            signals.emit('midi:port:added', {'port_state': port_state})
+
+        if to_add or to_remove:
+            signals.emit('midi:changed')
 
 
 class PresetState(EventEmitter):

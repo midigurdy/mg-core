@@ -144,20 +144,23 @@ class MIDIPortItem(ValueListItem):
     minval = 0
     maxval = 1
 
-    def __init__(self, port):
+    def __init__(self, port_state):
         super().__init__()
-        self.port = port
+        self.port_state = port_state
 
     @property
     def label(self):
-        return self.port.name
+        name = self.port_state.port.name
+        if name == 'f_midi':
+            name = 'Main USB MIDI'
+        return name[0:16]
 
     def set_value(self, val):
         with self.state.lock():
-            self.port.enabled = (val == 1)
+            self.port_state.enabled = (val == 1)
 
     def get_value(self):
-        return 1 if self.port.enabled else 0
+        return 1 if self.port_state.enabled else 0
 
     def format_value(self, value):
         return 'On' if value else 'Off'
@@ -165,8 +168,7 @@ class MIDIPortItem(ValueListItem):
 
 class MIDIPage(ConfigList):
     state_events = [
-        'midi:port:added',
-        'midi:port:removed',
+        'midi:changed',
     ]
 
     @property
@@ -174,7 +176,6 @@ class MIDIPage(ConfigList):
         return self.state.ui.timeout
 
     def handle_state_event(self, name, data):
-        print('midipage event', name, data)
         for item in self.visible_items:
             item.hide()
         self.visible_items = []
@@ -189,7 +190,8 @@ class MIDIPage(ConfigList):
         self.menu.goto('home')
 
     def get_items(self):
-        return [MIDIPortItem(port) for port in self.state.midi.get_ports()] or [Spacer()]
+        return [MIDIPortItem(port_state)
+                for port_state in self.state.midi.get_port_states()] or [Spacer()]
 
 
 class ConfigPage(ConfigList):
