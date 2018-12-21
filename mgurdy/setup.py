@@ -33,5 +33,6 @@ setup(
     cffi_modules=[
         "src/mg/mglib/mglib_build.py:ffibuilder",
         "src/mg/fluidsynth/fluidsynth_build.py:ffibuilder",
+        "src/mg/alsa/alsa_build.py:ffibuilder",
     ],
 )
