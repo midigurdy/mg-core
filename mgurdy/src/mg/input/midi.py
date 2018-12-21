@@ -160,15 +160,18 @@ class MidiParser:
             else:
                 if self.code is None:
                     continue
-                elif self.code in (4, 5) or self.arg1 is not None:
+                elif self.code in (4, 5):
+                    self.arg1 = byte
+                    messages.append(self._create_msg(None))
+                elif self.arg1 is not None:
                     messages.append(self._create_msg(byte))
                 else:
                     self.arg1 = byte
         return messages
 
     def _create_msg(self, arg2=None):
-        if self.arg1 is None:
-            msg = MidiMessage(self.channel, MessageType(self.code).name, arg2)
+        if arg2 is None:
+            msg = MidiMessage(self.channel, MessageType(self.code).name, self.arg1)
         else:
             msg = MidiMessage(self.channel, MessageType(self.code).name,
                               self.arg1, arg2)
