@@ -248,7 +248,18 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
         if (src_note->channel != dst_note->channel) {
             ret = output->noteon(output, src_note->channel, key, src_note->velocity);
             if (ret < 0) {
-                // FIXME: need to clean up the active_notes before exit!
+                /* If sending a noteon failed and we want to abort, make sure
+                 * we record which notes we have already sent noteons for
+                 * before exiting. No need to consider notes which have changed
+                 * channels (in which case it would already be in the
+                 * dst->active_notes array), as the core will make sure that a
+                 * channel reset is sent before switching the channel of a string. */
+                if (notes_have_changed) {
+                    for (i = 0; i < note_count; i++) {
+                        dst->active_notes[dst->note_count++] = active_notes[i];
+                    }
+                }
+
                 return -1;
             }
             stream->tokens -= ret;
@@ -270,7 +281,24 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
         else {
             ret = output->noteoff(output, dst_note->channel, key);
             if (ret < 0) {
-                // FIXME: need to clean up the active_notes before exit!
+                /* If sending a noteoff failed and we want to abort, update the
+                 * dst->active_notes array immediately, but make sure to also
+                 * add all notes for which we haven't checked for a noteoff yet. */
+
+                if (notes_have_changed) {
+                    /* Add all notes which we haven't checked yet (and therefore exclude notes for
+                       which we have sent noteoffs already. */
+                    for (; i < dst->note_count; i++) {
+                        active_notes[note_count++] = dst->active_notes[i];
+                    }
+
+                    /* Update active_note list on destination. */
+                    dst->note_count = note_count;
+                    for (i = 0; i < note_count; i++) {
+                        dst->active_notes[i] = active_notes[i];
+                    }
+                }
+
                 return -1;
             }
             stream->tokens -= ret;
@@ -296,6 +324,8 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
         mg_output_send_t *sender = stream->sender[stream->sender_idx];
         ret = sender(output, stream);
         if (ret < 0) {
+            /* No need to clean up anything here, as senders are supposed to only update the
+             * destination state if they succeeded in sending their message. */
             return -1;
         }
         stream->tokens -= ret;
