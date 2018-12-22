@@ -19,6 +19,7 @@ ffibuilder.cdef(r"""
     int snd_card_next(int *card);
     int snd_ctl_open(struct snd_ctl_t *ctl[], const char *name, int mode);
     int snd_ctl_close(struct snd_ctl_t *ctl);
+    int snd_rawmidi_drop(struct snd_rawmidi_t *rmidi);
     int snd_ctl_rawmidi_next_device(struct snd_ctl_t *ctl, int *device);
     int snd_ctl_rawmidi_info(struct snd_ctl_t *ctl, struct snd_rawmidi_info_t * info);
 

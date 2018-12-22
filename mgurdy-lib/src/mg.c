@@ -16,7 +16,6 @@
 
 
 static struct mg_core mg_core;
-static void *mg_delete_output_worker(void *arg);
 
 
 /* Public API functions */
@@ -372,34 +371,12 @@ int mg_remove_midi_output(int output_id)
         mg_core.output_count--;
     }
 
+    /* no need to hold the state lock while deleting the already removed output */
     mg_state_unlock(&mg_core.state);
-
-    // delete the output in a one-shot background thread
-    pthread_t pth;
-
-    if (pthread_create(&pth, NULL, mg_delete_output_worker, output)) {
-        perror("Unable to start output removal thread");
-        return -1;
-    }
-
-    if (pthread_detach(pth)) {
-        perror("Unable to detach output removal thread");
-    }
-
-    return 0;
-}
-
-
-/* Background thread to delete and free any output resources. This needs to run in a separate (detached)
- * thread because calling close on some system resources (e.g. a disappeared USB MIDI connection) sometimes
- * takes a few seconds to complete. */
-static void *mg_delete_output_worker(void *arg)
-{
-    struct mg_output *output = arg;
 
     mg_output_delete(output);
 
-    return NULL;
+    return 0;
 }
 
 

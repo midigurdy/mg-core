@@ -1,9 +1,9 @@
-#include <unistd.h>
 #include <stdint.h>
-#include <errno.h>
+#include <alsa/asoundlib.h>
+
+#include "output_midi.h"
 #include "output.h"
-#include <fcntl.h>
-#include <sys/stat.h>
+
 
 static int add_melody_stream(struct mg_output *output, struct mg_string *string, int tokens_percent);
 static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int tokens_percent);
@@ -38,7 +38,7 @@ static int mg_midi_write(struct mg_output *output, uint8_t *buffer, size_t size)
 
 
 struct mg_midi_info {
-    int fp;
+    snd_rawmidi_t *rawmidi;
     char *device;
 };
 
@@ -47,33 +47,35 @@ struct mg_output *new_midi_output(struct mg_core *mg, const char *device)
 {
     struct mg_output *output;
     struct mg_midi_info *info;
-    int fp;
+    snd_rawmidi_t *rawmidi;
+    int err;
 
-    fp = open(device, O_WRONLY | O_NONBLOCK);
-    if (fp < 0) {
-        fprintf(stderr, "Error opening MIDI device\n");
+    err = snd_rawmidi_open(NULL, &rawmidi, device, SND_RAWMIDI_NONBLOCK);
+    if (err) {
+        fprintf(stderr, "Error opening raw MIDI device %s: %s\n",
+                device, snd_strerror(err));
         return NULL;
     }
     
     output = mg_output_new();
     if (output == NULL) {
-        close(fp);
+        snd_rawmidi_close(rawmidi);
         return NULL;
     }
 
     info = malloc(sizeof(struct mg_midi_info));
     if (info == NULL) {
+        snd_rawmidi_close(rawmidi);
         mg_output_delete(output);
-        close(fp);
         return NULL;
     }
 
-    info->fp = fp;
+    info->rawmidi = rawmidi;
     info->device = strdup(device);
     if (info->device == NULL) {
         fprintf(stderr, "Out of memory\n");
+        snd_rawmidi_close(rawmidi);
         mg_output_delete(output);
-        close(fp);
         return NULL;
     }
 
@@ -103,9 +105,8 @@ static void mg_output_midi_close(struct mg_output *output)
     if (info == NULL)
         return;
 
-    printf("closing fp\n");
-    close(info->fp);
-    printf("done\n");
+    snd_rawmidi_drop(info->rawmidi);
+    snd_rawmidi_close(info->rawmidi);
     free(info->device);
     free(info);
 
@@ -285,11 +286,13 @@ static int mg_midi_chmsg2(struct mg_output *output, int msg, int channel, int va
 
 static int mg_midi_write(struct mg_output *output, uint8_t *buffer, size_t size)
 {
-    int ret;
+    size_t ret;
     struct mg_midi_info *info = output->data;
 
-    ret = write(info->fp, buffer, size);
+    ret = snd_rawmidi_write(info->rawmidi, buffer, size);
     if (ret != size) {
+        fprintf(stderr, "rawmidi write failed on %s: %s\n", info->device,
+                (ret < 0) ? snd_strerror(ret): "unknown error");
         output->failed = 1;
         return -1;
     }

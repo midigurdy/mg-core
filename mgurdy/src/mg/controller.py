@@ -359,18 +359,16 @@ class MIDIController(EventListener):
 
     def midi_port_removed(self, port_state, **kwargs):
         if port_state.enabled:
-            print('removing midi out')
-            #mgcore.remove_midi_output(port_state.port.device)
-            print('done removing midi out')
+            mgcore.remove_midi_output(port_state.port.device)
             self.input_manager.unregister(port_state.port.device)
 
     def midi_port_enabled_changed(self, enabled, sender, **kwargs):
         port_state = sender
         if enabled:
-            #mgcore.add_midi_output(port_state.port.device)
+            mgcore.add_midi_output(port_state.port.device)
             self._add_midi_input(port_state.port)
         else:
-            #mgcore.remove_midi_output(port_state.port)
+            mgcore.remove_midi_output(port_state.port.device)
             self.input_manager.unregister(port_state.port.device)
 
     def _add_midi_input(self, port):
