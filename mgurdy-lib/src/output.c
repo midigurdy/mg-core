@@ -2,12 +2,12 @@
 #include "output.h"
 #include "state.h"
 
-static void mg_output_sync(struct mg_output *output);
+static int mg_output_sync(struct mg_output *output);
 static void mg_output_add_tokens(struct mg_output *output);
 static void mg_output_calculate_tokens_per_tick(struct mg_output *output);
 static int mg_output_next_id(void);
 
-static void mg_output_stream_sync(struct mg_output *output, struct mg_stream *stream);
+static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *stream);
 static void mg_output_stream_reset(struct mg_output *output, struct mg_stream *stream);
 
 
@@ -79,9 +79,19 @@ void mg_output_all_sync(struct mg_core *mg)
 
     for (i = 0; i < mg->output_count; i++) {
         output = mg->outputs[i];
-        if (output->enabled && !output->failed) {
+        if (output->enabled) {
+            if (output->skip_iterations > 0) {
+                output->skip_iterations--;
+                continue;
+            }
+
             mg_output_add_tokens(output);
-            mg_output_sync(output);
+
+            if (mg_output_sync(output)) {
+                /* If there was an error during sync of this output, skip it for 1 second (1000 core
+                 * worker iterations) */
+                output->skip_iterations = 1000;
+            }
         }
     }
 }
@@ -137,7 +147,7 @@ void mg_output_reset(struct mg_output *output)
 
 /* Private functions */
 
-static void mg_output_sync(struct mg_output *output)
+static int mg_output_sync(struct mg_output *output)
 {
     int i;
     struct mg_stream *stream;
@@ -145,9 +155,13 @@ static void mg_output_sync(struct mg_output *output)
     for (i = 0; i < output->stream_count; i++) {
         stream = output->stream[i];
         if (stream->enabled) {
-            mg_output_stream_sync(output, stream);
+            if (mg_output_stream_sync(output, stream)) {
+                return -1;
+            }
         }
     }
+
+    return 0;
 }
 
 static void mg_output_add_tokens(struct mg_output *output)
@@ -210,10 +224,11 @@ static void mg_output_stream_reset(struct mg_output *output, struct mg_stream *s
     mg_state_reset_output_voice(&stream->dst);
 }
 
-static void mg_output_stream_sync(struct mg_output *output, struct mg_stream *stream)
+static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *stream)
 {
     int i;
     int key;
+    int ret;
 
     int active_notes[NUM_NOTES];
     int note_count = 0;
@@ -231,7 +246,12 @@ static void mg_output_stream_sync(struct mg_output *output, struct mg_stream *st
         dst_note = &dst->notes[key];
 
         if (src_note->channel != dst_note->channel) {
-            stream->tokens -= output->noteon(output, src_note->channel, key, src_note->velocity);
+            ret = output->noteon(output, src_note->channel, key, src_note->velocity);
+            if (ret < 0) {
+                // FIXME: need to clean up the active_notes before exit!
+                return -1;
+            }
+            stream->tokens -= ret;
             dst_note->channel = src_note->channel;
             active_notes[note_count++] = key;
             notes_have_changed = 1;
@@ -248,7 +268,12 @@ static void mg_output_stream_sync(struct mg_output *output, struct mg_stream *st
             active_notes[note_count++] = key;
         }
         else {
-            stream->tokens -= output->noteoff(output, dst_note->channel, key);
+            ret = output->noteoff(output, dst_note->channel, key);
+            if (ret < 0) {
+                // FIXME: need to clean up the active_notes before exit!
+                return -1;
+            }
+            stream->tokens -= ret;
             dst_note->channel = CHANNEL_OFF;
             notes_have_changed = 1;
         }
@@ -269,8 +294,14 @@ static void mg_output_stream_sync(struct mg_output *output, struct mg_stream *st
             break;
         }
         mg_output_send_t *sender = stream->sender[stream->sender_idx];
-        stream->tokens -= sender(output, stream);
+        ret = sender(output, stream);
+        if (ret < 0) {
+            return -1;
+        }
+        stream->tokens -= ret;
         stream->sender_idx++;
         stream->sender_idx %= stream->sender_count;
     }
+
+    return 0;
 }

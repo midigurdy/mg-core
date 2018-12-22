@@ -176,20 +176,28 @@ static int add_drone_stream(struct mg_output *output, struct mg_string *string, 
 
 static int mg_output_midi_noteon(struct mg_output *output, int channel, int note, int velocity)
 {
-    mg_midi_chmsg2(output, MIDI_MSG_NOTEON, channel, note, velocity);
+    if (mg_midi_chmsg2(output, MIDI_MSG_NOTEON, channel, note, velocity)) {
+        return -1;
+    }
     return 3000;
 }
 
 static int mg_output_midi_noteoff(struct mg_output *output, int channel, int note)
 {
-    mg_midi_chmsg2(output, MIDI_MSG_NOTEOFF, channel, note, 0);
+    if (mg_midi_chmsg2(output, MIDI_MSG_NOTEOFF, channel, note, 0)) {
+        return -1;
+    }
     return 3000;
 }
 
 static int mg_output_midi_reset(struct mg_output *output, int channel)
 {
-    mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, channel, MG_CC_ALL_SOUNDS_OFF, 0);
-    mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, channel, MG_CC_ALL_CTRL_OFF, 0);
+    if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, channel, MG_CC_ALL_SOUNDS_OFF, 0)) {
+        return -1;
+    }
+    if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, channel, MG_CC_ALL_CTRL_OFF, 0)) {
+        return -1;
+    }
     return 6000;
 }
 
@@ -201,7 +209,9 @@ static int mg_output_midi_expression(struct mg_output *output, struct mg_stream 
     }
 
     if (stream->dst.expression != expression) {
-        mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_EXPRESSION, expression);
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_EXPRESSION, expression)) {
+            return -1;
+        }
         stream->dst.expression = expression;
         return 3000;
     }
@@ -214,7 +224,9 @@ static int mg_output_midi_volume(struct mg_output *output, struct mg_stream *str
     int volume = stream->string->model.volume;
 
     if (stream->dst.volume != volume) {
-        mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_VOLUME, volume);
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_VOLUME, volume)) {
+            return -1;
+        }
         stream->dst.volume = volume;
         return 3000;
     }
@@ -227,9 +239,9 @@ static int mg_output_midi_pitch(struct mg_output *output, struct mg_stream *stre
     int pitch = stream->string->model.pitch;
 
     if (stream->dst.pitch != pitch) {
-        mg_midi_chmsg2(output,
-                MIDI_MSG_PITCH_BEND, stream->string->channel,
-                MIDI_LSB(pitch), MIDI_MSB(pitch));
+        if (mg_midi_chmsg2(output, MIDI_MSG_PITCH_BEND, stream->string->channel, MIDI_LSB(pitch), MIDI_MSB(pitch))) {
+            return -1;
+        }
         stream->dst.pitch = pitch;
         return 3000;
     }
@@ -242,7 +254,9 @@ static int mg_output_midi_channel_pressure(struct mg_output *output, struct mg_s
     int pressure = stream->string->model.pressure;
 
     if (stream->dst.pressure != pressure) {
-        mg_midi_chmsg1(output, MIDI_MSG_CHANNEL_PRESSURE, stream->string->channel, pressure);
+        if (mg_midi_chmsg1(output, MIDI_MSG_CHANNEL_PRESSURE, stream->string->channel, pressure)) {
+            return -1;
+        }
         stream->dst.pressure = pressure;
         return 2000;
     }
@@ -255,7 +269,9 @@ static int mg_output_midi_balance(struct mg_output *output, struct mg_stream *st
     int panning = stream->string->model.panning;
 
     if (stream->dst.panning != panning) {
-        mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_PANNING, panning);
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_PANNING, panning)) {
+            return -1;
+        }
         stream->dst.panning = panning;
         return 3000;
     }
@@ -270,7 +286,7 @@ static int mg_midi_chmsg1(struct mg_output *output, int msg, int channel, int va
     data[0] = msg | (channel & 0xF);
     data[1] = (val & 0x7F);
 
-    return mg_midi_write(output, data, 2);
+    return (mg_midi_write(output, data, 2) == 2) ? 0 : -1;
 }
 
 static int mg_midi_chmsg2(struct mg_output *output, int msg, int channel, int val1, int val2)
@@ -281,7 +297,7 @@ static int mg_midi_chmsg2(struct mg_output *output, int msg, int channel, int va
     data[1] = (val1 & 0x7F);
     data[2] = (val2 & 0x7F);
 
-    return mg_midi_write(output, data, 3);
+    return (mg_midi_write(output, data, 3) == 3) ? 0 : -1;
 }
 
 static int mg_midi_write(struct mg_output *output, uint8_t *buffer, size_t size)
@@ -293,7 +309,6 @@ static int mg_midi_write(struct mg_output *output, uint8_t *buffer, size_t size)
     if (ret != size) {
         fprintf(stderr, "rawmidi write failed on %s: %s\n", info->device,
                 (ret < 0) ? snd_strerror(ret): "unknown error");
-        output->failed = 1;
         return -1;
     }
 
