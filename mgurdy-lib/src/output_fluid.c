@@ -129,6 +129,7 @@ static int add_keynoise_stream(struct mg_output *output, struct mg_string *strin
 static int mg_output_fluid_noteon(struct mg_output *output, int channel, int note, int velocity)
 {
     fluid_synth_noteon((fluid_synth_t *)output->data, channel, note, velocity);
+
     return 0;
 }
 
@@ -146,6 +147,7 @@ static int mg_output_fluid_reset(struct mg_output *output, int channel)
 {
     fluid_synth_cc((fluid_synth_t *)output->data, channel, MG_CC_ALL_SOUNDS_OFF, 0);
     fluid_synth_cc((fluid_synth_t *)output->data, channel, MG_CC_ALL_CTRL_OFF, 0);
+
     return 0;
 }
 
@@ -156,7 +158,6 @@ static int mg_output_fluid_expression(struct mg_output *output, struct mg_stream
     if (stream->dst.expression != expression) {
         fluid_synth_cc((fluid_synth_t *)output->data, stream->string->channel, MG_CC_EXPRESSION, expression);
         stream->dst.expression = expression;
-        return 3000;
     }
 
     return 0;
