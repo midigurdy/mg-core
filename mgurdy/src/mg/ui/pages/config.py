@@ -162,11 +162,11 @@ class MIDIPortInputItem(ValueListItem):
         self.set_value(0 if self.get_value() else 1)
 
     def render_on(self, display, x, y, width):
-        display.font_size(3)
         display.puts(x, y, self.get_label())
         char = chr(33) if self.get_value() else chr(32)
         display.font_size(9)
         display.puts(x + width, y, char, align='right', anchor='right')
+        display.font_size(3)
 
 
 class MIDIPortOutputItem(ValueListItem):
@@ -191,11 +191,11 @@ class MIDIPortOutputItem(ValueListItem):
         self.set_value(0 if self.get_value() else 1)
 
     def render_on(self, display, x, y, width):
-        display.font_size(3)
         display.puts(x, y, self.get_label())
         char = chr(33) if self.get_value() else chr(32)
         display.font_size(9)
         display.puts(x + width, y, char, align='right', anchor='right')
+        display.font_size(3)
 
 
 class MIDIPortPage(ConfigList):
