@@ -178,13 +178,6 @@ def save_misc_config(config):
         raise
 
 
-def delete_misc_config():
-    try:
-        Config.delete().where(Config.name == 'misc').execute()
-    except:
-        log.exception('Unable to delete misc config')
-
-
 def initialize(filepath):
     DB.init(filepath)
     DB.create_tables([Preset, Config, Version], safe=True)
