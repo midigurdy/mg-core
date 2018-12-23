@@ -117,7 +117,7 @@ class MidiInput(InputDevice):
         return inp
 
     def open(self):
-        self.port.open('r')
+        self.port.open()
         self.fd = self.port.fileno()
         return self.fd
 

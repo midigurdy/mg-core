@@ -120,33 +120,26 @@ class RawMIDIPort:
             'I' if self.is_input else '',
             'O' if self.is_output else '')
 
-    def open(self, mode, nonblock=True):
+    def open(self, nonblock=True):
         if self.rmidi:
             raise IOError(EINVAL, 'MIDI port {} already opened!'.format(self.device))
 
-        if mode == 'r':
-            in_rmidi = ffi.new('struct snd_rawmidi_t **')
-            out_rmidi = ffi.NULL
-        else:
-            in_rmidi = ffi.NULL
-            out_rmidi = ffi.new('struct snd_rawmidi_t **')
-
+        rmidi = ffi.new('struct snd_rawmidi_t **')
         block = RAWMIDI_NONBLOCK if nonblock else 0
 
-        ret = lib.snd_rawmidi_open(in_rmidi, out_rmidi, self.device.encode(), block)
+        ret = lib.snd_rawmidi_open(rmidi, ffi.NULL, self.device.encode(), block)
         if ret != 0:
             raise IOError(-ret, 'Unable to open MIDI port {}: {}'.format(
                 self.device,
                 ffi.string(lib.snd_strerror(ret)).decode()
             ))
 
-        self.rmidi = in_rmidi if mode == 'r' else out_rmidi
+        self.rmidi = rmidi
 
         return self
 
     def close(self):
         if self.rmidi:
-            lib.snd_rawmidi_drop(self.rmidi[0])
             err = lib.snd_rawmidi_close(self.rmidi[0])
             if err < 0:
                 raise IOError(-err, 'Unable to close MIDI input port')
