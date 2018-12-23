@@ -351,25 +351,32 @@ class SystemController(EventListener):
 class MIDIController(EventListener):
     events = (
         'midi:port:removed',
-        'midi:port:enabled:changed',
+        'midi:port:input_enabled:changed',
+        'midi:port:output_enabled:changed',
     )
 
     def __init__(self, input_manager):
         self.input_manager = input_manager
 
     def midi_port_removed(self, port_state, **kwargs):
-        if port_state.enabled:
+        if port_state.output_enabled:
             mgcore.remove_midi_output(port_state.port.device)
+        if port_state.input_enabled:
             self.input_manager.unregister(port_state.port.device)
 
-    def midi_port_enabled_changed(self, enabled, sender, **kwargs):
+    def midi_port_input_enabled_changed(self, input_enabled, sender, **kwargs):
         port_state = sender
-        if enabled:
-            mgcore.add_midi_output(port_state.port.device)
+        if input_enabled:
             self._add_midi_input(port_state.port)
         else:
-            mgcore.remove_midi_output(port_state.port.device)
             self.input_manager.unregister(port_state.port.device)
+
+    def midi_port_output_enabled_changed(self, output_enabled, sender, **kwargs):
+        port_state = sender
+        if output_enabled:
+            mgcore.add_midi_output(port_state.port.device)
+        else:
+            mgcore.remove_midi_output(port_state.port.device)
 
     def _add_midi_input(self, port):
         filename = find_config_file('midi.json')

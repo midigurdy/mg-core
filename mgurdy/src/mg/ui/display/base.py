@@ -29,6 +29,7 @@ class BaseDisplay:
     6:   9x15     14x2 chars (+ 2x1 px)
     7:   9x15B    14x2 chars (+ 2x1 px) BOLD
     8:   10x20    12x1 chars (+ 8x12 px)
+    9:   icons
 
     The fonts are available in .pil and .pdf format.
     """
@@ -43,6 +44,7 @@ class BaseDisplay:
         Font('9x15', 9, 15, 1, 2),
         Font('9x15B', 9, 15, 1, 2),
         Font('10x20', 10, 20, 1, 1),
+        Font('icons', 18, 10, 1, 3),
     )
 
     def __init__(self, width, height):

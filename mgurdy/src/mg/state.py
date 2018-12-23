@@ -386,7 +386,8 @@ class MIDIPortState(EventEmitter):
         super().__init__(prefix='midi:port')
         with signals.suppress():
             self.port = port
-            self.enabled = False
+            self.input_enabled = False
+            self.output_enabled = False
 
 
 class MIDIState(EventEmitter):
@@ -403,6 +404,8 @@ class MIDIState(EventEmitter):
         return sorted(self.port_states.values(), key=lambda s: s.port.id)
 
     def update_port_states(self):
+        if self.port_states is None:
+            self.port_states = {}
         ports = {p.id: p for p in RawMIDI().get_ports()}
         to_add = [pid for pid in ports if pid not in self.port_states]
         to_remove = [pid for pid in self.port_states if pid not in ports]

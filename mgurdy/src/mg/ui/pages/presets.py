@@ -41,7 +41,7 @@ class PresetsPage(ListPage):
 
     def load_presets(self):
         presets = list(Preset.select())
-        presets.append(Preset(name='New Preset...'))  # placeholder for 'new preset'
+        presets.append(Preset(name='New Preset' + chr(127)))  # placeholder for 'new preset'
         self.set_items(presets)
 
     def delete_preset(self):

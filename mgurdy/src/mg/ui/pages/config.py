@@ -140,30 +140,125 @@ class Spacer(ValueListItem):
         return ''
 
 
-class MIDIPortItem(ValueListItem):
-    minval = 0
-    maxval = 1
+class MIDIPortInputItem(ValueListItem):
+    min = 0
+    max = 1
+    label = 'Input'
 
     def __init__(self, port_state):
         super().__init__()
         self.port_state = port_state
 
-    @property
-    def label(self):
-        name = self.port_state.port.name
-        if name == 'f_midi':
-            name = 'Main USB MIDI'
-        return name[0:16]
-
     def set_value(self, val):
-        with self.state.lock():
-            self.port_state.enabled = (val == 1)
+        self.port_state.input_enabled = (val == 1)
 
     def get_value(self):
-        return 1 if self.port_state.enabled else 0
+        return 1 if self.port_state.input_enabled else 0
 
     def format_value(self, value):
         return 'On' if value else 'Off'
+
+    def activate(self, parent):
+        self.set_value(0 if self.get_value() else 1)
+
+    def render_on(self, display, x, y, width):
+        display.font_size(3)
+        display.puts(x, y, self.get_label())
+        char = chr(33) if self.get_value() else chr(32)
+        display.font_size(9)
+        display.puts(x + width, y, char, align='right', anchor='right')
+
+
+class MIDIPortOutputItem(ValueListItem):
+    min = 0
+    max = 1
+    label = 'Output'
+
+    def __init__(self, port_state):
+        super().__init__()
+        self.port_state = port_state
+
+    def set_value(self, val):
+        self.port_state.output_enabled = (val == 1)
+
+    def get_value(self):
+        return 1 if self.port_state.output_enabled else 0
+
+    def format_value(self, value):
+        return 'On' if value else 'Off'
+
+    def activate(self, parent):
+        self.set_value(0 if self.get_value() else 1)
+
+    def render_on(self, display, x, y, width):
+        display.font_size(3)
+        display.puts(x, y, self.get_label())
+        char = chr(33) if self.get_value() else chr(32)
+        display.font_size(9)
+        display.puts(x + width, y, char, align='right', anchor='right')
+
+
+class MIDIPortPage(ConfigList):
+    state_events = [
+        'midi:port:removed',
+    ]
+
+    def __init__(self, port_state, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.port_state = port_state
+
+    def handle_state_event(self, name, data):
+        # if this port got removed, show notice and return to home
+        if data.get('port_state', None) == self.port_state:
+            self.menu.message('MIDI Port removed', 2)
+            return True
+
+    def get_items(self):
+        return [
+            MIDIPortInputItem(self.port_state),
+            MIDIPortOutputItem(self.port_state),
+        ]
+
+
+class NoMIDIDevices(Spacer):
+    label = '- No MIDI devices -'
+
+    def show_cursor(self):
+        return False
+
+
+class MIDIPortPopupItem(PopupItem):
+    def __init__(self, port_state):
+        self.port_state = port_state
+        self.page = MIDIPortPage(port_state)
+        name = port_state.port.name
+        if name == 'f_midi':  # this is the USB MIDI Gadget
+            name = 'Main USB MIDI'
+        self.label = name[0:15] + chr(127)
+
+    def get_value_display(self):
+        return '|{}{}'.format(
+            'I' if self.port_state.input_enabled else ' ',
+            'O' if self.port_state.output_enabled else ' '
+        )
+
+    def render_on(self, display, x, y, width):
+        display.puts(x, y, self.get_label())
+
+        right = x + width
+
+        icon = {
+            'io': chr(34),
+            'iO': chr(35),
+            'Io': chr(36),
+            'IO': chr(37),
+        }['{}{}'.format(
+            'I' if self.port_state.input_enabled else 'i',
+            'O' if self.port_state.output_enabled else 'o',
+        )]
+        display.font_size(9)
+        display.puts(right, y, icon, align='right', anchor='right')
+        display.font_size(3)
 
 
 class MIDIPage(ConfigList):
@@ -190,8 +285,11 @@ class MIDIPage(ConfigList):
         self.menu.goto('home')
 
     def get_items(self):
-        return [MIDIPortItem(port_state)
-                for port_state in self.state.midi.get_port_states()] or [Spacer()]
+        items = [MIDIPortPopupItem(ps) for ps in self.state.midi.get_port_states()]
+        if items:
+            return items
+        else:
+            return [NoMIDIDevices()]
 
 
 class ConfigPage(ConfigList):
@@ -208,11 +306,11 @@ class ConfigPage(ConfigList):
             FineTuneItem(),
             PitchbendRangeItem(),
             SynthGainItem(),
-            PopupItem('Keynoise...', KeynoisePage(
+            PopupItem('Keynoise' + chr(127), KeynoisePage(
                 'Keynoise',
                 voice_name='preset.keynoise.0',
                 sync_state=False)),
-            PopupItem('MIDI...', MIDIPage()),
+            PopupItem('MIDI' + chr(127), MIDIPage()),
             Spacer(),
             BrightnessItem(),
             DisplayTimeoutItem(),

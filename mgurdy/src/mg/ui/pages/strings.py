@@ -193,7 +193,7 @@ class SoundPopupItem(PopupItem):
                     self.page.voice.program)
 
         else:
-            return 'No sound...'
+            return 'No sound' + chr(127)
 
     def render_on(self, display, x, y, width):
         name = self.get_label()
@@ -476,7 +476,7 @@ class VoicePage(ConfigList):
 
     def get_items(self):
         return [
-            SoundPopupItem('Sound...', TreeSoundListPage(self.voice)),
+            SoundPopupItem('Sound' + chr(127), TreeSoundListPage(self.voice)),
             BaseNoteItem(self.voice),
             VoiceParamItem(self.voice, 'volume', 'Volume'),
             VoicePanningItem(self.voice),
@@ -520,7 +520,7 @@ class KeynoisePage(VoicePage):
 
     def get_items(self):
         return [
-            SoundPopupItem('Sound...', TreeSoundListPage(self.voice, x_offset=0, limit_to_type=True)),
+            SoundPopupItem('Sound' + chr(127), TreeSoundListPage(self.voice, x_offset=0, limit_to_type=True)),
             VoiceParamItem(self.voice, 'volume', 'Volume'),
             VoicePanningItem(self.voice),
         ]
