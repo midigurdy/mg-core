@@ -67,7 +67,7 @@ class RawMIDI:
 
                 port = RawMIDIPort(
                     card_idx, device_idx, subdevice_idx,
-                    subdevice_name or device_name,
+                    device_name, subdevice_name,
                     self.port_is_input(ctl, device_idx, subdevice_idx),
                     self.port_is_output(ctl, device_idx, subdevice_idx)
                 )
@@ -100,13 +100,14 @@ class RawMIDI:
 
 class RawMIDIPort:
     def __init__(self, card_idx, device_idx, subdevice_idx,
-                 name, is_input=True, is_output=True):
+                 device_name, subdevice_name, is_input=True, is_output=True):
         self.card_idx = card_idx
         self.device_idx = device_idx
         self.subdevice_idx = subdevice_idx
         self.device = 'hw:{},{},{}'.format(card_idx, device_idx, subdevice_idx)
-        self.name = name
-        self.id = '{}-{}'.format(self.device, self.name)
+        self.device_name = device_name
+        self.subdevice_name = subdevice_name
+        self.id = '{}:{}'.format(device_name, subdevice_name or subdevice_idx)
         self.is_input = is_input
         self.is_output = is_output
 
@@ -119,6 +120,10 @@ class RawMIDIPort:
             self.name,
             'I' if self.is_input else '',
             'O' if self.is_output else '')
+
+    @property
+    def name(self):
+        return self.subdevice_name or self.device_name
 
     def open(self, nonblock=True):
         if self.rmidi:

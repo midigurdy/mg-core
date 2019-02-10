@@ -178,6 +178,33 @@ def save_misc_config(config):
         raise
 
 
+def load_midi_config(port_id):
+    config_key = 'midi:{}'.format(port_id)[0:255]
+    try:
+        entry = Config.get(Config.name == config_key)
+    except Config.DoesNotExist:
+        return None
+    try:
+        return schema.MidiSchema().loads(entry.data).data
+    except:
+        log.exception('Unable to read midi config')
+
+
+def save_midi_config(port_id, config):
+    config_key = 'midi:{}'.format(port_id)[0:255]
+    entry, _created = Config.get_or_create(name=config_key)
+    try:
+        entry.data = schema.MidiSchema().dumps(config).data
+    except:
+        log.exception('Unable to serialize midi config')
+        raise
+    try:
+        entry.save()
+    except:
+        log.exception('Unable to write midi config')
+        raise
+
+
 def initialize(filepath):
     DB.init(filepath)
     DB.create_tables([Preset, Config, Version], safe=True)

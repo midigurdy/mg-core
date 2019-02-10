@@ -244,6 +244,37 @@ class ValueListItem:
         return True
 
 
+class BooleanListItem(ValueListItem):
+    min = 0
+    max = 1
+
+    def __init__(self, state_obj, attribute, label):
+        super().__init__()
+        self.label = label
+        self.attribute = attribute
+        self.state_obj = state_obj
+
+    def set_value(self, val):
+        with self.state.lock():
+            setattr(self.state_obj, self.attribute, (val == 1))
+
+    def get_value(self):
+        return 1 if getattr(self.state_obj, self.attribute) else 0
+
+    def format_value(self, value):
+        return 'On' if value else 'Off'
+
+    def activate(self, parent):
+        self.set_value(0 if self.get_value() else 1)
+
+    def render_on(self, display, x, y, width):
+        display.puts(x, y, self.get_label())
+        char = chr(33) if self.get_value() else chr(32)
+        display.font_size(9)
+        display.puts(x + width, y, char, align='right', anchor='right')
+        display.font_size(3)
+
+
 class PopupItem:
     def __init__(self, label, page):
         self.label = label

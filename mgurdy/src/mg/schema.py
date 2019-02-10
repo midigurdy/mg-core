@@ -124,6 +124,12 @@ class MiscSchema(Schema):
     keyboard = fields.Nested(MiscKeyboardSchema)
 
 
+class MidiSchema(Schema):
+    input_enabled = fields.Boolean(default=False)
+    output_enabled = fields.Boolean(default=False)
+    auto_connect = fields.Boolean(default=False)
+
+
 class ExportSchema(Schema):
     mappings = fields.Nested(MappingSchema, many=True)
     presets = fields.Nested(PresetSchema, many=True)

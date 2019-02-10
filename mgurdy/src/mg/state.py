@@ -4,7 +4,7 @@ import logging
 
 from mg.signals import EventEmitter, signals
 from mg.utils import PeriodicTimer
-from mg.db import Preset
+from mg.db import Preset, load_midi_config
 from mg.sf2 import SoundFont
 from mg.alsa.api import RawMIDI
 
@@ -388,6 +388,21 @@ class MIDIPortState(EventEmitter):
             self.port = port
             self.input_enabled = False
             self.output_enabled = False
+            self.auto_connect = False
+
+    def to_midi_dict(self):
+        return {
+            'input_enabled': self.input_enabled,
+            'output_enabled': self.output_enabled,
+            'auto_connect': self.auto_connect,
+        }
+
+    def from_midi_dict(self, data, partial=False):
+        print('from midi dict: {}'.format(data))
+        _set(self, 'auto_connect', data, 'auto_connect', False, partial)
+        if self.auto_connect:
+            _set(self, 'input_enabled', data, 'input_enabled', False, partial)
+            _set(self, 'output_enabled', data, 'output_enabled', False, partial)
 
 
 class MIDIState(EventEmitter):
@@ -415,9 +430,14 @@ class MIDIState(EventEmitter):
             signals.emit('midi:port:removed', {'port_state': port_state})
 
         for pid in to_add:
-            port_state = MIDIPortState(ports[pid])
+            port = ports[pid]
+            port_state = MIDIPortState(port)
             self.port_states[pid] = port_state
             signals.emit('midi:port:added', {'port_state': port_state})
+
+            config = load_midi_config(port.id)
+            if config:
+                port_state.from_midi_dict(config)
 
         if to_add or to_remove:
             signals.emit('midi:changed')

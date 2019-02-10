@@ -1,4 +1,4 @@
-from .base import ConfigList, ValueListItem, Page
+from .base import ConfigList, ValueListItem, BooleanListItem, Page
 from .presets import PresetsPage
 
 from mg.input import Key
@@ -140,64 +140,6 @@ class Spacer(ValueListItem):
         return ''
 
 
-class MIDIPortInputItem(ValueListItem):
-    min = 0
-    max = 1
-    label = 'Input'
-
-    def __init__(self, port_state):
-        super().__init__()
-        self.port_state = port_state
-
-    def set_value(self, val):
-        self.port_state.input_enabled = (val == 1)
-
-    def get_value(self):
-        return 1 if self.port_state.input_enabled else 0
-
-    def format_value(self, value):
-        return 'On' if value else 'Off'
-
-    def activate(self, parent):
-        self.set_value(0 if self.get_value() else 1)
-
-    def render_on(self, display, x, y, width):
-        display.puts(x, y, self.get_label())
-        char = chr(33) if self.get_value() else chr(32)
-        display.font_size(9)
-        display.puts(x + width, y, char, align='right', anchor='right')
-        display.font_size(3)
-
-
-class MIDIPortOutputItem(ValueListItem):
-    min = 0
-    max = 1
-    label = 'Output'
-
-    def __init__(self, port_state):
-        super().__init__()
-        self.port_state = port_state
-
-    def set_value(self, val):
-        self.port_state.output_enabled = (val == 1)
-
-    def get_value(self):
-        return 1 if self.port_state.output_enabled else 0
-
-    def format_value(self, value):
-        return 'On' if value else 'Off'
-
-    def activate(self, parent):
-        self.set_value(0 if self.get_value() else 1)
-
-    def render_on(self, display, x, y, width):
-        display.puts(x, y, self.get_label())
-        char = chr(33) if self.get_value() else chr(32)
-        display.font_size(9)
-        display.puts(x + width, y, char, align='right', anchor='right')
-        display.font_size(3)
-
-
 class MIDIPortPage(ConfigList):
     state_events = [
         'midi:port:removed',
@@ -206,6 +148,18 @@ class MIDIPortPage(ConfigList):
     def __init__(self, port_state, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.port_state = port_state
+        self._prev_state = {}
+
+    def show(self, *args, **kwargs):
+        self._prev_state = self.port_state.to_midi_dict()
+        super().show(*args, **kwargs)
+
+    def hide(self):
+        curr_state = self.port_state.to_midi_dict()
+        if self._prev_state != curr_state:
+            db.save_midi_config(self.port_state.port.id, curr_state)
+            print('Saving port state {}'.format(curr_state))
+        super().hide()
 
     def handle_state_event(self, name, data):
         # if this port got removed, show notice and return to home
@@ -215,8 +169,9 @@ class MIDIPortPage(ConfigList):
 
     def get_items(self):
         return [
-            MIDIPortInputItem(self.port_state),
-            MIDIPortOutputItem(self.port_state),
+            BooleanListItem(self.port_state, 'input_enabled', 'Input'),
+            BooleanListItem(self.port_state, 'output_enabled', 'Output'),
+            BooleanListItem(self.port_state, 'auto_connect', 'Auto Connect'),
         ]
 
 
@@ -233,7 +188,7 @@ class MIDIPortPopupItem(PopupItem):
         self.page = MIDIPortPage(port_state)
         name = port_state.port.name
         if name == 'f_midi':  # this is the USB MIDI Gadget
-            name = 'Main USB MIDI'
+            name = 'Main MIDI'
         self.label = name[0:15] + chr(127)
 
     def get_value_display(self):
