@@ -46,6 +46,9 @@ enum mg_param_enum {
          MG_PARAM_NOTE_CLEAR,
          MG_PARAM_RESET,
          MG_PARAM_MODE,
+
+         MG_PARAM_BANK,
+         MG_PARAM_PROGRAM,
 };
 
 enum mg_map_enum {

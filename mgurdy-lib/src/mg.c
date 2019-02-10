@@ -255,6 +255,12 @@ int mg_set_string(struct mg_string_config *configs)
                 // printf("string %d channel: %d\n", snum, c->val);
                 // printf("channel %d\n", c->val);
                 break;
+            case MG_PARAM_BANK:
+                st->bank = c->val;
+                break;
+            case MG_PARAM_PROGRAM:
+                st->program = c->val;
+                break;
             case MG_PARAM_BASE_NOTE:
                 mg_string_set_base_note(st, c->val);
                 break;

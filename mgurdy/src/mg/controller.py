@@ -157,6 +157,8 @@ class SynthController(EventListener):
                     self.fluid.set_channel_sound(voice.channel, voice.soundfont_id,
                                                  voice.bank, voice.program)
                     configs.append((string, 'mute', int(voice.muted)))
+                    configs.append((string, 'bank', voice.bank))
+                    configs.append((string, 'program', voice.program))
 
                 configs.append((string, 'volume', voice.volume))
                 configs.append((string, 'panning', voice.panning))
@@ -225,6 +227,8 @@ class SynthController(EventListener):
         configs = [
             (voice.string, 'reset', 0),
             (voice.string, 'mode', VOICE_MODES.index(voice.mode)),
+            (voice.string, 'bank', voice.bank),
+            (voice.string, 'program', voice.program),
         ]
         if not voice.muted:
             configs.append((voice.string, 'mute', 0))

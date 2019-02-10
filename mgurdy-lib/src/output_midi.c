@@ -20,6 +20,7 @@ static int mg_output_midi_volume(struct mg_output *output, struct mg_stream *str
 static int mg_output_midi_pitch(struct mg_output *output, struct mg_stream *stream);
 static int mg_output_midi_channel_pressure(struct mg_output *output, struct mg_stream *stream);
 static int mg_output_midi_balance(struct mg_output *output, struct mg_stream *stream);
+static int mg_output_midi_bank_prog(struct mg_output *output, struct mg_stream *stream);
 
 static int mg_midi_chmsg1(struct mg_output *output, int msg, int channel, int val);
 static int mg_midi_chmsg2(struct mg_output *output, int msg, int channel, int val1, int val2);
@@ -32,6 +33,7 @@ static int mg_midi_write(struct mg_output *output, uint8_t *buffer, size_t size)
 #define MIDI_MSG_NOTEON                (0x90)
 #define MIDI_MSG_NOTEOFF               (0x80)
 #define MIDI_MSG_CONTROL_CHANGE        (0xB0)
+#define MIDI_MSG_PROGRAM_CHANGE        (0xC0)
 #define MIDI_MSG_CHANNEL_PRESSURE      (0xD0)
 #define MIDI_MSG_POLY_PRESSURE         (0xA0)
 #define MIDI_MSG_PITCH_BEND            (0xE0)
@@ -126,6 +128,7 @@ static int add_melody_stream(struct mg_output *output, struct mg_string *string,
     stream->sender[stream->sender_count++] = mg_output_midi_channel_pressure;
     stream->sender[stream->sender_count++] = mg_output_midi_volume;
     stream->sender[stream->sender_count++] = mg_output_midi_balance;
+    stream->sender[stream->sender_count++] = mg_output_midi_bank_prog;
 
     output->stream[output->stream_count++] = stream;
 
@@ -146,6 +149,7 @@ static int add_trompette_stream(struct mg_output *output, struct mg_string *stri
     stream->sender[stream->sender_count++] = mg_output_midi_channel_pressure;
     stream->sender[stream->sender_count++] = mg_output_midi_volume;
     stream->sender[stream->sender_count++] = mg_output_midi_balance;
+    stream->sender[stream->sender_count++] = mg_output_midi_bank_prog;
 
     output->stream[output->stream_count++] = stream;
 
@@ -165,6 +169,7 @@ static int add_drone_stream(struct mg_output *output, struct mg_string *string, 
     stream->sender[stream->sender_count++] = mg_output_midi_expression;
     stream->sender[stream->sender_count++] = mg_output_midi_volume;
     stream->sender[stream->sender_count++] = mg_output_midi_balance;
+    stream->sender[stream->sender_count++] = mg_output_midi_bank_prog;
 
     output->stream[output->stream_count++] = stream;
 
@@ -277,6 +282,34 @@ static int mg_output_midi_balance(struct mg_output *output, struct mg_stream *st
     }
 
     return 0;
+}
+
+static int mg_output_midi_bank_prog(struct mg_output *output, struct mg_stream *stream)
+{
+    int bank = stream->string->bank;
+    int program = stream->string->program;
+    int tokens = 0;
+
+    if (stream->dst.bank != bank) {
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_BANK_LSB, MIDI_LSB(bank))) {
+            return -1;
+        }
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_BANK_MSB, MIDI_MSB(bank))) {
+            return -1;
+        }
+        stream->dst.bank = bank;
+        tokens += 6000;
+    }
+
+    if (stream->dst.program != program) {
+        if (mg_midi_chmsg1(output, MIDI_MSG_PROGRAM_CHANGE, stream->string->channel, program)) {
+            return -1;
+        }
+        stream->dst.program = program;
+        tokens += 2000;
+    }
+
+    return tokens;
 }
 
 static int mg_midi_chmsg1(struct mg_output *output, int msg, int channel, int val)

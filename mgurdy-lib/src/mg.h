@@ -43,6 +43,8 @@
 #define MG_CC_VOLUME (7)
 #define MG_CC_PANNING (8)  // uses balance control
 #define MG_CC_EXPRESSION (11)
+#define MG_CC_BANK_MSB (0)
+#define MG_CC_BANK_LSB (32)
 #define MG_CC_ALL_SOUNDS_OFF (0x78)
 #define MG_CC_ALL_CTRL_OFF (0x79)
 
@@ -77,6 +79,9 @@ struct mg_voice {
     int volume;
     int panning;
     int pressure;
+
+    int bank;
+    int program;
 
     struct mg_note notes[NUM_NOTES];
     int active_notes[NUM_NOTES];
@@ -157,6 +162,9 @@ struct mg_string {
     int muted;
     int volume;
     int panning;
+
+    int bank;
+    int program;
 
     int base_note_count;
 
@@ -381,6 +389,9 @@ enum mg_param_enum {
     MG_PARAM_NOTE_CLEAR,
     MG_PARAM_RESET,
     MG_PARAM_MODE,
+
+    MG_PARAM_BANK,
+    MG_PARAM_PROGRAM,
 };
 
 enum mg_map_enum {

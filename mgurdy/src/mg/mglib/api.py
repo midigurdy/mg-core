@@ -28,6 +28,8 @@ PARAMS = {
     'base_note': lib.MG_PARAM_BASE_NOTE,
     'reset': lib.MG_PARAM_RESET,
     'mode': lib.MG_PARAM_MODE,
+    'bank': lib.MG_PARAM_BANK,
+    'program': lib.MG_PARAM_PROGRAM,
 }
 
 MAPPINGS = {

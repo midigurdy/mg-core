@@ -295,6 +295,9 @@ static void reset_string(struct mg_string *string, int channel)
     string->muted = 1; // default is off
     string->volume = 127; // max volume
     string->panning = 64;  // center
+    string->bank = 0;
+    string->program = 0;
+
     string->mode = MG_MODE_MIDIGURDY;
 
     string->base_note_count = 0;
@@ -320,6 +323,8 @@ void mg_state_reset_model_voice(struct mg_voice *voice)
     voice->volume = 127;
     voice->panning = 64;
     voice->pressure = 0;
+    voice->bank = 0;
+    voice->program = 0;
 
     for (i = 0; i < NUM_NOTES; i++) {
         voice->notes[i].channel = -1;
@@ -339,6 +344,8 @@ void mg_state_reset_output_voice(struct mg_voice *voice)
     voice->volume = -1;
     voice->panning = -1;
     voice->pressure = -1;
+    voice->bank = -1;
+    voice->program = 1;
 
     for (i = 0; i < NUM_NOTES; i++) {
         voice->notes[i].channel = -1;
