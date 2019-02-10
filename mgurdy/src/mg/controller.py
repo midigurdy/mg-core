@@ -99,10 +99,7 @@ class SynthController(EventListener):
         mgcore.set_string_params([(sender.string, 'polyphonic', int(sender.polyphonic))])
 
     def active_preset_voice_panning_changed(self, panning, sender, **kwargs):
-        if sender.string == 'keynoise1':
-            self.fluid.set_channel_panning(sender.channel, panning)
-        else:
-            mgcore.set_string_params([(sender.string, 'panning', sender.panning)])
+        mgcore.set_string_params([(sender.string, 'panning', sender.panning)])
 
     def coarse_tune_changed(self, **kwargs):
         mgcore.set_string_params(self.base_note_configs())
@@ -152,8 +149,6 @@ class SynthController(EventListener):
             configs = []
             for voice in self.state.preset.voices:
                 string = voice.string
-                if string == 'keynoise1':
-                    continue
 
                 if not voice.get_sound():
                     self.fluid.clear_channel_sound(voice.channel)
@@ -173,17 +168,8 @@ class SynthController(EventListener):
                 if voice.type in ('drone', 'trompette'):
                     configs.append((string, 'all_notes_off', 0))
                     configs.append((string, 'note_on', int(voice.base_note)))
+            print('settings string configs: {}'.format(configs))
             mgcore.set_string_params(configs)
-
-            # setup keynoise voice
-            voice = self.state.preset.keynoise[0]
-            if not voice.get_sound():
-                self.fluid.clear_channel_sound(voice.channel)
-            else:
-                self.fluid.set_channel_volume(voice.channel, voice.volume)
-                self.fluid.set_channel_panning(voice.channel, voice.panning)
-                self.fluid.set_channel_sound(voice.channel, voice.soundfont_id,
-                                             voice.bank, voice.program)
 
             self.fluid.unload_unused_soundfonts()
         finally:
@@ -260,10 +246,7 @@ class SynthController(EventListener):
         self.fluid.ladspa.set_control('sympa', 'Wet Right', utils.balance2amp(panning, 'right'))
 
     def set_voice_volume(self, voice, volume):
-        if voice.string == 'keynoise1':
-            self.fluid.set_channel_volume(voice.channel, volume)
-        else:
-            mgcore.set_string_params([(voice.string, 'volume', volume)])
+        mgcore.set_string_params([(voice.string, 'volume', volume)])
 
     def set_synth_gain(self, gain):
         gain = (gain / (127 / 3.0))
