@@ -65,6 +65,7 @@ struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_perc
         return NULL;
     }
     memset(stream, 0, sizeof(struct mg_stream));
+    mg_state_reset_output_voice(&stream->dst);
 
     stream->string = string;
     stream->tokens_percent = tokens_percent;
