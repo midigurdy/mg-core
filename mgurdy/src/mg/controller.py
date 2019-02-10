@@ -168,7 +168,6 @@ class SynthController(EventListener):
                 if voice.type in ('drone', 'trompette'):
                     configs.append((string, 'all_notes_off', 0))
                     configs.append((string, 'note_on', int(voice.base_note)))
-            print('settings string configs: {}'.format(configs))
             mgcore.set_string_params(configs)
 
             self.fluid.unload_unused_soundfonts()
