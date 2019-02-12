@@ -1,4 +1,4 @@
-from .base import ConfigList, ValueListItem, BooleanListItem, Page
+from .base import ConfigList, ValueListItem, Page
 from .presets import PresetsPage
 
 from mg.input import Key
@@ -140,6 +140,44 @@ class Spacer(ValueListItem):
         return ''
 
 
+class MIDIConnectionState(ValueListItem):
+    min_val = 0
+    max_val = 2
+    zero_value = 0
+
+    def __init__(self, port_state, enabled_attr, auto_attr, label):
+        self.port_state = port_state
+        self.enabled_attr = enabled_attr
+        self.auto_attr = auto_attr
+        self.label = label
+        super().__init__()
+
+    def set_value(self, val):
+        self.value = val
+        setattr(self.port_state, self.enabled_attr, val > 0)
+        setattr(self.port_state, self.auto_attr, val == 2)
+
+    def get_value(self):
+        enabled = getattr(self.port_state, self.enabled_attr, False)
+        auto = getattr(self.port_state, self.auto_attr, False)
+        if enabled and auto:
+            value = 2
+        elif enabled:
+            value = 1
+        else:
+            value = 0
+        self.value = value
+        return self.value
+
+    def format_value(self, val):
+        if val == 2:
+            return 'Auto-On'
+        elif val:
+            return 'On'
+        else:
+            return 'Off'
+
+
 class MIDIPortPage(ConfigList):
     state_events = [
         'midi:port:removed',
@@ -158,7 +196,6 @@ class MIDIPortPage(ConfigList):
         curr_state = self.port_state.to_midi_dict()
         if self._prev_state != curr_state:
             db.save_midi_config(self.port_state.port.id, curr_state)
-            print('Saving port state {}'.format(curr_state))
         super().hide()
 
     def handle_state_event(self, name, data):
@@ -169,9 +206,8 @@ class MIDIPortPage(ConfigList):
 
     def get_items(self):
         return [
-            BooleanListItem(self.port_state, 'input_enabled', 'Input'),
-            BooleanListItem(self.port_state, 'output_enabled', 'Output'),
-            BooleanListItem(self.port_state, 'auto_connect', 'Auto Connect'),
+            MIDIConnectionState(self.port_state, 'input_enabled', 'input_auto', 'Input'),
+            MIDIConnectionState(self.port_state, 'output_enabled', 'output_auto', 'Output'),
         ]
 
 

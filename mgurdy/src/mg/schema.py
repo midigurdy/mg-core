@@ -126,8 +126,9 @@ class MiscSchema(Schema):
 
 class MidiSchema(Schema):
     input_enabled = fields.Boolean(default=False)
+    input_auto = fields.Boolean(default=False)
     output_enabled = fields.Boolean(default=False)
-    auto_connect = fields.Boolean(default=False)
+    output_auto = fields.Boolean(default=False)
 
 
 class ExportSchema(Schema):

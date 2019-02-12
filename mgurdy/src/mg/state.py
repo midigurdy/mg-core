@@ -387,21 +387,25 @@ class MIDIPortState(EventEmitter):
         with signals.suppress():
             self.port = port
             self.input_enabled = False
+            self.input_auto = False
             self.output_enabled = False
-            self.auto_connect = False
+            self.output_auto = False
 
     def to_midi_dict(self):
         return {
             'input_enabled': self.input_enabled,
+            'input_auto': self.input_auto,
             'output_enabled': self.output_enabled,
-            'auto_connect': self.auto_connect,
+            'output_auto': self.output_auto,
         }
 
     def from_midi_dict(self, data, partial=False):
-        print('from midi dict: {}'.format(data))
-        _set(self, 'auto_connect', data, 'auto_connect', False, partial)
-        if self.auto_connect:
+        _set(self, 'input_auto', data, 'input_auto', False, partial)
+        if self.input_auto:
             _set(self, 'input_enabled', data, 'input_enabled', False, partial)
+
+        _set(self, 'output_auto', data, 'output_auto', False, partial)
+        if self.output_auto:
             _set(self, 'output_enabled', data, 'output_enabled', False, partial)
 
 
