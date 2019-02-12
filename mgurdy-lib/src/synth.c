@@ -228,7 +228,7 @@ static void update_melody_model(struct mg_core *mg)
                     model->active_notes[model->note_count++] = midi_note;
 
                     note = &model->notes[midi_note];
-                    note->channel = st->channel;
+                    note->on = 1;
 
                     if (st->mode == MG_MODE_GENERIC) {
                         note->velocity = 120;
@@ -288,7 +288,7 @@ static void update_melody_model(struct mg_core *mg)
                         midi_note = st->base_note + st->empty_key;
                         if (midi_note > 127) midi_note = 127;
                         note = &model->notes[midi_note];
-                        note->channel = st->channel;
+                        note->on = 1;
                         if (st->mode == MG_MODE_MIDIGURDY) {
                             if (prev_expression < MG_MELODY_EXPRESSION_THRESHOLD) {
                                 note->velocity = 1;
@@ -324,7 +324,7 @@ static void update_melody_model(struct mg_core *mg)
                 model->active_notes[model->note_count++] = midi_note;
 
                 note = &model->notes[midi_note];
-                note->channel = st->channel;
+                note->on = 1;
 
                 if (st->mode == MG_MODE_GENERIC) {
                     note->velocity = 120;
@@ -399,7 +399,7 @@ static void update_drone_model(struct mg_core *mg)
             midi_note = st->fixed_notes[i];
 
             note = &model->notes[midi_note];
-            note->channel = st->channel;
+            note->on = 1;
             note->velocity = 127;
             note->pressure = 0;
             model->active_notes[model->note_count++] = midi_note;
@@ -489,7 +489,7 @@ static void update_trompette_model(struct mg_core *mg)
             midi_note = st->fixed_notes[i];
 
             note = &model->notes[midi_note];
-            note->channel = st->channel;
+            note->on = 1;
             note->velocity = 127;
             note->pressure = 0;  // polyphonic pressure
             model->active_notes[model->note_count++] = midi_note;
@@ -540,7 +540,7 @@ static void update_keynoise_model(struct mg_core *mg)
         model->active_notes[model->note_count++] = midi_note;
 
         note = &model->notes[midi_note];
-        note->channel = st->channel;
+        note->on = 1;
         note->velocity = velocity;
     }
 

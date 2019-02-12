@@ -1,4 +1,4 @@
-from .base import ConfigList, ValueListItem, Page
+from .base import ConfigList, ValueListItem, Page, BooleanListItem
 from .presets import PresetsPage
 
 from mg.input import Key
@@ -141,8 +141,8 @@ class Spacer(ValueListItem):
 
 
 class MIDIConnectionState(ValueListItem):
-    min_val = 0
-    max_val = 2
+    minval = 0
+    maxval = 2
     zero_value = 0
 
     def __init__(self, port_state, enabled_attr, auto_attr, label):
@@ -178,6 +178,71 @@ class MIDIConnectionState(ValueListItem):
             return 'Off'
 
 
+class MIDIConnectionSpeed(ValueListItem):
+    label = 'Speed'
+    minval = 0
+    maxval = 2
+    zero_val = 0
+
+    def __init__(self, port_state):
+        self.port_state = port_state
+        super().__init__()
+
+    def set_value(self, val):
+        self.value = val
+        setattr(self.port_state, 'speed', val)
+
+    def get_value(self):
+        self.value = getattr(self.port_state, 'speed', 0)
+        return self.value
+
+    def format_value(self, val):
+        if val == 0:
+            return 'Normal'
+        elif val == 1:
+            return 'Fast'
+        elif val > 1:
+            return 'Unlimited'
+
+
+class MIDIChannelItem(ValueListItem):
+    minval = -1
+    maxval = 15
+
+    def __init__(self, port_state, attr, label, default_channel):
+        self.zero_value = default_channel
+        self.port_state = port_state
+        self.attr = attr
+        self.label = label
+        super().__init__()
+
+    def set_value(self, val):
+        setattr(self.port_state, self.attr, val)
+        self.value = val
+
+    def get_value(self):
+        self.value = getattr(self.port_state, self.attr, self.zero_value)
+        return self.value
+
+    def format_value(self, val):
+        return '{}'.format(val + 1 if val >= 0 else 'Off')
+
+
+class MIDIOutputConfig(ConfigList):
+    def __init__(self, port_state):
+        self.port_state = port_state
+        super().__init__()
+
+    def get_items(self):
+        return [
+            MIDIChannelItem(self.port_state, 'melody_channel', 'Melody Channel', 1),
+            MIDIChannelItem(self.port_state, 'trompette_channel', 'Tromp. Channel', 2),
+            MIDIChannelItem(self.port_state, 'drone_channel', 'Drone Channel', 3),
+            BooleanListItem(self.port_state, 'program_change', 'Program Change'),
+            MIDIConnectionSpeed(self.port_state),
+        ]
+
+
 class MIDIPortPage(ConfigList):
     state_events = [
         'midi:port:removed',
@@ -208,6 +273,7 @@ class MIDIPortPage(ConfigList):
         return [
             MIDIConnectionState(self.port_state, 'input_enabled', 'input_auto', 'Input'),
             MIDIConnectionState(self.port_state, 'output_enabled', 'output_auto', 'Output'),
+            PopupItem('Output Config', MIDIOutputConfig(self.port_state)),
         ]
 
 

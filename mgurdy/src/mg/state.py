@@ -391,15 +391,34 @@ class MIDIPortState(EventEmitter):
             self.output_enabled = False
             self.output_auto = False
 
+            # channels are 0-based, -1 means OFF
+            self.melody_channel = 0
+            self.trompette_channel = 1
+            self.drone_channel = 2
+
+            self.program_change = False
+            self.speed = 0
+
     def to_midi_dict(self):
         return {
             'input_enabled': self.input_enabled,
             'input_auto': self.input_auto,
             'output_enabled': self.output_enabled,
             'output_auto': self.output_auto,
+            'melody_channel': self.melody_channel,
+            'drone_channel': self.drone_channel,
+            'trompette_channel': self.trompette_channel,
+            'program_change': self.program_change,
+            'speed': self.speed,
         }
 
     def from_midi_dict(self, data, partial=False):
+        _set(self, 'melody_channel', data, 'melody_channel', 0, partial)
+        _set(self, 'trompette_channel', data, 'trompette_channel', 1, partial)
+        _set(self, 'drone_channel', data, 'drone_channel', 2, partial)
+        _set(self, 'program_change', data, 'program_change', False, partial)
+        _set(self, 'speed', data, 'speed', 0, partial)
+
         _set(self, 'input_auto', data, 'input_auto', False, partial)
         if self.input_auto:
             _set(self, 'input_enabled', data, 'input_enabled', False, partial)

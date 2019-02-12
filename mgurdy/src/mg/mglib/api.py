@@ -290,6 +290,23 @@ class MGCore:
         self.outputs[device] = output_id
         return output_id
 
+    def enable_midi_output(self, device, enabled=True):
+        if device not in self.outputs:
+            raise RuntimeError('MIDI output %s not found' % device)
+        if lib.mg_enable_midi_output(self.outputs[device], 1 if enabled else 0):
+            raise RuntimeError('Unable to set MIDI output enable state')
+
+    def config_midi_output(self, device, melody_channel, drone_channel, trompette_channel, program_change, speed):
+        if device not in self.outputs:
+            raise RuntimeError('MIDI output %s not found' % device)
+        if lib.mg_config_midi_output(self.outputs[device],
+                                     int(melody_channel),
+                                     int(drone_channel),
+                                     int(trompette_channel),
+                                     int(program_change),
+                                     int(speed)):
+            raise RuntimeError('Unable to configure MIDI output')
+
     def remove_midi_output(self, device):
         if device not in self.outputs:
             raise RuntimeError('MIDI output %s not found' % device)

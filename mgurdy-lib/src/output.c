@@ -4,7 +4,7 @@
 
 static int mg_output_sync(struct mg_output *output);
 static void mg_output_add_tokens(struct mg_output *output);
-static void mg_output_calculate_tokens_per_tick(struct mg_output *output);
+static void mg_output_calc_stream_tokens_per_tick(struct mg_output *output);
 static int mg_output_next_id(void);
 
 static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *stream);
@@ -55,7 +55,7 @@ int mg_output_next_id(void)
     return output_id++;
 }
 
-struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_percent)
+struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_percent, int channel)
 {
     struct mg_stream *stream;
 
@@ -69,6 +69,7 @@ struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_perc
 
     stream->string = string;
     stream->tokens_percent = tokens_percent;
+    stream->channel = channel;
 
     return stream;
 }
@@ -134,8 +135,7 @@ void mg_output_enable(struct mg_output *output, int enable)
     }
 
     output->enabled = enable;
-
-    mg_output_calculate_tokens_per_tick(output);
+    mg_output_calc_stream_tokens_per_tick(output);
 }
 
 void mg_output_reset(struct mg_output *output)
@@ -145,6 +145,37 @@ void mg_output_reset(struct mg_output *output)
     }
 }
 
+void mg_output_set_tokens_per_tick(struct mg_output *output, int tokens)
+{
+    if (output->tokens_per_tick != tokens) {
+        output->tokens_per_tick = tokens;
+
+        // we only need to recalculate if rate limiting is enabled (tokens > 0)
+        if (tokens) {
+            mg_output_calc_stream_tokens_per_tick(output);
+        }
+    }
+}
+
+void mg_output_set_channel(struct mg_output *output, struct mg_string *string, int channel)
+{
+    struct mg_stream *stream;
+
+    for (int i = 0; i < output->stream_count; i++) {
+        stream = output->stream[i];
+
+        if (stream->string == string && stream->channel != channel) {
+            // if we switch channels on an active stream, reset it first
+            // to make sure all notes are turned off before switching channels
+            if (output->enabled && stream->channel >= 0) {
+                mg_output_stream_reset(output, stream);
+            }
+            stream->channel = channel;
+        }
+    }
+
+    mg_output_calc_stream_tokens_per_tick(output);
+}
 
 /* Private functions */
 
@@ -155,7 +186,7 @@ static int mg_output_sync(struct mg_output *output)
 
     for (i = 0; i < output->stream_count; i++) {
         stream = output->stream[i];
-        if (stream->enabled) {
+        if (stream->channel >= 0) {
             if (mg_output_stream_sync(output, stream)) {
                 return -1;
             }
@@ -173,7 +204,7 @@ static void mg_output_add_tokens(struct mg_output *output)
     if (output->tokens_per_tick) {
         for (i = 0; i < output->stream_count; i++) {
             stream = output->stream[i];
-            if (stream->enabled && stream->tokens < stream->max_tokens) {
+            if (stream->channel >= 0 && stream->tokens < stream->max_tokens) {
                 stream->tokens = MIN(stream->tokens + stream->tokens_per_tick, stream->max_tokens);
             }
         }
@@ -184,26 +215,26 @@ static void mg_output_add_tokens(struct mg_output *output)
     }
 }
 
-static void mg_output_calculate_tokens_per_tick(struct mg_output *output)
+static void mg_output_calc_stream_tokens_per_tick(struct mg_output *output)
 {
     int i;
     int toks = output->tokens_per_tick;
     struct mg_stream *stream;
 
     /* Add unused tokens from the disabled streams to the total available tokens, so that
-       it gets distributed to all enabled channels according to their token ratio */
+       it gets distributed to all enabled streams according to their token ratio */
     for (i = 0; i < output->stream_count; i++) {
         stream = output->stream[i];
-        if (!stream->enabled) {
+        if (stream->channel < 0) {
             toks += (stream->tokens_percent * output->tokens_per_tick) / 100;
             stream->tokens_per_tick = 0;
         }
     }
 
-    /* distribute the available tokens across all enabled channels */
+    /* distribute the available tokens across all enabled streams */
     for (i = 0; i < output->stream_count; i++) {
         stream = output->stream[i];
-        if (stream->enabled) {
+        if (stream->channel >= 0) {
             stream->tokens_per_tick = stream->tokens_percent * toks / 100;
         }
     }
@@ -221,7 +252,7 @@ static void mg_output_calculate_tokens_per_tick(struct mg_output *output)
 
 static void mg_output_stream_reset(struct mg_output *output, struct mg_stream *stream)
 {
-    output->reset(output, stream->string->channel);
+    output->reset(output, stream->channel);
     mg_state_reset_output_voice(&stream->dst);
 }
 
@@ -246,8 +277,8 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
         src_note = &src->notes[key];
         dst_note = &dst->notes[key];
 
-        if (src_note->channel != dst_note->channel) {
-            ret = output->noteon(output, src_note->channel, key, src_note->velocity);
+        if (!dst_note->on) {
+            ret = output->noteon(output, stream->channel, key, src_note->velocity);
             if (unlikely(ret < 0)) {
                 /* If sending a noteon failed and we want to abort, make sure
                  * we record which notes we have already sent noteons for
@@ -264,7 +295,7 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
                 return -1;
             }
             stream->tokens -= ret;
-            dst_note->channel = src_note->channel;
+            dst_note->on = 1;
             active_notes[note_count++] = key;
             notes_have_changed = 1;
         }
@@ -276,11 +307,11 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
         dst_note = &dst->notes[key];
         src_note = &src->notes[key];
 
-        if (dst_note->channel == src_note->channel) {
+        if (src_note->on) {
             active_notes[note_count++] = key;
         }
         else {
-            ret = output->noteoff(output, dst_note->channel, key);
+            ret = output->noteoff(output, stream->channel, key);
             if (unlikely(ret < 0)) {
                 /* If sending a noteoff failed and we want to abort, update the
                  * dst->active_notes array immediately, but make sure to also
@@ -303,7 +334,7 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
                 return -1;
             }
             stream->tokens -= ret;
-            dst_note->channel = CHANNEL_OFF;
+            dst_note->on = 0;
             notes_have_changed = 1;
         }
     }

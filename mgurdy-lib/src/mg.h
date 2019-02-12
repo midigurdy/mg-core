@@ -28,8 +28,6 @@
 #define KEY_PRESSED (1)
 #define KEY_RELEASED (2)
 
-#define CHANNEL_OFF (-1)
-
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
@@ -66,7 +64,7 @@ struct mg_map {
 
 /* Represents the (internal or external) state of a single note */
 struct mg_note {
-    int channel;  // -1 if note is off
+    int on;
     int velocity;
     int pressure;
 };
@@ -121,7 +119,7 @@ struct mg_stream {
     int sender_count;
     int sender_idx; /* round-robin message sending index */
 
-    int enabled;
+    int channel;  // 0-based, negative value means disabled
 };
 
 
@@ -134,6 +132,7 @@ struct mg_output {
     /* Total number of tokens added to the (enabled) stream buckets per tick.
      * Set to 0 to disable rate-limiting. */
     int tokens_per_tick;
+    int send_prog_change;
 
     int enabled;
     int skip_iterations;
@@ -156,8 +155,6 @@ struct mg_output {
  * and synth state is used to determine which messages to send to the synth.
  */
 struct mg_string {
-    int channel; /* MIDI channel */
-
     int base_note;
     int muted;
     int volume;
@@ -338,8 +335,6 @@ struct mg_core {
 #define EMPTY_NOTE_DELAY 50
 #define TICKS_PER_SECOND 2000
 
-#define NUM_CHANNELS 3
-
 #define CHIEN_MAX_VAL 100
 #define NOTEOFF -9999
 #define MIDIDEV "hw:1,0,0"
@@ -428,6 +423,8 @@ extern int mg_set_mapping(const struct mg_map *src, int idx);
 extern int mg_reset_mapping_ranges(int idx);
 
 extern int mg_add_midi_output(const char *device);
+extern int mg_enable_midi_output(int output_id, int enabled);
+extern int mg_config_midi_output(int output_id, int melody_ch, int drone_ch, int trompette_ch, int prog_change, int speed);
 extern int mg_remove_midi_output(int output_id);
 
 struct mg_image {

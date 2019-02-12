@@ -129,6 +129,11 @@ class MidiSchema(Schema):
     input_auto = fields.Boolean(default=False)
     output_enabled = fields.Boolean(default=False)
     output_auto = fields.Boolean(default=False)
+    melody_channel = fields.Int(default=0)
+    trompette_channel = fields.Int(default=1)
+    drone_channel = fields.Int(default=2)
+    program_change = fields.Boolean(default=False)
+    speed = fields.Int(default=0)
 
 
 class ExportSchema(Schema):

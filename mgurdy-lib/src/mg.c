@@ -252,8 +252,7 @@ int mg_set_string(struct mg_string_config *configs)
                 mg_string_set_volume(st, c->val);
                 break;
             case MG_PARAM_CHANNEL:
-                // printf("string %d channel: %d\n", snum, c->val);
-                // printf("channel %d\n", c->val);
+                // FIXME: unused param, remove!
                 break;
             case MG_PARAM_BANK:
                 st->bank = c->val;
@@ -323,8 +322,6 @@ int mg_add_midi_output(const char *device)
         return -1;
     }
 
-    mg_output_enable(output, 1);
-
     ret = mg_state_lock(&mg_core.state);
     if (ret) {
         fprintf(stderr, "Unable to get state lock!\n");
@@ -342,6 +339,92 @@ int mg_add_midi_output(const char *device)
     mg_core.outputs[mg_core.output_count++] = output;
 
     ret = output->id;
+
+exit:
+    mg_state_unlock(&mg_core.state);
+    return ret;
+}
+
+int mg_enable_midi_output(int output_id, int enabled)
+{
+    int ret;
+    int output_idx;
+    struct mg_output *output = NULL;
+
+    ret = mg_state_lock(&mg_core.state);
+    if (ret) {
+        fprintf(stderr, "Unable to get state lock!\n");
+        return ret;
+    }
+
+    // find the output by id
+    for (output_idx = 0; output_idx < mg_core.output_count; output_idx++) {
+        output = mg_core.outputs[output_idx];
+        if (output->id == output_id)
+            break;
+    }
+
+    if (output_idx >= mg_core.output_count) {
+        fprintf(stderr, "Output port %d not found!\n", output_id);
+        ret = -1;
+        goto exit;
+    }
+
+    mg_output_enable(output, enabled);
+
+    ret = 0;
+
+exit:
+    mg_state_unlock(&mg_core.state);
+    return ret;
+}
+
+
+int mg_config_midi_output(int output_id, int melody_ch, int drone_ch, int trompette_ch, int prog_change, int speed)
+{
+    int ret;
+    int output_idx;
+    struct mg_output *output = NULL;
+    int toks_per_tick;
+
+    ret = mg_state_lock(&mg_core.state);
+    if (ret) {
+        fprintf(stderr, "Unable to get state lock!\n");
+        return ret;
+    }
+
+    // find the output by id
+    for (output_idx = 0; output_idx < mg_core.output_count; output_idx++) {
+        output = mg_core.outputs[output_idx];
+        if (output->id == output_id)
+            break;
+    }
+
+    if (output_idx >= mg_core.output_count) {
+        fprintf(stderr, "Output port %d not found!\n", output_id);
+        ret = -1;
+        goto exit;
+    }
+
+    // MIDI outputs currently only use the first string of each type
+    mg_output_set_channel(output, &mg_core.state.melody[0], melody_ch);
+    mg_output_set_channel(output, &mg_core.state.drone[0], drone_ch);
+    mg_output_set_channel(output, &mg_core.state.trompette[0], trompette_ch);
+
+    output->send_prog_change = prog_change;
+
+    if (speed == 1) {  // fast mode
+        toks_per_tick = 6000;
+    } else if (speed > 1) {  // unlimited mode
+        toks_per_tick = 0;
+    } else {  // normal mode
+        toks_per_tick = 3000;
+    }
+    if (output->tokens_per_tick != toks_per_tick) {
+        mg_output_set_tokens_per_tick(output, toks_per_tick);
+    }
+
+    ret = 0;
 
 exit:
     mg_state_unlock(&mg_core.state);

@@ -92,6 +92,8 @@ int mg_set_mapping(const struct mg_map *src, int idx);
 int mg_reset_mapping_ranges(int idx);
 
 int mg_add_midi_output(const char *device);
+int mg_enable_midi_output(int output_id, int enabled);
+int mg_config_midi_output(int output_id, int melody_ch, int drone_ch, int trompette_ch, int prog_change, int speed);
 int mg_remove_midi_output(int output_id);
 
 struct mg_image;

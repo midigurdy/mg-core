@@ -339,6 +339,11 @@ class MIDIController(EventListener):
         'midi:port:removed',
         'midi:port:input_enabled:changed',
         'midi:port:output_enabled:changed',
+        'midi:port:melody_channel:changed',
+        'midi:port:drone_channel:changed',
+        'midi:port:trompette_channel:changed',
+        'midi:port:program_change:changed',
+        'midi:port:speed:changed',
     )
 
     def __init__(self, input_manager):
@@ -361,8 +366,35 @@ class MIDIController(EventListener):
         port_state = sender
         if output_enabled:
             mgcore.add_midi_output(port_state.port.device)
+            self._config_midi_output(port_state)
+            mgcore.enable_midi_output(port_state.port.device)
         else:
             mgcore.remove_midi_output(port_state.port.device)
+
+    def midi_port_melody_channel_changed(self, melody_channel, sender, **kwargs):
+        self._config_midi_output(sender)
+
+    def midi_port_drone_channel_changed(self, drone_channel, sender, **kwargs):
+        self._config_midi_output(sender)
+
+    def midi_port_trompette_channel_changed(self, trompette_channel, sender, **kwargs):
+        self._config_midi_output(sender)
+
+    def midi_port_program_change_changed(self, program_change, sender, **kwargs):
+        self._config_midi_output(sender)
+
+    def midi_port_speed_changed(self, speed, sender, **kwargs):
+        self._config_midi_output(sender)
+
+    def _config_midi_output(self, port_state):
+        if port_state.output_enabled:
+            mgcore.config_midi_output(
+                device=port_state.port.device,
+                melody_channel=port_state.melody_channel,
+                trompette_channel=port_state.trompette_channel,
+                drone_channel=port_state.drone_channel,
+                program_change=port_state.program_change,
+                speed=port_state.speed)
 
     def _add_midi_input(self, port):
         filename = find_config_file('midi.json')

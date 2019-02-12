@@ -2,10 +2,10 @@
 
 #include "output.h"
 
-static int add_melody_stream(struct mg_output *output, struct mg_string *string);
-static int add_trompette_stream(struct mg_output *output, struct mg_string *string);
-static int add_drone_stream(struct mg_output *output, struct mg_string *string);
-static int add_keynoise_stream(struct mg_output *output, struct mg_string *string);
+static int add_melody_stream(struct mg_output *output, struct mg_string *string, int channel);
+static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int channel);
+static int add_drone_stream(struct mg_output *output, struct mg_string *string, int channel);
+static int add_keynoise_stream(struct mg_output *output, struct mg_string *string, int channel);
 
 static int mg_output_fluid_noteon(struct mg_output *output, int channel, int note, int velocity);
 static int mg_output_fluid_noteoff(struct mg_output *output, int channel, int note);
@@ -33,16 +33,16 @@ struct mg_output *new_fluid_output(struct mg_core *mg)
     output->reset = mg_output_fluid_reset;
     output->tokens_per_tick = 0; /* no rate limiting for internal synth */
 
-    if (!(add_melody_stream(output, &mg->state.melody[0]) &&
-          add_melody_stream(output, &mg->state.melody[1]) &&
-          add_melody_stream(output, &mg->state.melody[3]) &&
-          add_trompette_stream(output, &mg->state.trompette[0]) &&
-          add_trompette_stream(output, &mg->state.trompette[1]) &&
-          add_trompette_stream(output, &mg->state.trompette[2]) &&
-          add_drone_stream(output, &mg->state.drone[0]) &&
-          add_drone_stream(output, &mg->state.drone[1]) &&
-          add_drone_stream(output, &mg->state.drone[2]) &&
-          add_keynoise_stream(output, &mg->state.keynoise)))
+    if (!(add_melody_stream(output, &mg->state.melody[0], 0) &&
+          add_melody_stream(output, &mg->state.melody[1], 1) &&
+          add_melody_stream(output, &mg->state.melody[2], 2) &&
+          add_trompette_stream(output, &mg->state.trompette[0], 6) &&
+          add_trompette_stream(output, &mg->state.trompette[1], 7) &&
+          add_trompette_stream(output, &mg->state.trompette[2], 8) &&
+          add_drone_stream(output, &mg->state.drone[0], 3) &&
+          add_drone_stream(output, &mg->state.drone[1], 4) &&
+          add_drone_stream(output, &mg->state.drone[2], 5) &&
+          add_keynoise_stream(output, &mg->state.keynoise, 9)))
     {
         mg_output_delete(output);
         return NULL;
@@ -52,9 +52,9 @@ struct mg_output *new_fluid_output(struct mg_core *mg)
 }
 
 
-static int add_melody_stream(struct mg_output *output, struct mg_string *string)
+static int add_melody_stream(struct mg_output *output, struct mg_string *string, int channel)
 {
-    struct mg_stream *stream = mg_output_stream_new(string, 0);
+    struct mg_stream *stream = mg_output_stream_new(string, 0, channel);
     if (stream == NULL) {
         return 0;
     }
@@ -67,14 +67,12 @@ static int add_melody_stream(struct mg_output *output, struct mg_string *string)
 
     output->stream[output->stream_count++] = stream;
 
-    stream->enabled = 1;
-
     return 1;
 }
 
-static int add_trompette_stream(struct mg_output *output, struct mg_string *string)
+static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int channel)
 {
-    struct mg_stream *stream = mg_output_stream_new(string, 0);
+    struct mg_stream *stream = mg_output_stream_new(string, 0, channel);
     if (stream == NULL) {
         return 0;
     }
@@ -86,14 +84,12 @@ static int add_trompette_stream(struct mg_output *output, struct mg_string *stri
 
     output->stream[output->stream_count++] = stream;
 
-    stream->enabled = 1;
-
     return 1;
 }
 
-static int add_drone_stream(struct mg_output *output, struct mg_string *string)
+static int add_drone_stream(struct mg_output *output, struct mg_string *string, int channel)
 {
-    struct mg_stream *stream = mg_output_stream_new(string, 0);
+    struct mg_stream *stream = mg_output_stream_new(string, 0, channel);
     if (stream == NULL) {
         return 0;
     }
@@ -104,14 +100,12 @@ static int add_drone_stream(struct mg_output *output, struct mg_string *string)
 
     output->stream[output->stream_count++] = stream;
 
-    stream->enabled = 1;
-
     return 1;
 }
 
-static int add_keynoise_stream(struct mg_output *output, struct mg_string *string)
+static int add_keynoise_stream(struct mg_output *output, struct mg_string *string, int channel)
 {
-    struct mg_stream *stream = mg_output_stream_new(string, 0);
+    struct mg_stream *stream = mg_output_stream_new(string, 0, channel);
     if (stream == NULL) {
         return 0;
     }
@@ -120,8 +114,6 @@ static int add_keynoise_stream(struct mg_output *output, struct mg_string *strin
     stream->sender[stream->sender_count++] = mg_output_fluid_balance;
 
     output->stream[output->stream_count++] = stream;
-
-    stream->enabled = 1;
 
     return 1;
 }
@@ -156,7 +148,7 @@ static int mg_output_fluid_expression(struct mg_output *output, struct mg_stream
     int expression = stream->string->model.expression;
 
     if (stream->dst.expression != expression) {
-        fluid_synth_cc((fluid_synth_t *)output->data, stream->string->channel, MG_CC_EXPRESSION, expression);
+        fluid_synth_cc((fluid_synth_t *)output->data, stream->channel, MG_CC_EXPRESSION, expression);
         stream->dst.expression = expression;
     }
 
@@ -168,7 +160,7 @@ static int mg_output_fluid_volume(struct mg_output *output, struct mg_stream *st
     int volume = stream->string->model.volume;
 
     if (stream->dst.volume != volume) {
-        fluid_synth_cc((fluid_synth_t *)output->data, stream->string->channel, MG_CC_VOLUME, volume);
+        fluid_synth_cc((fluid_synth_t *)output->data, stream->channel, MG_CC_VOLUME, volume);
         stream->dst.volume = volume;
     }
 
@@ -180,7 +172,7 @@ static int mg_output_fluid_pitch(struct mg_output *output, struct mg_stream *str
     int pitch = stream->string->model.pitch;
 
     if (stream->dst.pitch != pitch) {
-        fluid_synth_pitch_bend((fluid_synth_t *)output->data, stream->string->channel, pitch);
+        fluid_synth_pitch_bend((fluid_synth_t *)output->data, stream->channel, pitch);
         stream->dst.pitch = pitch;
     }
 
@@ -192,7 +184,7 @@ static int mg_output_fluid_channel_pressure(struct mg_output *output, struct mg_
     int pressure = stream->string->model.pressure;
 
     if (stream->dst.pressure != pressure) {
-        fluid_synth_channel_pressure((fluid_synth_t *)output->data, stream->string->channel, pressure);
+        fluid_synth_channel_pressure((fluid_synth_t *)output->data, stream->channel, pressure);
         stream->dst.pressure = pressure;
     }
 
@@ -204,7 +196,7 @@ static int mg_output_fluid_balance(struct mg_output *output, struct mg_stream *s
     int panning = stream->string->model.panning;
 
     if (stream->dst.panning != panning) {
-        fluid_synth_cc((fluid_synth_t *)output->data, stream->string->channel, MG_CC_PANNING, panning);
+        fluid_synth_cc((fluid_synth_t *)output->data, stream->channel, MG_CC_PANNING, panning);
         stream->dst.panning = panning;
     }
 

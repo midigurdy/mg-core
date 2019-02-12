@@ -5,9 +5,9 @@
 #include "output.h"
 
 
-static int add_melody_stream(struct mg_output *output, struct mg_string *string, int tokens_percent);
-static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int tokens_percent);
-static int add_drone_stream(struct mg_output *output, struct mg_string *string, int tokens_percent);
+static int add_melody_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel);
+static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel);
+static int add_drone_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel);
 
 static void mg_output_midi_close(struct mg_output *output);
 
@@ -88,9 +88,9 @@ struct mg_output *new_midi_output(struct mg_core *mg, const char *device)
     output->reset = mg_output_midi_reset;
     output->tokens_per_tick = 3000;
 
-    if (!(add_melody_stream(output, &mg->state.melody[0], 60) &&
-          add_trompette_stream(output, &mg->state.trompette[0], 30) &&
-          add_drone_stream(output, &mg->state.drone[0], 10)))
+    if (!(add_melody_stream(output, &mg->state.melody[0], 60, 0) &&
+          add_trompette_stream(output, &mg->state.trompette[0], 30, 1) &&
+          add_drone_stream(output, &mg->state.drone[0], 10, 2)))
     {
         mg_output_delete(output);
         return NULL;
@@ -116,9 +116,9 @@ static void mg_output_midi_close(struct mg_output *output)
 }
 
 
-static int add_melody_stream(struct mg_output *output, struct mg_string *string, int tokens_percent)
+static int add_melody_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel)
 {
-    struct mg_stream *stream = mg_output_stream_new(string, tokens_percent);
+    struct mg_stream *stream = mg_output_stream_new(string, tokens_percent, channel);
     if (stream == NULL) {
         return 0;
     }
@@ -132,15 +132,14 @@ static int add_melody_stream(struct mg_output *output, struct mg_string *string,
 
     output->stream[output->stream_count++] = stream;
 
-    stream->enabled = 1;
     stream->max_tokens = 9000;
 
     return 1;
 }
 
-static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int tokens_percent)
+static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel)
 {
-    struct mg_stream *stream = mg_output_stream_new(string, tokens_percent);
+    struct mg_stream *stream = mg_output_stream_new(string, tokens_percent, channel);
     if (stream == NULL) {
         return 0;
     }
@@ -153,15 +152,14 @@ static int add_trompette_stream(struct mg_output *output, struct mg_string *stri
 
     output->stream[output->stream_count++] = stream;
 
-    stream->enabled = 1;
     stream->max_tokens = 9000;
 
     return 1;
 }
 
-static int add_drone_stream(struct mg_output *output, struct mg_string *string, int tokens_percent)
+static int add_drone_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel)
 {
-    struct mg_stream *stream = mg_output_stream_new(string, tokens_percent);
+    struct mg_stream *stream = mg_output_stream_new(string, tokens_percent, channel);
     if (stream == NULL) {
         return 0;
     }
@@ -173,7 +171,6 @@ static int add_drone_stream(struct mg_output *output, struct mg_string *string, 
 
     output->stream[output->stream_count++] = stream;
 
-    stream->enabled = 1;
     stream->max_tokens = 9000;
 
     return 1;
@@ -214,7 +211,7 @@ static int mg_output_midi_expression(struct mg_output *output, struct mg_stream 
     }
 
     if (stream->dst.expression != expression) {
-        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_EXPRESSION, expression)) {
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->channel, MG_CC_EXPRESSION, expression)) {
             return -1;
         }
         stream->dst.expression = expression;
@@ -229,7 +226,7 @@ static int mg_output_midi_volume(struct mg_output *output, struct mg_stream *str
     int volume = stream->string->model.volume;
 
     if (stream->dst.volume != volume) {
-        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_VOLUME, volume)) {
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->channel, MG_CC_VOLUME, volume)) {
             return -1;
         }
         stream->dst.volume = volume;
@@ -244,7 +241,7 @@ static int mg_output_midi_pitch(struct mg_output *output, struct mg_stream *stre
     int pitch = stream->string->model.pitch;
 
     if (stream->dst.pitch != pitch) {
-        if (mg_midi_chmsg2(output, MIDI_MSG_PITCH_BEND, stream->string->channel, MIDI_LSB(pitch), MIDI_MSB(pitch))) {
+        if (mg_midi_chmsg2(output, MIDI_MSG_PITCH_BEND, stream->channel, MIDI_LSB(pitch), MIDI_MSB(pitch))) {
             return -1;
         }
         stream->dst.pitch = pitch;
@@ -259,7 +256,7 @@ static int mg_output_midi_channel_pressure(struct mg_output *output, struct mg_s
     int pressure = stream->string->model.pressure;
 
     if (stream->dst.pressure != pressure) {
-        if (mg_midi_chmsg1(output, MIDI_MSG_CHANNEL_PRESSURE, stream->string->channel, pressure)) {
+        if (mg_midi_chmsg1(output, MIDI_MSG_CHANNEL_PRESSURE, stream->channel, pressure)) {
             return -1;
         }
         stream->dst.pressure = pressure;
@@ -274,7 +271,7 @@ static int mg_output_midi_balance(struct mg_output *output, struct mg_stream *st
     int panning = stream->string->model.panning;
 
     if (stream->dst.panning != panning) {
-        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_PANNING, panning)) {
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->channel, MG_CC_PANNING, panning)) {
             return -1;
         }
         stream->dst.panning = panning;
@@ -290,11 +287,15 @@ static int mg_output_midi_bank_prog(struct mg_output *output, struct mg_stream *
     int program = stream->string->program;
     int tokens = 0;
 
+    if (!output->send_prog_change) {
+        return 0;
+    }
+
     if (stream->dst.bank != bank) {
-        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_BANK_LSB, MIDI_LSB(bank))) {
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->channel, MG_CC_BANK_LSB, MIDI_LSB(bank))) {
             return -1;
         }
-        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->string->channel, MG_CC_BANK_MSB, MIDI_MSB(bank))) {
+        if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->channel, MG_CC_BANK_MSB, MIDI_MSB(bank))) {
             return -1;
         }
         stream->dst.bank = bank;
@@ -302,7 +303,7 @@ static int mg_output_midi_bank_prog(struct mg_output *output, struct mg_stream *
     }
 
     if (stream->dst.program != program) {
-        if (mg_midi_chmsg1(output, MIDI_MSG_PROGRAM_CHANGE, stream->string->channel, program)) {
+        if (mg_midi_chmsg1(output, MIDI_MSG_PROGRAM_CHANGE, stream->channel, program)) {
             return -1;
         }
         stream->dst.program = program;

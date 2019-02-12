@@ -3,7 +3,7 @@
 #include "state.h"
 
 
-static void reset_string(struct mg_string *string, int channel);
+static void reset_string(struct mg_string *string);
 
 
 #define ENSURE_NOTE_RANGE(param) if (param < 0) param = 0; else if (param > 127) param = 127;
@@ -83,11 +83,11 @@ int mg_state_init(struct mg_state *state)
     int i;
 
     for (i = 0; i < 3; i++) {
-        reset_string(&state->melody[i], i);     // channels 0 - 2
-        reset_string(&state->drone[i], 3 + i);  // channels 3 - 5
-        reset_string(&state->trompette[i], 6 + i);  // channels 6 - 8
+        reset_string(&state->melody[i]);
+        reset_string(&state->drone[i]);
+        reset_string(&state->trompette[i]);
     }
-    reset_string(&state->keynoise, 9);
+    reset_string(&state->keynoise);
 
     state->pitchbend_factor = 0.5; // 100 cents of default bend range
 
@@ -226,7 +226,7 @@ void mg_string_clear_notes(struct mg_string *st)
     int i;
 
     for (i = 0; i < st->model.note_count; i++) {
-        st->model.notes[st->model.active_notes[i]].channel = CHANNEL_OFF;
+        st->model.notes[st->model.active_notes[i]].on = 0;
     }
     st->model.note_count = 0;
 }
@@ -288,9 +288,8 @@ struct mg_map *mg_state_get_default_mapping(int idx)
 }
 
 
-static void reset_string(struct mg_string *string, int channel)
+static void reset_string(struct mg_string *string)
 {
-    string->channel = channel;
     string->base_note = 60;  // middle C
     string->muted = 1; // default is off
     string->volume = 127; // max volume
@@ -327,7 +326,7 @@ void mg_state_reset_model_voice(struct mg_voice *voice)
     voice->program = 0;
 
     for (i = 0; i < NUM_NOTES; i++) {
-        voice->notes[i].channel = -1;
+        voice->notes[i].on = 0;
         voice->notes[i].velocity = 0;
         voice->notes[i].pressure = 0;
     }
@@ -348,7 +347,7 @@ void mg_state_reset_output_voice(struct mg_voice *voice)
     voice->program = 1;
 
     for (i = 0; i < NUM_NOTES; i++) {
-        voice->notes[i].channel = -1;
+        voice->notes[i].on = 0;
         voice->notes[i].velocity = 0;
         voice->notes[i].pressure = 0;
     }
