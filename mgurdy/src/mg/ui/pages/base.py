@@ -452,9 +452,9 @@ class ConfigList(Page):
         length = math.ceil(per_item * self.win_len)
         top = int(self.win_start * per_item)
         bottom = top + length
-        self.menu.display.rect(126, top, 126, bottom)
-        for i in range(0, 32, 1):
-            self.menu.display.point(127, i)
+        d = self.menu.display
+        d.rect(126, top, 126, bottom)
+        d.line(127, 0, 127, 31)
 
     def render(self):
         d = self.menu.display
@@ -557,8 +557,9 @@ class ListPage(Page):
         top = int(self.win_start * per_item)
         bottom = top + length
         self.menu.display.rect(126, top, 126, bottom)
-        for i in range(0, 32, 1):
-            self.menu.display.point(127, i)
+        d = self.menu.display
+        d.rect(126, top, 126, bottom)
+        d.line(127, 0, 127, 31)
 
     def render(self):
         d = self.menu.display
