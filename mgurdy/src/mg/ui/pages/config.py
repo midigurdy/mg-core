@@ -273,7 +273,7 @@ class MIDIPortPage(ConfigList):
         return [
             MIDIConnectionState(self.port_state, 'input_enabled', 'input_auto', 'Input'),
             MIDIConnectionState(self.port_state, 'output_enabled', 'output_auto', 'Output'),
-            PopupItem('Output Config', MIDIOutputConfig(self.port_state)),
+            PopupItem('Output Setup' + chr(127), MIDIOutputConfig(self.port_state)),
         ]
 
 
