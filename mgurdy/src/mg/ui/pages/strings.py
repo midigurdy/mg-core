@@ -182,18 +182,25 @@ class ModeItem(ValueListItem):
 
 class SoundPopupItem(PopupItem):
     def get_label(self):
-        if self.page.voice.soundfont_id:
-            sound = self.page.voice.get_sound()
-            if sound:
-                return '%s/%s' % (sound.name, sound.soundfont.name)
+        voice = self.page.voice
+        prev_snd = getattr(self, '_prev_snd', (-1, -1, -1))
+        cur_snd = (voice.soundfont_id, voice.bank, voice.program)
+        if prev_snd != cur_snd:
+            # Label creation cached to prevent unnessecary calls to
+            # VoiceState.get_sound() (which parses the SF2 file every time)
+            if voice.soundfont_id:
+                sound = voice.get_sound()
+                if sound:
+                    self._label = '%s/%s' % (sound.name, sound.soundfont.name)
+                else:
+                    self._label = 'Missing: {} {}:{}'.format(
+                        voice.soundfont_id,
+                        voice.bank,
+                        voice.program)
             else:
-                return 'Missing: {} {}:{}'.format(
-                    self.page.voice.soundfont_id,
-                    self.page.voice.bank,
-                    self.page.voice.program)
-
-        else:
-            return 'No sound' + chr(127)
+                self._label = 'No sound' + chr(127)
+            self._prev_snd = cur_snd
+        return self._label
 
     def render_on(self, display, x, y, width):
         name = self.get_label()
