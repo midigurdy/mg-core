@@ -1,4 +1,4 @@
-from .base import PopupItem, ListPage, Deck, ConfigList, ValueListItem
+from .base import PopupItem, ListPage, Deck, ConfigList, ValueListItem, BooleanListItem
 
 from mg.input import Action, Key
 from mg.utils import midi2percent, midi2note
@@ -92,26 +92,6 @@ class BaseNoteItem(ValueListItem):
 
     def format_value(self, value):
         return midi2note(value)
-
-
-class PolyphonicItem(ValueListItem):
-    label = 'Polyphonic'
-    minval = 0
-    maxval = 1
-
-    def __init__(self, voice):
-        super().__init__()
-        self.voice = voice
-
-    def set_value(self, val):
-        with self.state.lock():
-            self.voice.polyphonic = bool(val)
-
-    def get_value(self):
-        return int(self.voice.polyphonic)
-
-    def format_value(self, value):
-        return 'On' if value else 'Off'
 
 
 class CapoItem(ValueListItem):
@@ -510,7 +490,7 @@ class MelodyPage(VoicePage):
     def get_items(self):
         return super().get_items() + [
             CapoItem(self.voice),
-            PolyphonicItem(self.voice),
+            BooleanListItem(self.voice, 'polyphonic', 'Polyphonic'),
             ModeItem(self.voice),
         ]
 
