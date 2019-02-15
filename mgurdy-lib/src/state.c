@@ -53,6 +53,13 @@ static struct mg_map default_speed_to_chien = {
     }
 };
 
+static struct mg_map default_speed_to_percussion = {
+    .count = 4,
+    .ranges = {
+        {0, 0}, {100, 80}, {250, 120}, {1000, 127}
+    }
+};
+
 static struct mg_map default_keyvel_to_notevel = {
     .count = 2,
     .ranges = {
@@ -101,6 +108,7 @@ int mg_state_init(struct mg_state *state)
     mg_reset_mapping_ranges(MG_MAP_SPEED_TO_DRONE_VOLUME);
     mg_reset_mapping_ranges(MG_MAP_SPEED_TO_TROMPETTE_VOLUME);
     mg_reset_mapping_ranges(MG_MAP_SPEED_TO_CHIEN);
+    mg_reset_mapping_ranges(MG_MAP_SPEED_TO_PERCUSSION);
     mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_NOTEVEL);
     mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_TANGENT);
     mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_KEYNOISE);
@@ -244,6 +252,8 @@ struct mg_map *mg_state_get_mapping(struct mg_state *state, int idx)
             return &state->speed_to_trompette_volume;
         case MG_MAP_SPEED_TO_CHIEN:
             return &state->speed_to_chien;
+        case MG_MAP_SPEED_TO_PERCUSSION:
+            return &state->speed_to_percussion;
         case MG_MAP_KEYVEL_TO_NOTEVEL:
             return &state->keyvel_to_notevel;
         case MG_MAP_KEYVEL_TO_TANGENT:
@@ -272,6 +282,8 @@ struct mg_map *mg_state_get_default_mapping(int idx)
             return &default_speed_to_trompette_volume;
         case MG_MAP_SPEED_TO_CHIEN:
             return &default_speed_to_chien;
+        case MG_MAP_SPEED_TO_PERCUSSION:
+            return &default_speed_to_percussion;
         case MG_MAP_KEYVEL_TO_NOTEVEL:
             return &default_keyvel_to_notevel;
         case MG_MAP_KEYVEL_TO_TANGENT:
@@ -321,6 +333,10 @@ void mg_state_reset_model_voice(struct mg_voice *voice)
     voice->pressure = 0;
     voice->bank = 0;
     voice->program = 0;
+
+    voice->chien_on_debounce = 2;
+    voice->chien_off_debounce = 3;
+    voice->chien_debounce = 0;
 
     for (i = 0; i < NUM_NOTES; i++) {
         voice->notes[i].on = 0;

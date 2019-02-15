@@ -78,6 +78,10 @@ struct mg_voice {
     int panning;
     int pressure;
 
+    int chien_on_debounce;
+    int chien_off_debounce;
+    int chien_debounce;
+
     int bank;
     int program;
 
@@ -210,6 +214,7 @@ struct mg_state {
     struct mg_map speed_to_drone_volume;
     struct mg_map speed_to_trompette_volume;
     struct mg_map speed_to_chien;
+    struct mg_map speed_to_percussion;
     struct mg_map keyvel_to_notevel;
     struct mg_map keyvel_to_tangent;
     struct mg_map keyvel_to_keynoise;
@@ -396,6 +401,7 @@ enum mg_map_enum {
     MG_MAP_SPEED_TO_DRONE_VOLUME,
     MG_MAP_SPEED_TO_TROMPETTE_VOLUME,
     MG_MAP_SPEED_TO_CHIEN,
+    MG_MAP_SPEED_TO_PERCUSSION,
     MG_MAP_KEYVEL_TO_NOTEVEL,
     MG_MAP_KEYVEL_TO_TANGENT,
     MG_MAP_KEYVEL_TO_KEYNOISE,

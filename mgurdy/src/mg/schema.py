@@ -28,7 +28,7 @@ class DroneSchema(VoiceSchema):
 
 
 class TrompetteSchema(VoiceSchema):
-    pass
+    mode = fields.Str(default='midigurdy')
 
 
 class KeynoiseSchema(VoiceSchema):

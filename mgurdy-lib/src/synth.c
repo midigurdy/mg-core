@@ -401,58 +401,23 @@ static void update_drone_model(struct mg_core *mg)
 static void update_trompette_model(struct mg_core *mg)
 {
     int s, i;
-    int expression;
     int pressure;
-    int midi_note;
     int chien_speed;
-    int threshold;
-    static int accel = 0;
-    int normalized_speed;
+
+    int midi_note;
     struct mg_string *st;
     struct mg_note *note;
     struct mg_voice *model;
 
-    /* Expression is the same for all trompette strings, calculate here only once. */
-    expression = multimap(mg->wheel.speed,
-            mg->state.speed_to_trompette_volume.ranges,
-            mg->state.speed_to_trompette_volume.count);
+    int expression = -1;
+    int velocity = -1;
+    int ws_chien_volume = -1;
 
-    /* Same with chien volume (channel pressure) for now. We only use the
-     * threshold of the first string.
-     *
-     * To calculate the chien volume we first check if the wheel speed
-     * is over the threshold. Then we normalize the range between threshold
-     * and MAX_SPEED to 1000, which is then mapped to the proper value
-     * using the speed_to_chien mapping.
-     */
-    pressure = 0;
-    normalized_speed = 0;
+    /* We currently only use the threshold of the first string. */
+    chien_speed = mg->wheel.speed - mg->state.trompette[0].threshold;
 
-    if (expression > 0) {  // no volume -> no trompette or chien :-)
-        threshold = mg->state.trompette[0].threshold;
-        chien_speed = mg->wheel.speed - threshold;
-        if (chien_speed > 0) {
-            if (threshold >= MG_SPEED_MAX) {
-                pressure = 127;  // to avoid division by zero
-                normalized_speed = 1000;
-            }
-            else {
-                normalized_speed = (chien_speed * 1000) / (MG_SPEED_MAX - threshold);
-                accel = mg->wheel.accel;
-                if (accel > 0)
-                    accel = mg_smooth(accel, accel, 0.8);
-                else
-                    accel = mg_smooth(0, accel, 0.8);
-                normalized_speed += accel;
-                pressure = multimap(normalized_speed,
-                        mg->state.speed_to_chien.ranges,
-                        mg->state.speed_to_chien.count);
-            }
-        }
-    }
-
-    mg->chien_volume = pressure;
-    mg->chien_speed = normalized_speed;
+    /* Record the wheel speed, so we can send it via websockets to the visualisations */
+    mg->chien_speed = chien_speed;
 
     for (s = 0; s < 3; s++) {
         st = &mg->state.trompette[s];
@@ -463,23 +428,118 @@ static void update_trompette_model(struct mg_core *mg)
             continue;
         }
 
-        model->expression = expression;
-        model->pressure = mg_smooth(pressure, model->pressure, 0.8);  // channel pressure
+        /* Standard modelling for MidiGurdy Soundfonts: trompette string sound
+         * and chien sound are part of a single preset and mixed together,
+         * their individual volumes controlled by channel pressure */
+        if (st->mode == MG_MODE_MIDIGURDY) {
 
-        if (expression <= 0)
-            continue;
+            /* Expression is the same for all trompette strings in MidiGurdy mode,
+            * calculate here only once. */
+            if (expression == -1) {
+                expression = multimap(mg->wheel.speed,
+                        mg->state.speed_to_trompette_volume.ranges,
+                        mg->state.speed_to_trompette_volume.count);
+            }
 
-        if (model->note_count != st->fixed_note_count) {
-            for (i = 0; i < st->fixed_note_count; i++) {
-                midi_note = st->fixed_notes[i];
+            if (chien_speed > 0) {
+                pressure = multimap(chien_speed,
+                        mg->state.speed_to_chien.ranges,
+                        mg->state.speed_to_chien.count);
+            } else {
+                pressure = 0;
+            }
 
-                note = &model->notes[midi_note];
-                note->on = 1;
-                note->velocity = 127;
-                note->pressure = 0;  // polyphonic pressure
-                model->active_notes[model->note_count++] = midi_note;
+            model->expression = expression;
+            model->pressure = pressure;
+
+            /* The first enabled trompette string (regardless of mode) determines
+             * the chien volume we report to the visualizations via websocket */
+            if (ws_chien_volume == -1) {
+                ws_chien_volume = pressure;
+            }
+
+            if (expression <= 0) {
+                if (model->note_count > 0) {
+                    mg_string_clear_notes(st);
+                }
+                continue;
+            }
+
+            if (model->note_count != st->fixed_note_count) {
+                for (i = 0; i < st->fixed_note_count; i++) {
+                    midi_note = st->fixed_notes[i];
+
+                    note = &model->notes[midi_note];
+                    note->on = 1;
+                    note->velocity = 127; // volume controlled via expression
+                    model->active_notes[model->note_count++] = midi_note;
+                }
             }
         }
+
+        /* Percussive mode, more suitable for other sounds like drums or other percussive sounds:
+         * Only when the threshold is reached does a note-on occur, the velocity of the
+         * note-on is calculated from the wheel speed above the threshold */
+        else if (st->mode == MG_MODE_GENERIC) {
+            // real-time volume only controlled via note-on velocity
+            model->expression = 127;
+
+            /* As we're dealing with percussive sounds, we need to debounce the
+             * on / off transitions.
+             * FIXME: make the debounce times configurable via the web-interface! */
+            if (chien_speed > 0) {
+                if (model->note_count == 0) {
+                    if (model->chien_debounce < model->chien_on_debounce) {
+                        model->chien_debounce++;
+                        continue;
+                    }
+                }
+            }
+            else {
+                if (model->note_count > 0) {
+                    if (model->chien_debounce < model->chien_off_debounce) {
+                        model->chien_debounce++;
+                        continue;
+                    }
+                }
+            }
+            model->chien_debounce = 0;
+
+            if (chien_speed > 0) {
+                if (model->note_count != st->fixed_note_count) {
+                    /* Velocity is the same for all trompette strings in percussive mode, so
+                    * calculate this here only once. */
+                    if (velocity == -1) {
+                        velocity = multimap(chien_speed,
+                                mg->state.speed_to_percussion.ranges,
+                                mg->state.speed_to_percussion.count);
+                    }
+
+                    if (ws_chien_volume == -1) {
+                        ws_chien_volume = velocity;
+                    }
+
+                    for (i = 0; i < st->fixed_note_count; i++) {
+                        midi_note = st->fixed_notes[i];
+
+                        note = &model->notes[midi_note];
+                        note->on = 1;
+                        note->velocity = velocity;
+                        model->active_notes[model->note_count++] = midi_note;
+                    }
+                }
+            }
+            else if (model->note_count > 0) {
+                if (ws_chien_volume == -1) {
+                    ws_chien_volume = 0;
+                }
+                mg_string_clear_notes(st);
+            }
+        }
+    }
+
+    if (ws_chien_volume != -1) {
+        mg->chien_volume = ws_chien_volume;
     }
 }
 

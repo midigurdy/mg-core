@@ -24,6 +24,7 @@ def test_start_stop(mg):
     'speed_to_drone_volume',
     'speed_to_trompette_volume',
     'speed_to_chien',
+    'speed_to_percussion',
     'keyvel_to_notevel',
     'keyvel_to_tangent',
     'keyvel_to_keynoise',

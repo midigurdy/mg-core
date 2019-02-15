@@ -134,7 +134,7 @@ class FineTuneItem(ValueListItem):
         return self.voice.finetune
 
 
-class ModeItem(ValueListItem):
+class MelodyModeItem(ValueListItem):
     label = 'Mode'
     minval = 0
     maxval = 2
@@ -158,6 +158,17 @@ class ModeItem(ValueListItem):
 
     def format_value(self, value):
         return self.MODES[value][1]
+
+
+class TrompetteModeItem(MelodyModeItem):
+    label = 'Mode'
+    minval = 0
+    maxval = 1
+
+    MODES = [
+        ('midigurdy', 'MidiGurdy'),
+        ('generic', 'Percussion'),
+    ]
 
 
 class SoundPopupItem(PopupItem):
@@ -491,7 +502,14 @@ class MelodyPage(VoicePage):
         return super().get_items() + [
             CapoItem(self.voice),
             BooleanListItem(self.voice, 'polyphonic', 'Polyphonic'),
-            ModeItem(self.voice),
+            MelodyModeItem(self.voice),
+        ]
+
+
+class TrompettePage(VoicePage):
+    def get_items(self):
+        return super().get_items() + [
+            TrompetteModeItem(self.voice),
         ]
 
 
@@ -560,7 +578,7 @@ class TrompetteDeck(VoiceDeck):
     next_page_evts = [(Key.fn3, Action.short), (Key.fn3, Action.long)]
 
     pages = [
-        VoicePage(title='T1', voice_name='preset.trompette.0'),
-        VoicePage(title='T2', voice_name='preset.trompette.1'),
-        VoicePage(title='T3', voice_name='preset.trompette.2'),
+        TrompettePage(title='T1', voice_name='preset.trompette.0'),
+        TrompettePage(title='T2', voice_name='preset.trompette.1'),
+        TrompettePage(title='T3', voice_name='preset.trompette.2'),
     ]

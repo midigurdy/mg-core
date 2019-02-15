@@ -117,6 +117,20 @@ MAPPINGS = {
             'max': 127,
         },
     },
+    'speed_to_percussion': {
+        'idx': lib.MG_MAP_SPEED_TO_PERCUSSION,
+        'name': 'Wheel Speed to Percussion Volume',
+        'src': {
+            'name': 'Wheel Speed',
+            'min': 0,
+            'max': 1000,
+        },
+        'dst': {
+            'name': 'Percussion Volume',
+            'min': 0,
+            'max': 127,
+        },
+    },
     'keyvel_to_notevel': {
         'idx': lib.MG_MAP_KEYVEL_TO_NOTEVEL,
         'name': 'Key Hit Velocity to Keyboard Volume',

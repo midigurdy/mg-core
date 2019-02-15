@@ -165,12 +165,12 @@ class SynthController(EventListener):
 
                 configs.append((string, 'volume', voice.volume))
                 configs.append((string, 'panning', voice.panning))
+                configs.append((string, 'mode', VOICE_MODES.index(voice.mode)))
 
                 if voice.type == 'melody':
                     configs.append((string, 'base_note', voice.base_note))
                     configs.append((string, 'capo', voice.capo))
                     configs.append((string, 'polyphonic', int(voice.polyphonic)))
-                    configs.append((string, 'mode', VOICE_MODES.index(voice.mode)))
 
                 elif voice.type in ('drone', 'trompette'):
                     configs.append((string, 'all_notes_off', 0))
