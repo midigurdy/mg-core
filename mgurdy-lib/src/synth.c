@@ -194,7 +194,7 @@ static void update_melody_model(struct mg_core *mg)
 
         /* If the string is muted, then there's no need to do any calculation. Just set
          * the volme to zero and go to next string. */
-        if (st->muted || mg->halt_midi_output) {
+        if (st->muted) {
             model->volume = 0;
             continue;
         }
@@ -379,7 +379,7 @@ static void update_drone_model(struct mg_core *mg)
 
         /* If the string is muted, then there's no need to do any calculation. Just set
          * the volme to zero and go to next string. */
-        if (st->muted || mg->halt_midi_output) {
+        if (st->muted) {
             model->volume = 0;
             mg_string_clear_notes(st);
             continue;
@@ -466,7 +466,7 @@ static void update_trompette_model(struct mg_core *mg)
 
         /* If the string is muted, then there's no need to do any calculation. Just set
          * the volme to zero and go to next string. */
-        if (st->muted || mg->halt_midi_output) {
+        if (st->muted) {
             model->volume = 0;
             mg_string_clear_notes(st);
             continue;
