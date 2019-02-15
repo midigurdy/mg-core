@@ -199,7 +199,6 @@ static void update_melody_model(struct mg_core *mg)
             continue;
         }
 
-        model->panning = st->panning;
         model->volume = st->volume;
 
         /* In keyboard mode, sound volume is controlled via velocity.
@@ -378,8 +377,6 @@ static void update_drone_model(struct mg_core *mg)
         st = &mg->state.drone[s];
         model = &st->model;
 
-        model->panning = st->panning;
-
         /* If the string is muted, then there's no need to do any calculation. Just set
          * the volme to zero and go to next string. */
         if (st->muted || mg->halt_midi_output) {
@@ -467,8 +464,6 @@ static void update_trompette_model(struct mg_core *mg)
         st = &mg->state.trompette[s];
         model = &st->model;
 
-        model->panning = st->panning;
-
         /* If the string is muted, then there's no need to do any calculation. Just set
          * the volme to zero and go to next string. */
         if (st->muted || mg->halt_midi_output) {
@@ -507,7 +502,6 @@ static void update_keynoise_model(struct mg_core *mg)
     struct mg_voice *model = &st->model;
     struct mg_note *note;
 
-    model->panning = st->panning;
     model->volume = st->volume;
 
     mg_string_clear_notes(st);

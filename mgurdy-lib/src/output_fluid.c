@@ -193,7 +193,8 @@ static int mg_output_fluid_channel_pressure(struct mg_output *output, struct mg_
 
 static int mg_output_fluid_balance(struct mg_output *output, struct mg_stream *stream)
 {
-    int panning = stream->string->model.panning;
+    // panning is taken directly from the string, no modelling involved
+    int panning = stream->string->panning;
 
     if (stream->dst.panning != panning) {
         fluid_synth_cc((fluid_synth_t *)output->data, stream->channel, MG_CC_PANNING, panning);
