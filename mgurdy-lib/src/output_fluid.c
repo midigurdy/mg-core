@@ -157,7 +157,8 @@ static int mg_output_fluid_expression(struct mg_output *output, struct mg_stream
 
 static int mg_output_fluid_volume(struct mg_output *output, struct mg_stream *stream)
 {
-    int volume = stream->string->model.volume;
+    // volume taken directly from string, no modelling involved
+    int volume = stream->string->volume;
 
     if (stream->dst.volume != volume) {
         fluid_synth_cc((fluid_synth_t *)output->data, stream->channel, MG_CC_VOLUME, volume);

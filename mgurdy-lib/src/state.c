@@ -140,10 +140,9 @@ void mg_string_set_mute(struct mg_string *st, int muted)
 {
     st->muted = muted;
 
-    if (muted)
-        st->model.volume = 0;
-    else
-        st->model.volume = st->volume;
+    if (muted) {
+        mg_string_clear_notes(st);
+    }
 }
 
 
@@ -152,11 +151,6 @@ void mg_string_set_volume(struct mg_string *st, int volume)
     ENSURE_NOTE_RANGE(volume);
 
     st->volume = volume;
-
-    if (st->muted)
-        st->model.volume = 0;
-    else
-        st->model.volume = volume;
 }
 
 
@@ -187,6 +181,8 @@ void mg_string_set_fixed_note(struct mg_string *st, int midi_note, int velocity)
     for (i = 0; i < k; i++)
         st->fixed_notes[i] = fixed[i];
     st->fixed_note_count = k;
+
+    mg_string_clear_notes(st);
 }
 
 
@@ -194,6 +190,7 @@ void mg_string_set_fixed_note(struct mg_string *st, int midi_note, int velocity)
 void mg_string_clear_fixed_notes(struct mg_string *st)
 {
     st->fixed_note_count = 0;
+    mg_string_clear_notes(st);
 }
 
 

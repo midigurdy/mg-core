@@ -223,7 +223,8 @@ static int mg_output_midi_expression(struct mg_output *output, struct mg_stream 
 
 static int mg_output_midi_volume(struct mg_output *output, struct mg_stream *stream)
 {
-    int volume = stream->string->model.volume;
+    // volume taken directly from string, no modelling involved
+    int volume = stream->string->volume;
 
     if (stream->dst.volume != volume) {
         if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->channel, MG_CC_VOLUME, volume)) {

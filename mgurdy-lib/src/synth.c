@@ -192,14 +192,10 @@ static void update_melody_model(struct mg_core *mg)
         st = &mg->state.melody[s];
         model = &st->model;
 
-        /* If the string is muted, then there's no need to do any calculation. Just set
-         * the volme to zero and go to next string. */
+        /* If the string is muted, then there's no need to do anything */
         if (st->muted) {
-            model->volume = 0;
             continue;
         }
-
-        model->volume = st->volume;
 
         /* In keyboard mode, sound volume is controlled via velocity.
          * In all other modes, it is controlled via expression. */
@@ -380,26 +376,24 @@ static void update_drone_model(struct mg_core *mg)
         /* If the string is muted, then there's no need to do any calculation. Just set
          * the volme to zero and go to next string. */
         if (st->muted) {
-            model->volume = 0;
-            mg_string_clear_notes(st);
             continue;
         }
 
-        model->volume = st->volume;
         model->expression = expression;
-        mg_string_clear_notes(st);
 
         if (expression <= 0)
             continue;
 
-        for (i = 0; i < st->fixed_note_count; i++) {
-            midi_note = st->fixed_notes[i];
+        if (model->note_count != st->fixed_note_count) {
+            for (i = 0; i < st->fixed_note_count; i++) {
+                midi_note = st->fixed_notes[i];
 
-            note = &model->notes[midi_note];
-            note->on = 1;
-            note->velocity = 127;
-            note->pressure = 0;
-            model->active_notes[model->note_count++] = midi_note;
+                note = &model->notes[midi_note];
+                note->on = 1;
+                note->velocity = 127;
+                note->pressure = 0;
+                model->active_notes[model->note_count++] = midi_note;
+            }
         }
     }
 }
@@ -464,30 +458,27 @@ static void update_trompette_model(struct mg_core *mg)
         st = &mg->state.trompette[s];
         model = &st->model;
 
-        /* If the string is muted, then there's no need to do any calculation. Just set
-         * the volme to zero and go to next string. */
+        /* If the string is muted, then there's no need to do any anything */
         if (st->muted) {
-            model->volume = 0;
-            mg_string_clear_notes(st);
             continue;
         }
 
-        model->volume = st->volume;
         model->expression = expression;
         model->pressure = mg_smooth(pressure, model->pressure, 0.8);  // channel pressure
-        mg_string_clear_notes(st);
 
         if (expression <= 0)
             continue;
 
-        for (i = 0; i < st->fixed_note_count; i++) {
-            midi_note = st->fixed_notes[i];
+        if (model->note_count != st->fixed_note_count) {
+            for (i = 0; i < st->fixed_note_count; i++) {
+                midi_note = st->fixed_notes[i];
 
-            note = &model->notes[midi_note];
-            note->on = 1;
-            note->velocity = 127;
-            note->pressure = 0;  // polyphonic pressure
-            model->active_notes[model->note_count++] = midi_note;
+                note = &model->notes[midi_note];
+                note->on = 1;
+                note->velocity = 127;
+                note->pressure = 0;  // polyphonic pressure
+                model->active_notes[model->note_count++] = midi_note;
+            }
         }
     }
 }
@@ -501,8 +492,6 @@ static void update_keynoise_model(struct mg_core *mg)
     struct mg_string *st = &mg->state.keynoise;
     struct mg_voice *model = &st->model;
     struct mg_note *note;
-
-    model->volume = st->volume;
 
     mg_string_clear_notes(st);
 
@@ -537,5 +526,4 @@ static void update_keynoise_model(struct mg_core *mg)
         note->on = 1;
         note->velocity = velocity;
     }
-
 }
