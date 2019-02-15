@@ -145,31 +145,37 @@ class SynthController(EventListener):
                 self.fluid.clear_all_channel_sounds()
                 self.fluid.unload_unused_soundfonts()
 
-            # setup melody, drone and trompette voices
             configs = []
+
             for voice in self.state.preset.voices:
                 string = voice.string
 
-                if not voice.get_sound():
-                    self.fluid.clear_channel_sound(voice.channel)
-                    configs.append((string, 'mute', 1))
-                else:
-                    self.fluid.set_channel_sound(voice.channel, voice.soundfont_id,
-                                                 voice.bank, voice.program)
+                if voice.get_sound():
+                    self.fluid.set_channel_sound(
+                        voice.channel,
+                        voice.soundfont_id,
+                        voice.bank,
+                        voice.program)
                     configs.append((string, 'mute', int(voice.muted)))
                     configs.append((string, 'bank', voice.bank))
                     configs.append((string, 'program', voice.program))
+                else:
+                    self.fluid.clear_channel_sound(voice.channel)
+                    configs.append((string, 'mute', 1))
 
                 configs.append((string, 'volume', voice.volume))
                 configs.append((string, 'panning', voice.panning))
-                configs.append((string, 'mode', VOICE_MODES.index(voice.mode)))
+
                 if voice.type == 'melody':
                     configs.append((string, 'base_note', voice.base_note))
                     configs.append((string, 'capo', voice.capo))
                     configs.append((string, 'polyphonic', int(voice.polyphonic)))
-                if voice.type in ('drone', 'trompette'):
+                    configs.append((string, 'mode', VOICE_MODES.index(voice.mode)))
+
+                elif voice.type in ('drone', 'trompette'):
                     configs.append((string, 'all_notes_off', 0))
                     configs.append((string, 'note_on', int(voice.base_note)))
+
             mgcore.set_string_params(configs)
 
             self.fluid.unload_unused_soundfonts()

@@ -165,6 +165,7 @@ struct mg_string {
 
     int base_note_count;
 
+    /*  Used to control the modelling mode for melody strings */
     int mode;
 
     /* only used on melody string */
