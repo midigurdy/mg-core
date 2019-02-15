@@ -156,10 +156,6 @@ class FluidSynth(object):
         lib.fluid_synth_set_reverb(self.synth, args['roomsize'], args['damping'],
                                    args['width'], args['level'])
 
-    def set_sympathetic_reverb(self, on):
-        # FIXME!
-        pass
-
     def set_channel_volume(self, channel, volume):
         self._send_cc(channel, 7, volume)
 
