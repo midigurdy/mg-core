@@ -367,7 +367,6 @@ enum mg_param_enum {
 
     MG_PARAM_MUTE,
     MG_PARAM_VOLUME,
-    MG_PARAM_CHANNEL,
     MG_PARAM_BASE_NOTE,
     MG_PARAM_PANNING,
 

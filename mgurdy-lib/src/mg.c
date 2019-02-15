@@ -251,9 +251,6 @@ int mg_set_string(struct mg_string_config *configs)
             case MG_PARAM_VOLUME:
                 mg_string_set_volume(st, c->val);
                 break;
-            case MG_PARAM_CHANNEL:
-                // FIXME: unused param, remove!
-                break;
             case MG_PARAM_BANK:
                 st->bank = c->val;
                 break;
