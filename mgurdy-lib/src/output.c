@@ -47,11 +47,10 @@ void mg_output_delete(struct mg_output *output)
     free(output);
 }
 
-// FIXME: add a more rubust way to generate the output id!
 int mg_output_next_id(void)
 {
+    // very simple unique output id generator
     static int output_id = 0;
-
     return output_id++;
 }
 
