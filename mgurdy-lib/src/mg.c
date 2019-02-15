@@ -295,6 +295,7 @@ int mg_set_string(struct mg_string_config *configs)
             case MG_PARAM_MODE:
                 if (c->val >= 0 && c->val <= 2) {
                     st->mode = c->val;
+                    mg_string_clear_notes(st);
                 }
                 break;
             default:
