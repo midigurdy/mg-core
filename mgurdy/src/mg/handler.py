@@ -59,9 +59,10 @@ class EventHandler:
             method(evt)
 
     def handle_mdev_event(self, evt):
-        if evt.subsystem != 'midi':
-            return
-        if evt.action in ('add', 'remove'):
+        if evt.subsystem == 'midi' and evt.action in ('add', 'remove'):
+            self.state.midi.update_port_states()
+        elif evt.subsystem == 'udc':
+            self.state.midi.udc_config = int(evt.device)
             self.state.midi.update_port_states()
 
     def poweroff_prompt(self):

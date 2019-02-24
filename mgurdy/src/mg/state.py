@@ -433,6 +433,7 @@ class MIDIState(EventEmitter):
         super().__init__(prefix='midi')
         with signals.suppress():
             self.port_states = None
+            self.udc_config = -1
 
     def get_port_states(self):
         if self.port_states is None:
@@ -444,7 +445,16 @@ class MIDIState(EventEmitter):
     def update_port_states(self):
         if self.port_states is None:
             self.port_states = {}
-        ports = {p.id: p for p in RawMIDI().get_ports()}
+
+        rawmidi_ports = []
+        for p in RawMIDI().get_ports():
+            # which internal MIDI port to use depends on the currently
+            # selected UDC (USB gadget) configuration.
+            if p.id.startswith('f_midi') and p.card_idx != self.udc_config:
+                continue
+            rawmidi_ports.append(p)
+
+        ports = {p.id: p for p in rawmidi_ports}
         to_add = [pid for pid in ports if pid not in self.port_states]
         to_remove = [pid for pid in self.port_states if pid not in ports]
 

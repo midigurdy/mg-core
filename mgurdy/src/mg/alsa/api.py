@@ -107,7 +107,10 @@ class RawMIDIPort:
         self.device = 'hw:{},{},{}'.format(card_idx, device_idx, subdevice_idx)
         self.device_name = device_name
         self.subdevice_name = subdevice_name
-        self.id = '{}:{}'.format(device_name, subdevice_name or subdevice_idx)
+        if device_name == 'f_midi':
+            self.id = '{}:{}'.format(device_name, card_idx)
+        else:
+            self.id = '{}:{}'.format(device_name, subdevice_name or subdevice_idx)
         self.is_input = is_input
         self.is_output = is_output
 
