@@ -41,7 +41,7 @@ static void *scroll_thread(void *args)
 
     ret = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     if (ret) {
-        printf("Unable to set cancel state for scroller thread\n");
+        fprintf(stderr, "Unable to set cancel state for scroller thread\n");
         pthread_exit(NULL);
     }
 
@@ -249,7 +249,7 @@ static void set_timer(int fd, int initial_ms, int interval_ms)
 {
     struct itimerspec itimer;
     if (timerfd_gettime(fd, &itimer)) {
-        printf("unable to get time from timerfd!\n");
+        fprintf(stderr, "unable to get time from timerfd!\n");
         return;
     }
     if (initial_ms >= 0) {
@@ -261,7 +261,7 @@ static void set_timer(int fd, int initial_ms, int interval_ms)
         itimer.it_interval.tv_nsec = (interval_ms % 1000) * 1000 * 1000;
     }
     if (timerfd_settime(fd, 0, &itimer, NULL)) {
-        printf("Unable to set timerfd\n");
+        fprintf(stderr, "Unable to set timerfd\n");
     }
 }
 
@@ -337,7 +337,7 @@ void mg_image_destroy(struct mg_image *img)
     pthread_mutex_unlock(&img->mutex);
 
     if (pthread_mutex_destroy(&img->mutex)) {
-        printf("Unable to destroy mutex!\n");
+        fprintf(stderr, "Unable to destroy mutex!\n");
     }
 
     free(img);
@@ -352,14 +352,14 @@ int mg_image_load_font(struct mg_image *img, const char *filename)
     pthread_mutex_lock(&img->mutex);
 
     if (img->ft.face_count == MG_IMAGE_MAX_FONTS) {
-        printf("Maximum fonts reached for image!\n");
+        fprintf(stderr, "Maximum fonts reached for image!\n");
         id = -1;
         goto exit;
     }
 
     err = FT_New_Face(img->ft.library, filename, 0, &img->ft.faces[id]);
     if (err) {
-        printf("Error loading font %s: %d\n", filename, err);
+        fprintf(stderr, "Error loading font %s: %d\n", filename, err);
         id = -1;
         goto exit;
     }

@@ -19,7 +19,7 @@ struct mg_output *mg_output_new(void)
 
     output = malloc(sizeof(struct mg_output));
     if (output == NULL) {
-        printf("Out of memory!\n");
+        fprintf(stderr, "Out of memory!\n");
         return NULL;
     }
 
@@ -60,7 +60,7 @@ struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_perc
 
     stream = malloc(sizeof(struct mg_stream));
     if (stream == NULL) {
-        printf("Out of memory!\n");
+        fprintf(stderr, "Out of memory!\n");
         return NULL;
     }
     memset(stream, 0, sizeof(struct mg_stream));
