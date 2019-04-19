@@ -401,23 +401,30 @@ static void update_drone_model(struct mg_core *mg)
 static void update_trompette_model(struct mg_core *mg)
 {
     int s, i;
-    int pressure;
-    int chien_speed;
 
     int midi_note;
     struct mg_string *st;
     struct mg_note *note;
     struct mg_voice *model;
 
+    int pressure = -1;
     int expression = -1;
     int velocity = -1;
     int ws_chien_volume = -1;
 
-    /* We currently only use the threshold of the first string. */
-    chien_speed = mg->wheel.speed - mg->state.trompette[0].threshold;
+    int threshold;
+    int raw_chien_speed;
+    int normalized_chien_speed = 0;
 
-    /* Record the wheel speed, so we can send it via websockets to the visualisations */
-    mg->chien_speed = chien_speed;
+    /* We currently only use the threshold of the first string. */
+    threshold = mg->state.trompette[0].threshold;
+    raw_chien_speed = mg->wheel.speed - threshold;
+    if (raw_chien_speed > 0) {
+        normalized_chien_speed = (raw_chien_speed * 1000) / (MG_SPEED_MAX - threshold);
+        if (normalized_chien_speed > 1000) {
+            normalized_chien_speed = 1000;
+        }
+    }
 
     for (s = 0; s < 3; s++) {
         st = &mg->state.trompette[s];
@@ -441,12 +448,14 @@ static void update_trompette_model(struct mg_core *mg)
                         mg->state.speed_to_trompette_volume.count);
             }
 
-            if (chien_speed > 0) {
-                pressure = multimap(chien_speed,
-                        mg->state.speed_to_chien.ranges,
-                        mg->state.speed_to_chien.count);
-            } else {
-                pressure = 0;
+            if (pressure == -1) {
+                if (normalized_chien_speed > 0) {
+                    pressure = multimap(normalized_chien_speed,
+                            mg->state.speed_to_chien.ranges,
+                            mg->state.speed_to_chien.count);
+                } else {
+                    pressure = 0;
+                }
             }
 
             model->expression = expression;
@@ -462,10 +471,8 @@ static void update_trompette_model(struct mg_core *mg)
                 if (model->note_count > 0) {
                     mg_string_clear_notes(st);
                 }
-                continue;
             }
-
-            if (model->note_count != st->fixed_note_count) {
+            else if (model->note_count != st->fixed_note_count) {
                 for (i = 0; i < st->fixed_note_count; i++) {
                     midi_note = st->fixed_notes[i];
 
@@ -487,7 +494,7 @@ static void update_trompette_model(struct mg_core *mg)
             /* As we're dealing with percussive sounds, we need to debounce the
              * on / off transitions.
              * FIXME: make the debounce times configurable via the web-interface! */
-            if (chien_speed > 0) {
+            if (normalized_chien_speed > 0) {
                 if (model->note_count == 0) {
                     if (model->chien_debounce < model->chien_on_debounce) {
                         model->chien_debounce++;
@@ -505,12 +512,12 @@ static void update_trompette_model(struct mg_core *mg)
             }
             model->chien_debounce = 0;
 
-            if (chien_speed > 0) {
+            if (normalized_chien_speed > 0) {
                 if (model->note_count != st->fixed_note_count) {
                     /* Velocity is the same for all trompette strings in percussive mode, so
                     * calculate this here only once. */
                     if (velocity == -1) {
-                        velocity = multimap(chien_speed,
+                        velocity = multimap(normalized_chien_speed,
                                 mg->state.speed_to_percussion.ranges,
                                 mg->state.speed_to_percussion.count);
                     }
@@ -538,8 +545,14 @@ static void update_trompette_model(struct mg_core *mg)
         }
     }
 
+    /* Record the wheel speed and chien volume, so we can send it via websockets
+     * to the visualisations */
+    mg->chien_speed = normalized_chien_speed;
+
     if (ws_chien_volume != -1) {
         mg->chien_volume = ws_chien_volume;
+    } else {
+        mg->chien_volume = 0;
     }
 }
 
