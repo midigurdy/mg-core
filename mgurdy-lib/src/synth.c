@@ -182,7 +182,7 @@ static void update_melody_model(struct mg_core *mg)
         }
     }
 
-    /* Expression is also the same for all melody strings, calculate here only once. */
+    /* Expression is the same for all melody strings, calculate here only once. */
     expression = multimap(mg->wheel.speed,
             mg->state.speed_to_melody_volume.ranges,
             mg->state.speed_to_melody_volume.count);
@@ -215,7 +215,7 @@ static void update_melody_model(struct mg_core *mg)
                 st->base_note_count = 0;
 
                 if (model->expression > 0) {
-                    key_num = active_keys[active_count - 1];  // highest key number
+                    key_num = active_keys[active_count - 1];  // highest active key number
                     key = &mg->keys[key_num];
 
                     midi_note = st->base_note + key_num + 1;
@@ -244,10 +244,10 @@ static void update_melody_model(struct mg_core *mg)
                     else {  // MG_MODE_MIDIGURDY
                         /* If the key for the note we're enabling has recently been pressed,
                          * then use the key velocity to determine the note velocity
-                         * (27 values,from 101 to 127).
+                         * (63 values,from 64 to 127).
                          *
                          * If the key for the note we're enabling was already pressed for longer,
-                         * then use the velocity 100.
+                         * then use the fixed velocity of 32.
                          */
                         if (key->active_since < mg->state.base_note_delay) {
                             note->velocity = 64 + multimap(key->velocity,
@@ -256,11 +256,6 @@ static void update_melody_model(struct mg_core *mg)
                         } else {
                             note->velocity = 32;
                         }
-                        /*
-                        note->pressure = multimap(key->smoothed_pressure,
-                                mg->state.pressure_to_poly.ranges,
-                                mg->state.pressure_to_poly.count);
-                        */
                         note->pressure = 0;
                         model->pitch = 0x2000 + (
                                 mg->state.pitchbend_factor *
@@ -270,7 +265,7 @@ static void update_melody_model(struct mg_core *mg)
                     }
                 }
             }
-            /* Empty note if no key is pressed only in generic and midigurdy mode */
+            /* We play the empty note (if no key is pressed) only in generic and midigurdy mode */
             else if (st->mode != MG_MODE_KEYBOARD) {
                 if (st->base_note_count < base_note_delay) {
                     st->base_note_count++;
@@ -373,8 +368,7 @@ static void update_drone_model(struct mg_core *mg)
         st = &mg->state.drone[s];
         model = &st->model;
 
-        /* If the string is muted, then there's no need to do any calculation. Just set
-         * the volme to zero and go to next string. */
+        /* If the string is muted, then there's no need to do any calculation. */
         if (st->muted) {
             continue;
         }
