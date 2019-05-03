@@ -29,6 +29,11 @@ def send_static(path):
     return send_from_directory(settings.webroot_dir, os.path.join('static', path))
 
 
+@app.route('/manual/<path:path>')
+def send_manual(path):
+    return send_from_directory(settings.webroot_dir, os.path.join('manual', path))
+
+
 @app.route('/favicon.ico')
 def send_favicon():
     return send_static('favicon.ico')
