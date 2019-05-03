@@ -76,6 +76,9 @@ class Preset(BaseModel):
         data['id'] = self.id
         data['number'] = self.number
         data['name'] = self.name
+        for voice in data.get('voices', {}).get('trompette', []):
+            if not voice.get('mode'):
+                voice['mode'] = 'midigurdy'
         return data
 
 
