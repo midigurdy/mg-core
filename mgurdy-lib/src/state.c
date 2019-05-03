@@ -49,7 +49,9 @@ static struct mg_map default_speed_to_trompette_volume = {
 static struct mg_map default_speed_to_chien = {
     .count = 4,
     .ranges = {
-        {0, 0}, {300, 80}, {600, 120}, {1000, 127}
+        {0, 0}, {400, 80}, {1000, 120}, {4000, 127}
+    }
+};
 
 static struct mg_map default_chien_threshold_to_range = {
     .count = 3,

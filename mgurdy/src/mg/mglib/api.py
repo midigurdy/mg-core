@@ -105,11 +105,11 @@ MAPPINGS = {
     },
     'speed_to_chien': {
         'idx': lib.MG_MAP_SPEED_TO_CHIEN,
-        'name': 'Wheel Speed to Chien Volume',
+        'name': 'Coup Speed to Chien Volume',
         'src': {
-            'name': 'Wheel Speed',
+            'name': 'Coup Speed',
             'min': 0,
-            'max': 1000,
+            'max': 4000,
         },
         'dst': {
             'name': 'Chien Volume',
