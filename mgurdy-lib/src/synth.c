@@ -405,19 +405,37 @@ static void update_trompette_model(struct mg_core *mg)
     int expression = -1;
     int velocity = -1;
     int ws_chien_volume = -1;
+    int ws_chien_speed = -1;
 
     int threshold;
+    int chien_speed_factor;
     int raw_chien_speed;
     int normalized_chien_speed = 0;
 
     /* We currently only use the threshold of the first string. */
     threshold = mg->state.trompette[0].threshold;
-    raw_chien_speed = mg->wheel.speed - threshold;
-    if (raw_chien_speed > 0) {
-        normalized_chien_speed = (raw_chien_speed * 1000) / (MG_SPEED_MAX - threshold);
-        if (normalized_chien_speed > 1000) {
-            normalized_chien_speed = 1000;
+
+    if (threshold < MG_SPEED_MAX) {
+        chien_speed_factor = multimap(
+                (5000 - threshold) / 50,
+                mg->state.chien_threshold_to_range.ranges,
+                mg->state.chien_threshold_to_range.count);
+        raw_chien_speed = mg->wheel.speed - threshold;
+        if (raw_chien_speed > 0) {
+            if (chien_speed_factor > 0) {
+                normalized_chien_speed = (raw_chien_speed * (chien_speed_factor + 100)) / 100;
+            } else if (chien_speed_factor < 0) {
+                normalized_chien_speed = (raw_chien_speed * -100) /  (chien_speed_factor - 100);
+            } else {
+                normalized_chien_speed = raw_chien_speed;
+            }
+            if (normalized_chien_speed > MG_CHIEN_MAX) {
+                normalized_chien_speed = MG_CHIEN_MAX;
+            }
         }
+    } else {
+        raw_chien_speed = 0;
+        normalized_chien_speed = 0;
     }
 
     for (s = 0; s < 3; s++) {
@@ -461,6 +479,10 @@ static void update_trompette_model(struct mg_core *mg)
                 ws_chien_volume = pressure;
             }
 
+            if (ws_chien_speed == -1) {
+                ws_chien_speed = normalized_chien_speed;
+            }
+
             if (expression <= 0) {
                 if (model->note_count > 0) {
                     mg_string_clear_notes(st);
@@ -488,7 +510,7 @@ static void update_trompette_model(struct mg_core *mg)
             /* As we're dealing with percussive sounds, we need to debounce the
              * on / off transitions.
              * FIXME: make the debounce times configurable via the web-interface! */
-            if (normalized_chien_speed > 0) {
+            if (raw_chien_speed > 0) {
                 if (model->note_count == 0) {
                     if (model->chien_debounce < model->chien_on_debounce) {
                         model->chien_debounce++;
@@ -506,18 +528,22 @@ static void update_trompette_model(struct mg_core *mg)
             }
             model->chien_debounce = 0;
 
-            if (normalized_chien_speed > 0) {
+            if (raw_chien_speed > 0) {
                 if (model->note_count != st->fixed_note_count) {
                     /* Velocity is the same for all trompette strings in percussive mode, so
                     * calculate this here only once. */
                     if (velocity == -1) {
-                        velocity = multimap(normalized_chien_speed,
+                        velocity = multimap(raw_chien_speed,
                                 mg->state.speed_to_percussion.ranges,
                                 mg->state.speed_to_percussion.count);
                     }
 
                     if (ws_chien_volume == -1) {
                         ws_chien_volume = velocity;
+                    }
+
+                    if (ws_chien_speed == -1) {
+                        ws_chien_speed = raw_chien_speed;
                     }
 
                     for (i = 0; i < st->fixed_note_count; i++) {
@@ -528,11 +554,18 @@ static void update_trompette_model(struct mg_core *mg)
                         note->velocity = velocity;
                         model->active_notes[model->note_count++] = midi_note;
                     }
+                } else {
+                    /* Set to -2 so that the speed reported via websockets does
+                     * not change until we get a noteoff */
+                    ws_chien_speed = -2;
                 }
             }
             else if (model->note_count > 0) {
                 if (ws_chien_volume == -1) {
                     ws_chien_volume = 0;
+                }
+                if (ws_chien_speed == -1) {
+                    ws_chien_speed = 0;
                 }
                 mg_string_clear_notes(st);
             }
@@ -541,12 +574,15 @@ static void update_trompette_model(struct mg_core *mg)
 
     /* Record the wheel speed and chien volume, so we can send it via websockets
      * to the visualisations */
-    mg->chien_speed = normalized_chien_speed;
+    if (ws_chien_speed >= 0) {
+        mg->chien_speed = ws_chien_speed;
+    } else if (ws_chien_speed == -1) {
+        mg->chien_speed = 0;
+    }
+    /* otherwise (-2) leave chien_speed unchanged */
 
     if (ws_chien_volume != -1) {
         mg->chien_volume = ws_chien_volume;
-    } else {
-        mg->chien_volume = 0;
     }
 }
 
