@@ -28,6 +28,7 @@ def test_start_stop(mg):
     'keyvel_to_notevel',
     'keyvel_to_tangent',
     'keyvel_to_keynoise',
+    'chien_threshold_to_range',
 ])
 def test_set_get_and_reset_ranges(mg, name):
     default = mg.get_mapping_ranges(name)

@@ -214,6 +214,7 @@ struct mg_state {
     struct mg_map speed_to_drone_volume;
     struct mg_map speed_to_trompette_volume;
     struct mg_map speed_to_chien;
+    struct mg_map chien_threshold_to_range;
     struct mg_map speed_to_percussion;
     struct mg_map keyvel_to_notevel;
     struct mg_map keyvel_to_tangent;
@@ -405,6 +406,7 @@ enum mg_map_enum {
     MG_MAP_KEYVEL_TO_NOTEVEL,
     MG_MAP_KEYVEL_TO_TANGENT,
     MG_MAP_KEYVEL_TO_KEYNOISE,
+    MG_MAP_CHIEN_THRESHOLD_TO_RANGE,
 };
 
 struct mg_string_config {

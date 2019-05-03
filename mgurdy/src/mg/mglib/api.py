@@ -117,6 +117,20 @@ MAPPINGS = {
             'max': 127,
         },
     },
+    'chien_threshold_to_range': {
+        'idx': lib.MG_MAP_CHIEN_THRESHOLD_TO_RANGE,
+        'name': 'Chien Sensitivity to Chien Hardness',
+        'src': {
+            'name': 'Chien Sensitivity %',
+            'min': 0,
+            'max': 100,
+        },
+        'dst': {
+            'name': 'Chien Hardness',
+            'min': -500,
+            'max': 500,
+        },
+    },
     'speed_to_percussion': {
         'idx': lib.MG_MAP_SPEED_TO_PERCUSSION,
         'name': 'Wheel Speed to Percussion Volume',
