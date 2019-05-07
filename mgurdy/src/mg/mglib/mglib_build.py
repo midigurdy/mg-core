@@ -117,6 +117,7 @@ int mg_image_write(struct mg_image *img, const char *filename);
 void mg_image_scrolltext(struct mg_image *img, int face_id, const char *text,
         int x, int y, int width, int color,
         int initial_delay_ms, int shift_delay_ms, int end_delay_ms);
+void mg_image_get_data(struct mg_image *img, char *buffer);
 
 int mg_calibrate_set_key(int key, float pressure_adjust,
                          float velocity_adjust);

@@ -9,6 +9,7 @@ from mg.server.resources.info import SystemInfo
 from mg.server.resources import calibration
 from mg.server.resources import config
 from mg.server.resources import misc
+from mg.server.resources.display import DisplayView
 
 views = Blueprint('api', __name__)
 api = Api(views)
@@ -37,3 +38,5 @@ api.add_resource(calibration.Keyboard, '/calibrate/keyboard')
 api.add_resource(calibration.Wheel, '/calibrate/wheel')
 
 api.add_resource(SystemInfo, '/info')
+
+api.add_resource(DisplayView, '/screenshot')

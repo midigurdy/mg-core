@@ -734,3 +734,12 @@ exit:
 
     return ret;
 }
+
+void mg_image_get_data(struct mg_image *img, char *buffer)
+{
+    pthread_mutex_lock(&img->mutex);
+
+    convert_8bpp_to_1bpp(img, buffer);
+
+    pthread_mutex_unlock(&img->mutex);
+}

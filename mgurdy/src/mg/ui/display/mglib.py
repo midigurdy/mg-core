@@ -46,7 +46,7 @@ class MGDisplay(BaseDisplay):
         self.img.scrolltext(x, y, width, text, self.fonts[self.font_id], color, initial_delay, shift_delay, end_delay)
 
     def get_image_data(self):
-        self.img.get_image_data()
+        return self.img.get_image_data()
 
     def _load_bdf_fonts(self):
         self.fonts = []

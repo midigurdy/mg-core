@@ -13,9 +13,10 @@ log = logging.getLogger('web')
 
 
 class WebServer(threading.Thread):
-    def __init__(self, state, port=80, debug=None):
+    def __init__(self, state, menu, port=80, debug=None):
         super().__init__(name='mg-web-server')
         self.state = state
+        self.menu = menu
         self.daemon = True
         self.port = port
         self.debug = debug
@@ -24,6 +25,7 @@ class WebServer(threading.Thread):
         prctl.set_name(self.name)
         try:
             app.config['state'] = self.state
+            app.config['menu'] = self.menu
             app.run(port=self.port, host='0.0.0.0', debug=self.debug, threaded=True)
         except:
             log.exception('Unable to start webserver on port {}'.format(self.port))

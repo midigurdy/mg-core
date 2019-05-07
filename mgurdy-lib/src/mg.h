@@ -482,6 +482,7 @@ extern void mg_image_scrolltext(struct mg_image *img, int face_id, const char *t
 extern void mg_image_rect(struct mg_image *img, int x0, int y0, int x1, int y1,
         int c, int fill);
 extern int mg_image_write(struct mg_image *img, const char *filename);
+extern void mg_image_get_data(struct mg_image *img, char *buffer);
 
 extern int mg_calibrate_set_key(int key, float pressure_adjust, float velocity_adjust);
 extern int mg_calibrate_get_key(int key, float *pressure_adjust, float *velocity_adjust);

@@ -348,6 +348,8 @@ class MGCore:
 
 class MGImage:
     def __init__(self, width, height, mmap_filename=None, filename=None):
+        self.width = width
+        self.height = height
         self.img = lib.mg_image_create(width, height, filename.encode() if filename else ffi.NULL)
         if mmap_filename:
             ret = lib.mg_image_mmap_file(self.img, mmap_filename.encode())
@@ -392,21 +394,9 @@ class MGImage:
                                 x, y, width, color, initial_delay, shift_delay, end_delay)
 
     def get_image_data(self):
-        """
-        This is not very fast, only used for testing purposes (Tk Display)
-        """
-        data = bytearray()
-        bit = 0
-        byte = 0
-        for pixel in list(bytes(ffi.buffer(self.img.data, self.img.size))):
-            byte |= pixel << bit
-            if bit == 7:
-                data.append(byte)
-                byte = 0
-                bit = 0
-            else:
-                bit += 1
-        return bytes(data)
+        data = ffi.new('char[]', (self.width * self.height) // 8)
+        lib.mg_image_get_data(self.img, data)
+        return bytes(ffi.buffer(data))
 
     def load_font(self, filename):
         return lib.mg_image_load_font(self.img, filename.encode())

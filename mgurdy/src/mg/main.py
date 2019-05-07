@@ -126,7 +126,7 @@ def start(args):
         pass
 
     menu.message('Starting server')
-    start_server(state)
+    start_server(state, menu)
 
     menu.goto('home')
     input_manager.start()
@@ -135,11 +135,11 @@ def start(args):
 
 
 @background_task()
-def start_server(state):
+def start_server(state, menu):
     from mg.server.web import WebServer
     from mg.server.websocket import WebSocketServer
 
-    web = WebServer(state=state, port=settings.http_port)
+    web = WebServer(state=state, menu=menu, port=settings.http_port)
     web.start()
     ws = WebSocketServer()
     ws.start()
