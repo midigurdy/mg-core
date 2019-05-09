@@ -63,7 +63,7 @@ static struct mg_map default_chien_threshold_to_range = {
 static struct mg_map default_speed_to_percussion = {
     .count = 4,
     .ranges = {
-        {0, 0}, {250, 80}, {500, 120}, {1000, 127}
+        {0, 70}, {200, 100}, {500, 120}, {1000, 127}
     }
 };
 
