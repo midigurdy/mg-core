@@ -360,6 +360,11 @@ class VoiceState(EventEmitter):
         self.notify('sound:changed')
         if sound.base_note > -1:
             self.base_note = sound.base_note
+        # reset the mode back to MidiGurdy when selecting a MidiGurdy specific sound
+        if (sound.soundfont.mode == 'midigurdy' and
+                sound.type in ('trompette', 'trompette') and
+                self.mode != 'midigurdy'):
+            self.mode = 'midigurdy'
 
     def clear_sound(self):
         with signals.suppress():
