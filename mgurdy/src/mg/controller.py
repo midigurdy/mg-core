@@ -16,6 +16,7 @@ log = logging.getLogger('controller')
 BACKLIGHT_BRIGHTNESS = '/sys/class/backlight/ssd1307fb0/brightness'
 LED_BRIGHTNESS_TMPL = '/sys/class/leds/string%s/brightness'
 ALSA_MIXER = 'Power Amplifier'
+UDC_CONFIG = '/sys/devices/platform/soc@01c00000/1c13000.usb/musb-hdrc.1.auto/gadget/configuration'
 
 
 VOICE_MODES = (
@@ -338,6 +339,13 @@ class SystemController(EventListener):
         if self._mixer is None:
             self._mixer = alsaaudio.Mixer(ALSA_MIXER)
         return self._mixer
+
+    def update_udc_configuration(self):
+        try:
+            with open(UDC_CONFIG, 'r') as f:
+                self.state.midi.udc_config = int(f.read())
+        except:
+            pass
 
 
 class MIDIController(EventListener):

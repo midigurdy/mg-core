@@ -64,6 +64,7 @@ def start(args):
     system_ctrl.set_string_led(1, 0)
     system_ctrl.set_string_led(2, 0)
     system_ctrl.set_string_led(3, 0)
+    system_ctrl.update_udc_configuration()
 
     midi_ctrl = MIDIController(input_manager)
     midi_ctrl.start_listening()
