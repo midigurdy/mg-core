@@ -420,11 +420,13 @@ class TreeSoundListPage(ListPage):
                 # before setting the new sound
                 if unmute:
                     self.voice.muted = False
+            self.selected_sf = None
             self.menu.pop()
         elif snum == -1:
             with self.state.lock():
                 self.voice.clear_sound()
                 self.voice.muted = True
+            self.selected_sf = None
             self.menu.pop()
         else:
             self.selected_sf = sf

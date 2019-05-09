@@ -362,7 +362,7 @@ class VoiceState(EventEmitter):
             self.base_note = sound.base_note
         # reset the mode back to MidiGurdy when selecting a MidiGurdy specific sound
         if (sound.soundfont.mode == 'midigurdy' and
-                sound.type in ('trompette', 'trompette') and
+                sound.type in ('melody', 'trompette') and
                 self.mode != 'midigurdy'):
             self.mode = 'midigurdy'
 
