@@ -368,15 +368,18 @@ static void update_drone_model(struct mg_core *mg)
         st = &mg->state.drone[s];
         model = &st->model;
 
-        /* If the string is muted, then there's no need to do any calculation. */
         if (st->muted) {
-            continue;
+            model->expression = 0;
+        } else {
+            model->expression = expression;
         }
 
-        model->expression = expression;
-
-        if (expression <= 0)
+        if (expression <= 0) {
+            if (model->note_count > 0) {
+                mg_string_clear_notes(st);
+            }
             continue;
+        }
 
         if (model->note_count != st->fixed_note_count) {
             for (i = 0; i < st->fixed_note_count; i++) {
