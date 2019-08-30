@@ -64,40 +64,40 @@ class ImportExportView(StateResource):
         if errors:
             abort(400, errors=errors)
 
-        if opt_switch('presets'):
+        if opt_switch('presets') and data.get('presets', []):
             for preset in db.Preset.select():
-                preset.delete_instance()
                 signals.emit('preset:deleted', {'id': preset.id})
+            db.Preset.delete().execute()
 
-            for preset_data in data.get('presets', []):
+            for preset_data in data['presets']:
                 name = preset_data.pop('name', '')
                 preset = db.Preset(name=name)
                 preset.set_data(preset_data)
                 preset.save(force_insert=True)
                 signals.emit('preset:added', {'id': preset.id})
 
-        if opt_switch('mappings'):
+        if opt_switch('mappings') and data.get('mappings', []):
             mapping_configs = mgcore.get_mapping_configs()
             for name in mapping_configs.keys():
                 db.delete_mapping_ranges(name)
                 mgcore.reset_mapping_ranges(name)
-            for mapping in data.get('mappings', []):
+            for mapping in data['mappings']:
                 name = mapping['name']
                 if name in mapping_configs:
                     db.save_mapping_ranges(name, mapping['ranges'])
                     mgcore.set_mapping_ranges(name, mapping['ranges'])
 
-        if opt_switch('calibration'):
+        if opt_switch('calibration') and data.get('calibration', []):
             db.delete_key_calibration()
-            calib = data.get('calibration', [])
+            calib = data['calibration']
             if calib:
                 db.save_key_calibration(calib)
             else:
                 calib = calibration.default_keys()
             calibration.commit_keys(calib)
 
-        if opt_switch('settings'):
-            misc = data.get('settings', [])
+        if opt_switch('settings') and data.get('settings', []):
+            misc = data['settings']
             if misc:
                 self.state.from_misc_dict(misc)
                 db.save_misc_config(misc)
