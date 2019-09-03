@@ -12,23 +12,26 @@ from mg.utils import PeriodicTimer
 
 LOOP = asyncio.new_event_loop()
 
-WS_EVENTS = [
-    'active:preset:changed',
-    'preset:added',
-    'preset:deleted',
-    'preset:changed',
-    'preset:reordered',
-    'sound:added',
-    'sound:deleted',
-    'sound:changed',
-    'main_volume:changed',
-    'reverb_volume:changed',
-    'chien_threshold:changed',
-    'coarse_tune:changed',
-    'pitchbend_range:changed',
-    'fine_tune:changed',
-    'synth:gain:changed',
-]
+THROTTLE_DEFAULT = 0
+THROTTLE_ALWAYS = 1
+
+WS_EVENTS = {
+    'active:preset:changed': THROTTLE_DEFAULT,
+    'preset:added': THROTTLE_DEFAULT,
+    'preset:deleted': THROTTLE_DEFAULT,
+    'preset:changed': THROTTLE_DEFAULT,
+    'preset:reordered': THROTTLE_DEFAULT,
+    'sound:added': THROTTLE_DEFAULT,
+    'sound:deleted': THROTTLE_DEFAULT,
+    'sound:changed': THROTTLE_DEFAULT,
+    'main_volume:changed': THROTTLE_ALWAYS,
+    'reverb_volume:changed': THROTTLE_ALWAYS,
+    'chien_threshold:changed': THROTTLE_ALWAYS,
+    'coarse_tune:changed': THROTTLE_ALWAYS,
+    'pitchbend_range:changed': THROTTLE_ALWAYS,
+    'fine_tune:changed': THROTTLE_ALWAYS,
+    'synth:gain:changed': THROTTLE_ALWAYS,
+}
 
 
 class WebSocketServer(threading.Thread):
@@ -51,7 +54,7 @@ class WebSocketQueue:
         self.client_id = client_id
         self.throttle = {}
         self.pending = {}
-        self.throttle_timeout = 1
+        self.throttle_timeout = 0.5
         self.throttle_lock = threading.RLock()
         self.pending_timer = PeriodicTimer(self.throttle_timeout, self.send_pending)
 
@@ -89,13 +92,16 @@ class WebSocketQueue:
             names = list(self.pending.keys())
             for name in names:
                 (ts, data) = self.pending[name]
-                if now - ts > self.throttle_timeout:
+                if now - ts > self.throttle_timeout or WS_EVENTS.get(name) == THROTTLE_ALWAYS:
                     self.handle_event(name, data, force=True)
                     del self.pending[name]
 
     def throttle_event(self, name, data):
         with self.throttle_lock:
             now = time.time()
+            if WS_EVENTS.get(name) == THROTTLE_ALWAYS:
+                self.pending[name] = (now, data)
+                return
             prev = self.throttle.get(name)
             if prev is not None:
                 if now - prev > self.throttle_timeout:
