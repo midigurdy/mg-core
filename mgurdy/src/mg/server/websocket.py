@@ -86,9 +86,9 @@ class WebSocketQueue:
 
     def send_pending(self):
         with self.throttle_lock:
-            now = time.time()
             if not self.pending:
                 return
+            now = time.time()
             names = list(self.pending.keys())
             for name in names:
                 (ts, data) = self.pending[name]
