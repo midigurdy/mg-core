@@ -26,11 +26,11 @@ WS_EVENTS = {
     'sound:changed': THROTTLE_DEFAULT,
     'main_volume:changed': THROTTLE_ALWAYS,
     'reverb_volume:changed': THROTTLE_ALWAYS,
-    'chien_threshold:changed': THROTTLE_ALWAYS,
     'coarse_tune:changed': THROTTLE_ALWAYS,
     'pitchbend_range:changed': THROTTLE_ALWAYS,
     'fine_tune:changed': THROTTLE_ALWAYS,
     'synth:gain:changed': THROTTLE_ALWAYS,
+    'active:preset:voice:chien_threshold:changed': THROTTLE_ALWAYS,
 }
 
 
@@ -77,7 +77,14 @@ class WebSocketQueue:
                 data = {'client_id': data.pop('client_id', None)}
             else:
                 return
-        data.pop('sender', None)  # no need to send this back to ui
+
+        sender = data.pop('sender', None)
+
+        # for voice states we also want to let the UI know *which*
+        # voice was changed
+        if sender and name.startswith('active:preset:voice'):
+            data['string'] = sender.string
+
         if not force and not self.throttle_event(name, data):
             return
         if data.pop('client_id', '') == self.client_id:
@@ -89,29 +96,30 @@ class WebSocketQueue:
             if not self.pending:
                 return
             now = time.time()
-            names = list(self.pending.keys())
-            for name in names:
-                (ts, data) = self.pending[name]
+            keys = list(self.pending.keys())
+            for key in keys:
+                (name, ts, data) = self.pending[key]
                 if now - ts > self.throttle_timeout or WS_EVENTS.get(name) == THROTTLE_ALWAYS:
                     self.handle_event(name, data, force=True)
-                    del self.pending[name]
+                    del self.pending[key]
 
     def throttle_event(self, name, data):
         with self.throttle_lock:
             now = time.time()
+            key = (name, data.get('string', None))
             if WS_EVENTS.get(name) == THROTTLE_ALWAYS:
-                self.pending[name] = (now, data)
+                self.pending[key] = (name, now, data)
                 return
-            prev = self.throttle.get(name)
+            prev = self.throttle.get(key)
             if prev is not None:
                 if now - prev > self.throttle_timeout:
-                    self.throttle[name] = now
+                    self.throttle[key] = now
                     return True
                 else:
-                    self.pending[name] = (now, data)
+                    self.pending[key] = (name, now, data)
             else:
-                self.throttle[name] = now
-                if name in self.pending:
+                self.throttle[key] = now
+                if key in self.pending:
                     del self.pending
                 return True
 
