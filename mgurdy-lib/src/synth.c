@@ -601,6 +601,12 @@ static void update_keynoise_model(struct mg_core *mg)
 
     mg_string_clear_notes(st);
 
+    if (mg->wheel.speed > 0) {
+        model->pressure = 127;
+    } else {
+        model->pressure = 0;
+    }
+
     for (i = 0; i < KEY_COUNT; i++) {
         key = &mg->keys[i];
 

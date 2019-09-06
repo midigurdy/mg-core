@@ -112,6 +112,7 @@ static int add_keynoise_stream(struct mg_output *output, struct mg_string *strin
 
     stream->sender[stream->sender_count++] = mg_output_fluid_volume;
     stream->sender[stream->sender_count++] = mg_output_fluid_balance;
+    stream->sender[stream->sender_count++] = mg_output_fluid_channel_pressure;
 
     output->stream[output->stream_count++] = stream;
 
