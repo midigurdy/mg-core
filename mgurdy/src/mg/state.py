@@ -351,12 +351,12 @@ class VoiceState(EventEmitter):
             sound = sf.get_sound(data['bank'], data['program']) if sf else None
             if sound:
                 self.set_sound(sound)
+                _set(self, 'muted', data, 'muted', True, partial)
             else:
                 self.clear_sound()
         elif not partial:
             self.clear_sound()
 
-        _set(self, 'muted', data, 'muted', True, partial)
         _set(self, 'volume', data, 'volume', 100, partial)
         _set(self, 'panning', data, 'panning', 64, partial)
         _set(self, 'base_note', data, 'note', 60, partial)
