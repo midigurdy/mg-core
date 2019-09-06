@@ -263,3 +263,8 @@ class LADSPA:
                                                   port.encode(), float(value))
         if ret != lib.FLUID_OK:
             raise FluidSynthError('Unable to set control %s %s' % (name, port))
+
+    def add_buffer(self, name):
+        ret = lib.fluid_ladspa_add_buffer(self.fx, name.encode())
+        if ret != lib.FLUID_OK:
+            raise FluidSynthError('Unable to add buffer %s' % name)

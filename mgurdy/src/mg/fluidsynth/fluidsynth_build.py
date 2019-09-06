@@ -96,6 +96,7 @@ int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name, cons
 int fluid_ladspa_effect_set_mix(fluid_ladspa_fx_t *fx, const char *name, int mix, float gain);
 int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name, float val);
 int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name, const char *name);
+int fluid_ladspa_add_buffer(fluid_ladspa_fx_t *fx, const char *name);
 
 
 """)
