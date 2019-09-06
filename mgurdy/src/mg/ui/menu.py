@@ -71,7 +71,10 @@ class Menu:
 
         # turning the encoder automatically switches to chien sensitivity page
         if evt.name == Key.encoder:
-            self.push('chien_threshold')
+            if self.state.multi_chien_threshold:
+                self.push('multi_chien_threshold')
+            else:
+                self.push('chien_threshold')
             return True
 
     def handle_state_event(self, evt):

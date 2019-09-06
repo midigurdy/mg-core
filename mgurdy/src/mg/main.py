@@ -109,7 +109,6 @@ def start(args):
     state.preset.keynoise[0].volume = 25
     state.coarse_tune = 0
     state.fine_tune = 0
-    state.chien_threshold = 50
     state.ui.brightness = 80
     state.synth.gain = 50
     state.pitchbend_range = 100
@@ -189,7 +188,7 @@ def start_ui(state, ui_test, no_ui):
 
     from mg.handler import EventHandler
     from mg.ui.menu import Menu
-    from mg.ui.pages.main import Home, VolumeDeck, ChienThresholdPage
+    from mg.ui.pages.main import Home, VolumeDeck, ChienThresholdPage, MultiChienThresholdPage
     from mg.ui.pages.config import PresetConfigDeck
     from mg.ui.pages.strings import MelodyDeck, DroneDeck, TrompetteDeck
 
@@ -212,6 +211,7 @@ def start_ui(state, ui_test, no_ui):
     menu.register_page('config', PresetConfigDeck)
     menu.register_page('volume', VolumeDeck)
     menu.register_page('chien_threshold', ChienThresholdPage)
+    menu.register_page('multi_chien_threshold', MultiChienThresholdPage)
     menu.goto('home')
 
     input_manager = InputManager(event_queue)

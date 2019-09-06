@@ -41,7 +41,7 @@ class SynthController(EventListener):
         'coarse_tune:changed',
         'pitchbend_range:changed',
         'fine_tune:changed',
-        'chien_threshold:changed',
+        'multi_chien_threshold:changed',
         'active:preset:changed',
         'active:preset:voice:base_note:changed',
         'active:preset:voice:capo:changed',
@@ -50,6 +50,7 @@ class SynthController(EventListener):
         'active:preset:voice:polyphonic:changed',
         'active:preset:voice:panning:changed',
         'active:preset:voice:finetune:changed',
+        'active:preset:voice:chien_threshold:changed',
     ]
 
     def __init__(self, fluid, state):
@@ -102,6 +103,12 @@ class SynthController(EventListener):
     def active_preset_voice_panning_changed(self, panning, sender, **kwargs):
         mgcore.set_string_params([(sender.string, 'panning', sender.panning)])
 
+    def active_preset_voice_chien_threshold_changed(self, **kwargs):
+        mgcore.set_string_params(self.chien_threshold_configs())
+
+    def multi_chien_threshold_changed(self, **kwargs):
+        mgcore.set_string_params(self.chien_threshold_configs())
+
     def coarse_tune_changed(self, **kwargs):
         mgcore.set_string_params(self.base_note_configs())
 
@@ -115,9 +122,6 @@ class SynthController(EventListener):
     def set_voice_fine_tune(self, voice):
         fine_tune = voice.finetune + self.state.fine_tune
         self.fluid.set_channel_fine_tune(voice.channel, fine_tune)
-
-    def chien_threshold_changed(self, **kwargs):
-        mgcore.set_string_params(self.chien_threshold_configs())
 
     def active_preset_changed(self, **kwargs):
         self.configure_all_voices()
@@ -217,9 +221,13 @@ class SynthController(EventListener):
         return voice.base_note + self.state.coarse_tune
 
     def chien_threshold_configs(self):
-        threshold = int(5000 - (5000 * (self.state.chien_threshold / 100.0)))
         configs = []
         for voice in self.state.preset.trompette:
+            if self.state.multi_chien_threshold:
+                threshold = voice.chien_threshold
+            else:
+                threshold = self.state.preset.trompette[0].chien_threshold
+            threshold = int(5000 - (5000 * (threshold / 100.0)))
             configs.append((voice.string, 'chien_threshold', threshold))
         return configs
 

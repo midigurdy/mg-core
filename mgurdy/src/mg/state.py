@@ -30,7 +30,6 @@ class State(EventEmitter):
             self.reverb_panning = 0
             self.coarse_tune = 0
             self.fine_tune = 0
-            self.chien_threshold = 0
             self.last_preset_number = 0
             self.pitchbend_range = 0
 
@@ -38,6 +37,7 @@ class State(EventEmitter):
             self.key_off_debounce = 10
             self.base_note_delay = 20
             self.chien_sens_reverse = False
+            self.multi_chien_threshold = False
 
             self.ui = UIState()
             self.synth = SynthState()
@@ -124,7 +124,6 @@ class State(EventEmitter):
         self.reverb_panning = 64
         self.coarse_tune = 0
         self.fine_tune = 0
-        self.chien_threshold = 50
         self.synth.clear()
         self.preset.clear()
 
@@ -138,9 +137,6 @@ class State(EventEmitter):
             'tuning': {
                 'coarse': self.coarse_tune,
                 'fine': self.fine_tune,
-            },
-            'chien': {
-                'threshold': self.chien_threshold,
             },
             'voices': self.preset.to_voices_dict(),
             'keynoise': {
@@ -166,10 +162,23 @@ class State(EventEmitter):
         _set(self, 'coarse_tune', tuning, 'coarse', 0, partial)
         _set(self, 'fine_tune', tuning, 'fine', 0, partial)
 
-        chien = data.get('chien', {})
-        _set(self, 'chien_threshold', chien, 'threshold', 50, partial)
+        # FIXME: support for legacy chien threshold - remove in 1.5
+        try:
+            old_chien_style = data['voices']['trompette'][0]['chien_threshold'] and False
+        except (KeyError, IndexError):
+            old_chien_style = True
+
+        if old_chien_style:
+            chien_threshold = data.get('chien', {}).get('chien_threshold', None)
+            if chien_threshold is not None:
+                for i in (0, 1, 2):
+                    try:
+                        data['voices']['trompette'][i]['chien_threshold'] = chien_threshold
+                    except (KeyError, IndexError):
+                        pass
 
         self.preset.from_voices_dict(data.get('voices', {}), partial)
+
         self.preset.keynoise[0].from_dict(data.get('keynoise', {}), partial)
 
         reverb = data.get('reverb', {})
@@ -182,6 +191,7 @@ class State(EventEmitter):
                 'timeout': self.ui.timeout,
                 'brightness': self.ui.brightness,
                 'chien_sens_reverse': self.chien_sens_reverse,
+                'multi_chien_threshold': self.multi_chien_threshold,
             },
             'keyboard': {
                 'key_on_debounce': self.key_on_debounce,
@@ -195,6 +205,7 @@ class State(EventEmitter):
         _set(self.ui, 'timeout', ui, 'timeout', 10, partial)
         _set(self.ui, 'brightness', ui, 'brightness', 80, partial)
         _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
+        _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
 
         keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)
@@ -316,6 +327,7 @@ class VoiceState(EventEmitter):
         self.polyphonic = False
         self.mode = 'midigurdy'
         self.finetune = 0
+        self.chien_threshold = 50
 
     def to_dict(self):
         return {
@@ -330,6 +342,7 @@ class VoiceState(EventEmitter):
             'capo': self.capo,
             'polyphonic': self.polyphonic,
             'finetune': self.finetune,
+            'chien_threshold': self.chien_threshold,
         }
 
     def from_dict(self, data, partial=False):
@@ -351,6 +364,7 @@ class VoiceState(EventEmitter):
         _set(self, 'polyphonic', data, 'polyphonic', False, partial)
         _set(self, 'mode', data, 'mode', 'midigurdy', partial)
         _set(self, 'finetune', data, 'finetune', 0, partial)
+        _set(self, 'chien_threshold', data, 'chien_threshold', 50, partial)
 
     def set_sound(self, sound):
         with signals.suppress():
@@ -533,6 +547,19 @@ class PresetState(EventEmitter):
             return self.voices[number]
         except IndexError:
             log.error('Invalid string number: {}'.format(number))
+
+    def set_chien_thresholds(self, thresholds):
+        num = len(thresholds or [])
+        for i in (0, 1, 2):
+            if num > i and thresholds[i] is not None:
+                self.trompette[i].chien_threshold = thresholds[i]
+
+    def get_chien_thresholds(self):
+        return [
+            self.trompette[0].chien_threshold,
+            self.trompette[1].chien_threshold,
+            self.trompette[2].chien_threshold,
+        ]
 
 
 def _set(state, attr, data, name, default=None, partial=False):

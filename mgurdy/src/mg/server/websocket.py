@@ -31,6 +31,7 @@ WS_EVENTS = {
     'fine_tune:changed': THROTTLE_ALWAYS,
     'synth:gain:changed': THROTTLE_ALWAYS,
     'active:preset:voice:chien_threshold:changed': THROTTLE_ALWAYS,
+    'multi_chien_threshold:changed': THROTTLE_DEFAULT,
 }
 
 

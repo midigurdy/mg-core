@@ -79,6 +79,12 @@ class Preset(BaseModel):
         for voice in data.get('voices', {}).get('trompette', []):
             if not voice.get('mode'):
                 voice['mode'] = 'midigurdy'
+            if voice.get('chien_threshold') is None:
+                voice['chien_threshold'] = data.get('chien_threshold', 50)
+            if (not voice.get('soundfont') or
+                    voice.get('bank') is None or
+                    voice.get('program') is None):
+                voice['muted'] = True
         return data
 
 

@@ -15,6 +15,7 @@ class VoiceSchema(Schema):
     muted = fields.Boolean(default=True)
     note = fields.Int(default=60, validate=validate.Range(min=-1, max=127))
     finetune = fields.Int(default=0, validate=validate.Range(min=-100, max=100))
+    chien_threshold = fields.Int(default=50, validate=percent_range)
 
 
 class MelodySchema(VoiceSchema):
@@ -111,6 +112,7 @@ class MiscUISchema(Schema):
     timeout = fields.Int(default=10, validate=validate.Range(min=0, max=1000))
     brightness = fields.Int(default=80, validate=percent_range)
     chien_sens_reverse = fields.Boolean(default=False)
+    multi_chien_threshold = fields.Boolean(default=False)
 
 
 class MiscKeyboardSchema(Schema):

@@ -3,6 +3,7 @@ from .base import Page, Slider, Deck
 
 from mg.input import Action, Key
 from mg.utils import midi2percent, midi2note
+from mg.signals import signals
 
 
 class Home(Page):
@@ -128,27 +129,151 @@ class Home(Page):
 
 class ChienThresholdPage(Slider):
     title = 'Chien Sens'
-    render_on_input = False
-    state_events = ['chien_threshold:changed']
+    render_on_input = True
+    state_events = [
+        'active:preset:voice:chien_threshold:changed',
+        'multi_chien_threshold:changed',
+    ]
     minval = 0
     maxval = 100
     idle_timeout = 5
+
+    def __init__(self):
+        super().__init__()
+        self.thresholds = []
+
+    @property
+    def idle_timeout(self):
+        return self.state.ui.timeout
 
     @property
     def reverse_direction(self):
         return self.state.chien_sens_reverse
 
     def handle_state_event(self, name, data):
-        self.render()
+        if name == 'multi_chien_threshold:changed':
+            if self.state.multi_chien_threshold:
+                self.menu.goto('multi_chien_threshold')
+            return
+        # prevent rendering three times if all chiens have changed
+        thresholds = self.state.preset.get_chien_thresholds()
+        if self.thresholds != thresholds:
+            self.render()
 
     def get_value(self):
-        self.threshold = self.state.chien_threshold
-        return self.threshold
+        thresholds = self.state.preset.get_chien_thresholds()
+        return thresholds[0]
 
     def set_value(self, val):
-        self.threshold = val
+        self.thresholds = [val, val, val]
         with self.state.lock():
-            self.state.chien_threshold = self.threshold
+            self.state.preset.set_chien_thresholds(self.thresholds)
+
+
+class MultiChienThresholdPage(Page):
+    title = 'Chien Sensitivity'
+    minval = 0
+    maxval = 100
+    state_events = [
+        'active:preset:voice:chien_threshold:changed',
+        'multi_chien_threshold:changed',
+    ]
+
+    def __init__(self):
+        self.prevts = time.time()
+        self.prevdir = 0
+        self.chien_idx = 0
+        self.thresholds = []
+
+    @property
+    def idle_timeout(self):
+        return self.state.ui.timeout
+
+    @property
+    def reverse_direction(self):
+        return self.state.chien_sens_reverse
+
+    def handle_state_event(self, name, data):
+        if name == 'multi_chien_threshold:changed':
+            if not self.state.multi_chien_threshold:
+                self.menu.goto('chien_threshold')
+            return
+        # prevent rendering three times if all chiens have changed
+        thresholds = self.state.preset.get_chien_thresholds()
+        if self.thresholds != thresholds:
+            self.render()
+
+    def set_value(self, inc):
+        self.thresholds = self.state.preset.get_chien_thresholds()
+        for i in (0, 1, 2):
+            if self.chien_idx == 0 or i == (self.chien_idx - 1):
+                self.thresholds[i] = max(self.minval, min(self.maxval, self.thresholds[i] + inc))
+        with self.state.lock():
+            self.state.preset.set_chien_thresholds(self.thresholds)
+        self.render()
+
+    def show(self, **kwargs):
+        self.prevts = time.time()
+        self.prevdir = 0
+        super().show(**kwargs)
+
+    def handle(self, ev):
+        if ev.name == Key.encoder:
+            event_value = ev.value
+            if self.reverse_direction:
+                event_value *= -1
+            inc = event_value
+            if self.prevdir == inc:
+                diff = ev.ts - self.prevts
+                if diff < 30000:
+                    inc *= 5
+                elif diff < 50000:
+                    inc *= 2
+            self.prevts = ev.ts
+            self.prevdir = event_value
+            self.set_value(inc)
+            return True
+        elif ev.pressed(Key.select):
+            self.chien_idx += 1
+            self.chien_idx = self.chien_idx % 4
+            self.render()
+            return True
+
+    def render(self):
+        with self.menu.display as d:
+            d.font_size(0)
+            d.puts(64, 0, self.title, anchor='center')
+
+            y = 7
+            height = 5
+            margin = 4
+
+            # Output a slider for each trompette string
+            for i in (0, 1, 2):
+                val = self.state.preset.trompette[i].chien_threshold
+                active = (i == (self.chien_idx - 1) or self.chien_idx == 0)
+
+                if active:
+                    # if chien is active, draw number inverted
+                    # and output frame around slider
+                    d.rect(0, y - 1, 5, y + 6, fill=1)
+                    d.rect(8, y, 109, y + height)
+
+                d.font_size(1)
+                d.puts(1, y, '{}'.format(i + 1), color=0 if active else 1)
+
+                if val > 0:
+                    d.rect(9, y + 1, 8 + val, y + height - 1, fill=1)
+
+                # 100% label needs a smaller font size to fit
+                if val == 100:
+                    d.font_size(0)
+                    d.puts(127, y + 1, '{}%'.format(val), anchor='right')
+                else:
+                    d.font_size(1)
+                    d.puts(127, y, '{}%'.format(val), anchor='right')
+
+                y += height + margin
 
 
 class VolumeSlider(Slider):

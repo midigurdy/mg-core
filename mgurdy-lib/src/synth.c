@@ -404,50 +404,52 @@ static void update_trompette_model(struct mg_core *mg)
     struct mg_note *note;
     struct mg_voice *model;
 
-    int pressure = -1;
+    int pressure;
+
     int expression = -1;
     int velocity = -1;
     int ws_chien_volume = -1;
     int ws_chien_speed = -1;
 
-    int threshold;
     int chien_speed_factor;
     int raw_chien_speed;
     int normalized_chien_speed = 0;
-
-    /* We currently only use the threshold of the first string. */
-    threshold = mg->state.trompette[0].threshold;
-
-    if (threshold < MG_SPEED_MAX) {
-        chien_speed_factor = multimap(
-                (5000 - threshold) / 50,
-                mg->state.chien_threshold_to_range.ranges,
-                mg->state.chien_threshold_to_range.count);
-        raw_chien_speed = mg->wheel.speed - threshold;
-        if (raw_chien_speed > 0) {
-            if (chien_speed_factor > 0) {
-                normalized_chien_speed = (raw_chien_speed * (chien_speed_factor + 100)) / 100;
-            } else if (chien_speed_factor < 0) {
-                normalized_chien_speed = (raw_chien_speed * -100) /  (chien_speed_factor - 100);
-            } else {
-                normalized_chien_speed = raw_chien_speed;
-            }
-            if (normalized_chien_speed > MG_CHIEN_MAX) {
-                normalized_chien_speed = MG_CHIEN_MAX;
-            }
-        }
-    } else {
-        raw_chien_speed = 0;
-        normalized_chien_speed = 0;
-    }
 
     for (s = 0; s < 3; s++) {
         st = &mg->state.trompette[s];
         model = &st->model;
 
+
         /* If the string is muted, then there's no need to do any anything */
         if (st->muted) {
             continue;
+        }
+
+        if (st->threshold < MG_SPEED_MAX) {
+            chien_speed_factor = multimap(
+                    (5000 - st->threshold) / 50,
+                    mg->state.chien_threshold_to_range.ranges,
+                    mg->state.chien_threshold_to_range.count);
+            raw_chien_speed = mg->wheel.speed - st->threshold;
+            if (raw_chien_speed > 0) {
+                if (chien_speed_factor > 0) {
+                    normalized_chien_speed = (raw_chien_speed * (chien_speed_factor + 100)) / 100;
+                } else if (chien_speed_factor < 0) {
+                    normalized_chien_speed = (raw_chien_speed * -100) /  (chien_speed_factor - 100);
+                } else {
+                    normalized_chien_speed = raw_chien_speed;
+                }
+                if (normalized_chien_speed > MG_CHIEN_MAX) {
+                    normalized_chien_speed = MG_CHIEN_MAX;
+                }
+            }
+            else {
+                raw_chien_speed = 0;
+                normalized_chien_speed = 0;
+            }
+        } else {
+            raw_chien_speed = 0;
+            normalized_chien_speed = 0;
         }
 
         /* Standard modelling for MidiGurdy Soundfonts: trompette string sound
@@ -455,22 +457,20 @@ static void update_trompette_model(struct mg_core *mg)
          * their individual volumes controlled by channel pressure */
         if (st->mode == MG_MODE_MIDIGURDY) {
 
+            if (normalized_chien_speed > 0) {
+                pressure = multimap(normalized_chien_speed,
+                        mg->state.speed_to_chien.ranges,
+                        mg->state.speed_to_chien.count);
+            } else {
+                pressure = 0;
+            }
+
             /* Expression is the same for all trompette strings in MidiGurdy mode,
             * calculate here only once. */
             if (expression == -1) {
                 expression = multimap(mg->wheel.speed,
                         mg->state.speed_to_trompette_volume.ranges,
                         mg->state.speed_to_trompette_volume.count);
-            }
-
-            if (pressure == -1) {
-                if (normalized_chien_speed > 0) {
-                    pressure = multimap(normalized_chien_speed,
-                            mg->state.speed_to_chien.ranges,
-                            mg->state.speed_to_chien.count);
-                } else {
-                    pressure = 0;
-                }
             }
 
             model->expression = expression;
