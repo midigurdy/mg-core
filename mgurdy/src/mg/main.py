@@ -175,6 +175,7 @@ def start_fluidsynth(synth, dump_midi, debug=False):
     synth.ladspa.link_effect('sympa', 'Input', 'Reverb:Send')
     synth.ladspa.link_effect('sympa', 'Output Left', 'Main:L')
     synth.ladspa.link_effect('sympa', 'Output Right', 'Main:R')
+    synth.ladspa.set_control('sympa', 'Damping', 0.06)
 
     synth.ladspa.activate()
 
