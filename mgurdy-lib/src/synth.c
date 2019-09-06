@@ -374,7 +374,7 @@ static void update_drone_model(struct mg_core *mg)
             model->expression = expression;
         }
 
-        if (expression <= 0) {
+        if (model->expression <= 0) {
             if (model->note_count > 0) {
                 mg_string_clear_notes(st);
             }
