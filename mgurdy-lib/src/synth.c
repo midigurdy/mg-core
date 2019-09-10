@@ -284,7 +284,7 @@ static void update_melody_model(struct mg_core *mg)
                                 note->velocity = 1;
                             }
                             else {
-                                note->velocity = 32;
+                                note->velocity = 31;
                             }
                         } else {
                             note->velocity = 64; // FIXME: is this a good default for generic?
