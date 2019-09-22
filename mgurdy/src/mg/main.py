@@ -241,6 +241,11 @@ def configure_logging(debug=False):
                 'level': 'DEBUG',
                 'formatter': 'default',
             },
+            'syslog': {
+                'class': 'logging.handlers.SysLogHandler',
+                'address': '/dev/log',
+                'formatter': 'default',
+            },
         },
         'loggers': {
             'system': {
@@ -258,6 +263,6 @@ def configure_logging(debug=False):
         },
         'root': {
             'level': 'WARNING',
-            'handlers': ['console'],
+            'handlers': ['console', 'syslog'],
         },
     })
