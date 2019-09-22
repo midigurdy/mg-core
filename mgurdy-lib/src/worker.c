@@ -99,7 +99,6 @@ static int mg_worker_run(struct mg_core *mg)
 {
     int ret;
     int err;
-    static int count = 0;
 
     /* read any pending sensor values */
     ret = mg_sensors_read(mg);
@@ -131,13 +130,6 @@ static int mg_worker_run(struct mg_core *mg)
     position_to_websockets(mg);
     if (mg_server_key_client_count()) {
         mg_server_report_keys(mg->keys);
-    }
-
-    if (count < 1000) {
-        count ++;
-    } else {
-        count = 0;
-        // mg_midi_stats();
     }
 
     return 0;
