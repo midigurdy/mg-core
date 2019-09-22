@@ -10,7 +10,7 @@ OBJECTS = $(SOURCES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
 default: $(TARGET)
 
-all: default
+all: default mgcrashdump
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -23,5 +23,9 @@ $(OBJECTS) : $$(patsubst $(BUILD_DIR)/%.o,$(SRC_DIR)/%.c,$$@)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
+
+mgcrashdump:
+	mkdir -p $(BUILD_DIR)
+	$(CC) src/crashdump.c -o $(BUILD_DIR)/mgcrashdump
 
 .PHONY: default clean
