@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mgurdy",
-    version="1.2.0",
+    version="1.2.1",
     author="Marcus Weseloh",
     author_email="marcus@weseloh.cc",
     description="The main MidiGurdy program",
@@ -20,6 +20,7 @@ setup(
     scripts=[
         'bin/mgurdy.py',
         'bin/mgmessage.py',
+        'bin/mgsysinfo.py',
     ],
     install_requires=[
         'marshmallow',
