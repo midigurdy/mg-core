@@ -18,10 +18,16 @@ void int_handler(){
 
 void dump_and_restart()
 {
+    int err;
+
     system("/bin/echo 'heartbeat' > /sys/class/leds/string1/trigger");
     system("/bin/echo 'heartbeat' > /sys/class/leds/string2/trigger");
     system("/bin/echo 'heartbeat' > /sys/class/leds/string3/trigger");
-    system("/usr/bin/wget -q http://localhost:9999/live -O /data/crashdump.html");
+    err = system("/usr/bin/wget -q -T 10 http://localhost:9999/live -O /data/crashdump.html");
+    if (err) {
+        // if getting the sysinfo fails, at least try to secure the current syslog
+        system("cp /var/log/messages /data/crashdump.html");
+    }
     system("/bin/sync");
     printf("rebooting in 2 seconds!\n");
     sleep(2);
