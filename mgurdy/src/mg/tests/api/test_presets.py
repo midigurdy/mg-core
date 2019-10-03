@@ -64,6 +64,7 @@ def test_list_presets(client):
                     'panning': 64,
                     'mode': 'midigurdy',
                     'finetune': 0,
+                    'chien_threshold': 50,
                 }],
                 'trompette': [],
                 'drone': [],
@@ -113,6 +114,7 @@ def test_create_preset(client):
                     'panning': 0,
                     'mode': 'midigurdy',
                     'finetune': 0,
+                    'chien_threshold': 50,
                 }, {
                     'soundfont': 'test',
                     'bank': 0,
@@ -125,6 +127,7 @@ def test_create_preset(client):
                     'panning': 100,
                     'mode': 'keyboard',
                     'finetune': 0,
+                    'chien_threshold': 50,
                 }
             ],
             'drone': [],
@@ -163,6 +166,7 @@ def test_create_preset_checks_max_voice_len(client):
         'volume': 2,
         'panning': 0,
         'finetune': 0,
+        'chien_threshold': 50,
     }
     data = {
         'name': 'p1',
@@ -283,6 +287,7 @@ def test_update_preset(client):
                     'panning': 0,
                     'mode': 'midigurdy',
                     'finetune': 0,
+                    'chien_threshold': 50,
                 },
                 {
                     'soundfont': 'test',
@@ -296,6 +301,7 @@ def test_update_preset(client):
                     'panning': 0,
                     'mode': 'midigurdy',
                     'finetune': 0,
+                    'chien_threshold': 50,
                 }
             ],
             'drone': [],

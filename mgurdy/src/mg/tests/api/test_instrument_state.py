@@ -27,7 +27,6 @@ def test_get_instrument_state(client, state):
 
     expected = {
         'main': {'gain': 50, 'volume': 120, 'pitchbend_range': 0},
-        'chien': {'threshold': 50},
         'tuning': {'coarse': 0, 'fine': 0},
         'reverb': {'volume': 25, 'panning': 64},
         'keynoise': {'volume': 20, 'panning': 64, 'soundfont': None, 'bank': 0, 'program': 0},
@@ -45,6 +44,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 },
                 {
                     'bank': 0,
@@ -58,6 +58,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 },
                 {
                     'bank': 0,
@@ -71,6 +72,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 }
             ],
             'drone': [
@@ -86,6 +88,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 },
                 {
                     'bank': 0,
@@ -99,6 +102,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 },
                 {
                     'bank': 0,
@@ -112,6 +116,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 }
             ],
             'trompette': [
@@ -127,6 +132,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 },
                 {
                     'bank': 0,
@@ -140,6 +146,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 },
                 {
                     'bank': 0,
@@ -153,6 +160,7 @@ def test_get_instrument_state(client, state):
                     'soundfont': None,
                     'volume': 100,
                     'finetune': 0,
+                    'chien_threshold': 50,
                 }
             ]
         },
@@ -164,7 +172,7 @@ def test_get_instrument_state(client, state):
 
 def test_partial_update_instrument_state(client, state):
     data = {
-        'chien': {'threshold': 42},
+        'tuning': {'coarse': 42},
     }
 
     state.main_volume = 1
@@ -174,14 +182,14 @@ def test_partial_update_instrument_state(client, state):
                     content_type='application/json')
 
     assert rv.status_code == 200
-    assert state.chien_threshold == 42
+    assert state.coarse_tune == 42
     assert state.main_volume == 1
     assert state.preset.melody[0].soundfont_id == 'blafoo'
 
 
 def test_full_update_instrument_state(client, state):
     data = {
-        'chien': {'threshold': 42},
+        'tuning': {'coarse': 42},
     }
 
     state.main_volume = 1
@@ -191,6 +199,6 @@ def test_full_update_instrument_state(client, state):
                      content_type='application/json')
 
     assert rv.status_code == 200
-    assert state.chien_threshold == 42
+    assert state.coarse_tune == 42
     assert state.main_volume == 120  # default value
     assert state.preset.melody[0].soundfont_id is None

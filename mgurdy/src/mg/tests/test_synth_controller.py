@@ -33,7 +33,7 @@ def ctrl():
     ('active_preset_voice_capo_changed', {}),
     ('fine_tune_changed', {}),
     ('coarse_tune_changed', {}),
-    ('chien_threshold_changed', {}),
+    ('multi_chien_threshold_changed', {}),
     ('active_preset_changed', {}),
 ])
 def test_synth_gain_changed(ctrl, name, kwargs):
