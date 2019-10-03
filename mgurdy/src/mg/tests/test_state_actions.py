@@ -3,6 +3,7 @@ import pytest
 
 from mg.db import initialize, Preset
 from mg.handler import StateActionHandler
+from mg.input.events import Event
 from mg.state import State
 from mg.ui.display.base import BaseDisplay
 from mg.ui.menu import Menu
@@ -33,7 +34,7 @@ def test_load_preset(db, handler):
 
     assert handler.state.last_preset_number == 0
 
-    handler.load_preset(p.id)
+    handler.load_preset(_evt('', '', p.number))
 
     assert handler.state.last_preset_number == p.number
 
@@ -41,6 +42,14 @@ def test_load_preset(db, handler):
 def test_toggle_string_mute(handler):
     assert handler.state.preset.melody[0].muted is True
 
-    handler.toggle_string_mute(0)
+    handler.toggle_string_mute(_evt('', '', 0))
 
     assert handler.state.preset.melody[0].muted is False
+
+
+def _evt(name, action='down', value=None):
+    return Event.from_mapping({
+        'type': 'state_action',
+        'name': name,
+        'value': value,
+    })
