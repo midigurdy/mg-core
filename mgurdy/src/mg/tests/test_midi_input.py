@@ -5,16 +5,49 @@ import pytest
 from mg.input.events import Key, Action
 from mg.input.manager import InputManager
 from mg.input.midi import MidiInput, MidiMessage
+from mg.alsa.api import RawMIDIPort
+
+
+class MockedRawMIDIPort(RawMIDIPort):
+    def __init__(self, _filename, *args, **kwargs):
+        self._filename = _filename
+        self._fd = None
+        super().__init__(*args, **kwargs)
+
+    def open(self, nonblock=True):
+        self._fd = open(self._filename, 'rb')
+        return self
+
+    def close(self):
+        self._fd.close()
+
+    def read(self, size):
+        return self._fd.read(size)
+
+    def fileno(self):
+        return self._fd.fileno()
+
+
+class MockedMidiInput(MidiInput):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.port = MockedRawMIDIPort(self.filename, 1, 1, 1,
+                                      'mocked_card', 'mocked_subdevice')
 
 
 @pytest.fixture
-def dev(tmpdir):
+def port(tmpdir):
     tmpfile = tmpdir.join('testinput').ensure()
-    return str(tmpfile)
+    return MockedRawMIDIPort(str(tmpfile), 1, 1, 1,
+                             'mocked_card', 'mocked_subdevice')
 
 
-def test_read_empty(dev):
-    midi = MidiInput(dev)
+@pytest.fixture
+def midi(port):
+    return MidiInput(port, port._filename)
+
+
+def test_read_empty(midi):
     midi.open()
 
     assert midi.read() == []
@@ -22,15 +55,14 @@ def test_read_empty(dev):
     midi.close()
 
 
-def test_read_channel_messages(dev):
-    midi = MidiInput(dev)
+def test_read_channel_messages(midi):
     midi.open()
 
     msg1 = MidiMessage(1, 'note_on', 60, 127)
     msg2 = MidiMessage(2, 'program_change', 126)
     msg3 = MidiMessage(3, 'note_off', 61, 1)
 
-    with open(dev, 'wb') as f:
+    with open(midi.filename, 'wb') as f:
         f.write(msg1.to_binary())
         f.write(msg2.to_binary())
         f.write(msg3.to_binary())
@@ -54,21 +86,19 @@ def test_read_channel_messages(dev):
     assert m3.arg2 == 1
 
 
-def test_ignore_bogus_data(dev):
-    midi = MidiInput(dev)
+def test_ignore_bogus_data(midi):
     midi.open()
 
-    with open(dev, 'wb') as f:
+    with open(midi.filename, 'wb') as f:
         f.write(bytes([1, 2, 3, 4, 5, 6, 7, 9]))
 
     assert midi.read() == []
 
 
-def test_ignore_sysex_data(dev):
-    midi = MidiInput(dev)
+def test_ignore_sysex_data(midi):
     midi.open()
 
-    with open(dev, 'wb') as f:
+    with open(midi.filename, 'wb') as f:
         f.write(b'0x70')  # sysex start
         f.write(bytes([42] * 1011))  # some sysex payload
         f.write(b'0x7F')  # sysex end
@@ -76,14 +106,13 @@ def test_ignore_sysex_data(dev):
     assert midi.read() == []
 
 
-def test_realtime_messages(dev):
-    midi = MidiInput(dev)
+def test_realtime_messages(midi):
     midi.open()
 
     msg = MidiMessage(0, 'note_on', 60, 127)
     msgdata = msg.to_binary()
 
-    with open(dev, 'wb') as f:
+    with open(midi.filename, 'wb') as f:
         f.write(msgdata[:1])  # start note on message
         f.write(bytes(0xF8 + i for i in range(8)))  # all possible realtime msgs
         f.write(msgdata[1:])  # rest of note on message
@@ -96,26 +125,23 @@ def test_realtime_messages(dev):
     assert result[0].arg2 == 127
 
 
-def test_poll_device_without_config_returns_no_events(tmpdir):
-    dev = tmpdir.join('dev').ensure()
+def test_poll_device_without_config_returns_no_events(midi):
     queue = Queue()
     manager = InputManager(queue)
-    manager.register(MidiInput(str(dev)))
+    manager.register(midi)
 
-    with dev.open('wb') as f:
+    with open(midi.filename, 'wb') as f:
         f.write(MidiMessage(0, 'note_on', 60, 127).to_binary())
 
     manager.poll()
     assert queue.qsize() == 0
 
 
-def test_simple_map_two_byte_messages(tmpdir):
-    dev = tmpdir.join('dev').ensure()
-
-    config = [{
+def test_simple_map_two_byte_messages(port):
+    config = {
         'name': 'Test Map',
         'type': 'midi',
-        'device': str(dev),
+        'device': port._filename,
         'mappings': [
             {
                 'input': {
@@ -144,13 +170,14 @@ def test_simple_map_two_byte_messages(tmpdir):
                 },
             },
         ],
-    }]
+    }
 
     queue = Queue()
     manager = InputManager(queue)
-    manager.set_config(config)
+    inp = MidiInput.from_config(config, port=port)
+    manager.register(inp)
 
-    with dev.open('wb') as f:
+    with open(port._filename, 'wb') as f:
         # should all be ignored
         f.write(MidiMessage(7, 'note_on', 60, 127).to_binary())
         f.write(MidiMessage(1, 'note_off', 60, 127).to_binary())
@@ -175,13 +202,11 @@ def test_simple_map_two_byte_messages(tmpdir):
     assert e.action == Action.up
 
 
-def test_simple_map_single_byte_messages(tmpdir):
-    dev = tmpdir.join('dev').ensure()
-
-    config = [{
+def test_simple_map_single_byte_messages(port):
+    config = {
         'name': 'Test Map',
         'type': 'midi',
-        'device': str(dev),
+        'device': port._filename,
         'mappings': [
             {
                 'input': {
@@ -196,13 +221,14 @@ def test_simple_map_single_byte_messages(tmpdir):
                 },
             },
         ],
-    }]
+    }
 
     queue = Queue()
     manager = InputManager(queue)
-    manager.set_config(config)
+    inp = MidiInput.from_config(config, port=port)
+    manager.register(inp)
 
-    with dev.open('wb') as f:
+    with open(port._filename, 'wb') as f:
         f.write(MidiMessage(1, 'program_change', 60).to_binary())
 
     manager.poll()
@@ -214,14 +240,12 @@ def test_simple_map_single_byte_messages(tmpdir):
     assert e.action == Action.up
 
 
-def test_wildcard_match(tmpdir):
-    dev = tmpdir.join('dev').ensure()
-
-    config = [{
+def test_wildcard_match(port):
+    config = {
         'name': 'Test Map',
         'type': 'midi',
         'debug': True,
-        'device': str(dev),
+        'device': port._filename,
         'mappings': [
             {
                 'input': {
@@ -245,13 +269,14 @@ def test_wildcard_match(tmpdir):
                 },
             },
         ],
-    }]
+    }
 
     queue = Queue()
     manager = InputManager(queue)
-    manager.set_config(config)
+    inp = MidiInput.from_config(config, port=port)
+    manager.register(inp)
 
-    with dev.open('wb') as f:
+    with open(port._filename, 'wb') as f:
         f.write(MidiMessage(1, 'note_on', 7, 42).to_binary())
         f.write(MidiMessage(3, 'program_change', 7).to_binary())
         f.write(MidiMessage(5, 'control_change', 7, 42).to_binary())
