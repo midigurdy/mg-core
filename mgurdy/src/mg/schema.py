@@ -2,13 +2,14 @@ from marshmallow import Schema, fields, validate, ValidationError
 
 
 midi_range = validate.Range(min=0, max=127)
+bank_range = validate.Range(min=0, max=128)
 percent_range = validate.Range(min=0, max=100)
 debounce_range = validate.Range(min=0, max=50)
 
 
 class VoiceSchema(Schema):
     soundfont = fields.Str(default=None, allow_none=True)
-    bank = fields.Int(default=0, validate=midi_range)
+    bank = fields.Int(default=0, validate=bank_range)
     program = fields.Int(default=0, validate=midi_range)
     volume = fields.Int(default=127, validate=midi_range)
     panning = fields.Int(default=64, validate=midi_range)
@@ -34,7 +35,7 @@ class TrompetteSchema(VoiceSchema):
 
 class KeynoiseSchema(VoiceSchema):
     soundfont = fields.Str(default=None, allow_none=True)
-    bank = fields.Int(default=0, validate=midi_range)
+    bank = fields.Int(default=0, validate=bank_range)
     program = fields.Int(default=0, validate=midi_range)
     volume = fields.Int(default=127, validate=midi_range)
     panning = fields.Int(default=64, validate=midi_range)
