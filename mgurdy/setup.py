@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mgurdy",
-    version="1.2.1",
+    version="1.2.2",
     author="Marcus Weseloh",
     author_email="marcus@weseloh.cc",
     description="The main MidiGurdy program",
