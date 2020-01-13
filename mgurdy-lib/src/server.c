@@ -161,6 +161,9 @@ static int _wheel_callback(struct lws *wsi, enum lws_callback_reasons reason,
         case LWS_CALLBACK_CLOSED:
             _wheel_client_count--;
             // printf("wheel websocket connection closed: %d\n", _wheel_client_count);
+            if (_wheel_client_count == 0) {
+                _wheel_buf_count = 0;
+            }
             break;
         case LWS_CALLBACK_SERVER_WRITEABLE:
             if (_wheel_buf_count) {
