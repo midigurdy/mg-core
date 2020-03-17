@@ -381,13 +381,17 @@ class VoiceState(EventEmitter):
             self.mode = 'midigurdy'
 
     def clear_sound(self):
-        with signals.suppress():
+        do_update = False
+        with signals.suppress() as events:
             self.soundfont_id = None
             self.bank = 0
             self.program = 0
             self.base_note = 60
             self.muted = True
-        self.notify('sound:changed')
+            if events:
+                do_update = True
+        if do_update:
+            self.notify('sound:changed')
 
     def get_sound(self):
         from mg.sf2 import SoundFont
