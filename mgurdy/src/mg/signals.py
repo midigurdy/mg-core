@@ -45,7 +45,7 @@ class Signals:
 
         for handler in self.handlers.get(name, []):
             try:
-                handler(name, data)
+                handler(name, dict(data))
                 handled = True
                 log.debug('%s (%s) (%s)', name, handler, data)
             except:
@@ -54,7 +54,7 @@ class Signals:
                     raise
         for handler in self.handlers.get('__all__', []):
             try:
-                handler(name, data)
+                handler(name, dict(data))
                 handled = True
                 log.debug('%s (__all__ %s) (%s)', name, handler, data)
             except:
