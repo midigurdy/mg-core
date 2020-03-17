@@ -79,7 +79,7 @@ class State(EventEmitter):
                         obj = getattr(obj, name)
                 cached = obj
                 self._obj_path_cache[path] = cached
-            except:
+            except Exception:
                 log.exception('Unable to resolve obj path "{}"'.format(path))
         return cached
 
@@ -266,7 +266,7 @@ class PowerState(EventEmitter):
                 if f.read().strip() == '1':
                     return 'usb'
             return 'bat'
-        except:
+        except Exception:
             self._log.exception('Unable to get power source')
             return 'bat'
 
@@ -274,7 +274,7 @@ class PowerState(EventEmitter):
         try:
             with open(BAT_VOLTAGE, 'r') as f:
                 return int(f.read().strip()) / 1000
-        except:
+        except Exception:
             self._log.exception('Unable to get battery voltage')
             return 0
 
