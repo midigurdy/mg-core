@@ -347,7 +347,7 @@ class VoiceState(EventEmitter):
 
     def from_dict(self, data, partial=False):
         if 'soundfont' in data and 'bank' in data and 'program' in data:
-            sf = SoundFont.by_id(data['soundfont'])
+            sf = SoundFont.by_id(data['soundfont']) if data['soundfont'] else None
             sound = sf.get_sound(data['bank'], data['program']) if sf else None
             if sound:
                 self.set_sound(sound)
