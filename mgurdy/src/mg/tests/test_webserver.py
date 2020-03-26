@@ -1,13 +1,13 @@
 import pytest
 
 from mg.server.app import app as flask_app
-from mg.conf import settings
+from mg.tests.conf import settings
 from mg.state import State
 
 
 @pytest.fixture
 def client():
-    flask_app.config['state'] = State()
+    flask_app.config['state'] = State(settings)
     return flask_app.test_client()
 
 

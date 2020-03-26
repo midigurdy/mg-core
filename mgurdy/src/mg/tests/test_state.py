@@ -8,7 +8,7 @@ from mg.ui.pages.base import Page
 from mg.signals import signals
 from mg.db import initialize, Preset
 from mg.state import State, VoiceState
-from mg.conf import settings
+from mg.tests.conf import settings
 from mg.sf2 import SoundFont
 
 signals.propagate_exceptions = True
@@ -18,7 +18,7 @@ signals.propagate_exceptions = True
 def menu(tmpdir):
     display = BaseDisplay(128, 32)
     event_queue = Queue()
-    menu = Menu(event_queue, State(), display)
+    menu = Menu(event_queue, State(settings), display)
     yield menu
     menu.cleanup()
 
@@ -26,12 +26,6 @@ def menu(tmpdir):
 @pytest.fixture
 def db():
     initialize(':memory:')
-
-
-@pytest.fixture
-def testdata_dir():
-    settings.sound_dir = get_testdata_dir()
-    return settings.data_dir
 
 
 def get_testdata_dir():
@@ -74,7 +68,7 @@ def test_save_and_load_state_as_preset(db, menu):
     assert menu.state.preset.melody[0].prog == 2
 
 
-def test_set_sound_on_voice(db, menu, testdata_dir):
+def test_set_sound_on_voice(db, menu):
     sf = SoundFont.by_id('mg.sf2')
     sound = sf.get_sound(0, 1)
     voice = VoiceState('melody')

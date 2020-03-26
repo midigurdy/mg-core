@@ -1,13 +1,14 @@
 import json
 import pytest
 
+from mg.tests.conf import settings
 from mg.server.app import app as flask_app
 from mg.state import State
 
 
 @pytest.fixture
 def state():
-    return State()
+    return State(settings)
 
 
 @pytest.fixture

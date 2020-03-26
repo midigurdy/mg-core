@@ -2,12 +2,13 @@ import pytest
 
 from mg.fluidsynth.api import FluidSynth
 from mg.state import State
+from mg.tests.conf import settings
 from mg.controller import SynthController
 
 
 @pytest.fixture
 def ctrl():
-    fluid = FluidSynth()
+    fluid = FluidSynth(settings.sound_dir)
     fluid.configure({
         "audio.driver": "file",
         "synth.ladspa.active": 1,
@@ -21,7 +22,7 @@ def ctrl():
     fluid.ladspa.link_effect('sympa', 'Output Right', 'Main:R')
     fluid.ladspa.activate()
 
-    yield SynthController(fluid, State())
+    yield SynthController(fluid, State(settings))
 
     fluid.stop()
 

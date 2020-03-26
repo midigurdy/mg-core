@@ -1,6 +1,7 @@
 import json
 import pytest
 
+from mg.tests.conf import settings
 from mg.db import initialize
 from mg.server.app import app as flask_app
 from mg.state import State
@@ -13,7 +14,7 @@ def db():
 
 @pytest.fixture
 def client(db):
-    flask_app.config['state'] = State()
+    flask_app.config['state'] = State(settings)
     return flask_app.test_client()
 
 

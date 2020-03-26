@@ -8,13 +8,14 @@ from mg.state import State
 from mg.ui.display.base import BaseDisplay
 from mg.ui.menu import Menu
 from mg.ui.pages.base import Page
+from mg.tests.conf import settings
 
 
 @pytest.fixture
 def handler(tmpdir):
     display = BaseDisplay(128, 32)
     event_queue = Queue()
-    state = State()
+    state = State(settings)
     menu = Menu(event_queue, state, display)
     handler = StateActionHandler(state, menu)
     yield handler

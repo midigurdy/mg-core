@@ -4,7 +4,7 @@ import json
 import pytest
 
 from mg.server.app import app as flask_app
-from mg.conf import settings
+from mg.tests.conf import settings
 from mg.state import State
 
 
@@ -15,21 +15,17 @@ def get_testdata_dir():
 
 @pytest.fixture
 def client():
-    flask_app.config['state'] = State()
+    flask_app.config['state'] = State(settings)
     return flask_app.test_client()
 
 
 @pytest.fixture
-def testdata_dir():
-    settings.sound_dir = get_testdata_dir()
-    return settings.data_dir
-
-
-@pytest.fixture
 def tmpdata_dir(tmpdir):
+    old_dirs = (settings.sound_dir, settings.upload_dir)
     settings.sound_dir = str(tmpdir)
     settings.upload_dir = str(tmpdir)
-    return tmpdir
+    yield tmpdir
+    settings.sound_dir, settings.upload_dir = old_dirs
 
 
 def rjson(response):
@@ -43,14 +39,14 @@ def test_list_empty_soundfonts(client, tmpdata_dir):
     assert rjson(rv) == []
 
 
-def test_list_soundfonts(client, testdata_dir):
+def test_list_soundfonts(client):
     rv = client.get('/api/sounds')
 
     assert rv.status_code == 200
     assert len(rjson(rv)) == 2
 
 
-def test_get_soundfont(client, testdata_dir):
+def test_get_soundfont(client):
     rv = client.get('/api/sounds/mg.sf2')
 
     expected = MG_SOUNDFONT
@@ -60,7 +56,7 @@ def test_get_soundfont(client, testdata_dir):
 
 
 def test_upload_soundfont(client, tmpdata_dir):
-    filename = os.path.join(get_testdata_dir(), 'mg.sf2')
+    filename = os.path.join(get_testdata_dir(), 'sounds/mg.sf2')
     sfile = open(filename, 'rb')
 
     rv = client.post('/api/upload/sound/test.sf2', data=sfile)
@@ -133,7 +129,7 @@ def test_upload_soundfont(client, tmpdata_dir):
 
 
 def test_upload_with_existing_soundfont(client, tmpdata_dir):
-    filename = os.path.join(get_testdata_dir(), 'mg.sf2')
+    filename = os.path.join(get_testdata_dir(), 'sounds/mg.sf2')
     assert not os.path.exists(os.path.join(tmpdata_dir, 'test.sf2'))
 
     # create soundfont
@@ -147,7 +143,7 @@ def test_upload_with_existing_soundfont(client, tmpdata_dir):
 
 
 def test_delete_soundfont(client, tmpdata_dir):
-    shutil.copy(os.path.join(get_testdata_dir(), 'mg.sf2'), str(tmpdata_dir))
+    shutil.copy(os.path.join(get_testdata_dir(), 'sounds/mg.sf2'), str(tmpdata_dir))
     assert os.path.isfile(os.path.join(tmpdata_dir, 'mg.sf2'))
 
     rv = client.delete('/api/sounds/mg.sf2')
@@ -157,7 +153,7 @@ def test_delete_soundfont(client, tmpdata_dir):
     assert not os.path.isfile(os.path.join(tmpdata_dir, 'mg.sf2'))
 
 
-def test_download_soundfont(client, testdata_dir):
+def test_download_soundfont(client):
     rv = client.get('/download/sounds/test.sf2')
     assert rv.status_code == 200
 

@@ -3,16 +3,14 @@ import os
 import pytest
 
 from mg.fluidsynth.api import FluidSynth, FluidSynthError
-from mg.conf import settings
+from mg.tests.conf import settings
 
 
 @pytest.fixture(scope='module')
 def fs(tmpdir_factory):
     output = tmpdir_factory.mktemp('fluidsynth').join('output.wav')
-    cdir = os.path.dirname(os.path.abspath(__file__))
-    soundfont_dir = os.path.join(cdir, 'data')
-    settings.sound_dir = soundfont_dir
-    api = FluidSynth(soundfont_dir=soundfont_dir, config={
+    print(settings.sound_dir)
+    api = FluidSynth(soundfont_dir=settings.sound_dir, config={
         'audio.driver': 'file',
         'audio.file.name': str(output)
     })

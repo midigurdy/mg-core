@@ -1,5 +1,6 @@
 import pytest
 
+from mg.tests.conf import settings
 from mg.state import State
 from mg.ui.menu import Menu
 from mg.ui.pages.base import Page
@@ -12,7 +13,7 @@ def display():
 
 
 def test_register_and_goto_named_page(display):
-    menu = Menu(None, State(), display)
+    menu = Menu(None, State(settings), display)
 
     menu.register_page('test', Page)
     menu.goto('test')
