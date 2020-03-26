@@ -60,8 +60,11 @@ class Settings:
             if keytype == 'str':
                 keytype = ''
             if config.has_option(section, key):
-                getter = getattr(config, f'get{keytype}')
-                setattr(self, key, getter(section, key))
+                try:
+                    getter = getattr(config, f'get{keytype}')
+                    setattr(self, key, getter(section, key))
+                except Exception as e:
+                    raise Exception(f'Error parsing config {section}:{key}') from e
 
 
 settings = Settings()
