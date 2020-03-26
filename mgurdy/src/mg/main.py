@@ -50,7 +50,7 @@ def start(args):
 
     menu, input_manager, event_handler = start_ui(state, settings, args.debug)
 
-    fluid = FluidSynth()
+    fluid = FluidSynth(settings.sound_dir)
 
     synth_ctrl = SynthController(fluid, state)
     synth_ctrl.start_listening()

@@ -32,7 +32,7 @@ class FluidSynth(object):
         self.adriver = None
         self.synth = None
         self._ladspa = None
-        self.soundfont_dir = settings.sound_dir
+        self.soundfont_dir = soundfont_dir
         self.soundfonts = {}
         self.channels = {}
         self.settings = lib.new_fluid_settings()
