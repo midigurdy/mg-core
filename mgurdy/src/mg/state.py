@@ -11,13 +11,9 @@ from mg.alsa.api import RawMIDI
 
 log = logging.getLogger('state')
 
-AC_ONLINE_STATE = '/sys/class/power_supply/axp20x-ac/online'
-USB_ONLINE_STATE = '/sys/class/power_supply/axp20x-usb/online'
-BAT_VOLTAGE = '/sys/class/hwmon/hwmon0/in1_input'
-
 
 class State(EventEmitter):
-    def __init__(self):
+    def __init__(self, settings):
         super().__init__()
         self._lock = threading.RLock()
         self._obj_path_cache = {}
@@ -41,7 +37,11 @@ class State(EventEmitter):
 
             self.ui = UIState()
             self.synth = SynthState()
-            self.power = PowerState()
+            self.power = PowerState(
+                ac_state_file=settings.power_state_ac,
+                usb_state_file=settings.power_state_usb,
+                battery_voltage_file=settings.battery_voltage,
+            )
 
             self.midi = MIDIState()
 
@@ -247,9 +247,14 @@ class UIState(EventEmitter):
 
 
 class PowerState(EventEmitter):
-    def __init__(self):
+    def __init__(self, ac_state_file, usb_state_file, battery_voltage_file):
         super().__init__(prefix='power')
         self._log = logging.getLogger('system.power')
+
+        self._ac_state_file = ac_state_file
+        self._usb_state_file = usb_state_file
+        self._battery_voltage_file = battery_voltage_file
+
         self.source = 'ext'
         self.battery_voltage = 0.0
         self.battery_percent = 0
@@ -259,10 +264,10 @@ class PowerState(EventEmitter):
 
     def get_power_source(self):
         try:
-            with open(AC_ONLINE_STATE, 'r') as f:
+            with open(self._ac_state_file, 'r') as f:
                 if f.read().strip() == '1':
                     return 'ext'
-            with open(USB_ONLINE_STATE, 'r') as f:
+            with open(self._usb_state_file, 'r') as f:
                 if f.read().strip() == '1':
                     return 'usb'
             return 'bat'
@@ -272,7 +277,7 @@ class PowerState(EventEmitter):
 
     def get_battery_voltage(self):
         try:
-            with open(BAT_VOLTAGE, 'r') as f:
+            with open(self._battery_voltage_file, 'r') as f:
                 return int(f.read().strip()) / 1000
         except Exception:
             self._log.exception('Unable to get battery voltage')

@@ -13,11 +13,6 @@ from . import utils
 
 log = logging.getLogger('controller')
 
-BACKLIGHT_BRIGHTNESS = '/sys/class/backlight/ssd1307fb0/brightness'
-LED_BRIGHTNESS_TMPL = '/sys/class/leds/string%s/brightness'
-ALSA_MIXER = 'Power Amplifier'
-UDC_CONFIG = '/sys/devices/platform/soc@01c00000/1c13000.usb/musb-hdrc.1.auto/gadget/configuration'
-
 
 VOICE_MODES = (
     'midigurdy',
@@ -281,8 +276,18 @@ class SystemController(EventListener):
         'active:preset:voice:sound:changed',
     )
 
-    def __init__(self, state):
+    def __init__(self, state, settings):
         self.state = state
+
+        self.backlight_file = settings.backlight_control
+        self.led_brightnes_file = (
+            settings.led_brightness_1,
+            settings.led_brightness_2,
+            settings.led_brightness_3,
+        )
+        self.alsa_mixer_name = settings.alsa_mixer
+        self.udc_config_file = settings.udc_config
+
         self.log = logging.getLogger('system')
         self._mixer = None
 
@@ -310,18 +315,18 @@ class SystemController(EventListener):
         group = self.state.ui.string_group
         for i, name in enumerate(('trompette', 'melody', 'drone')):
             muted = getattr(self.state.preset, name)[group].is_silent()
-            self.set_string_led(i + 1, not muted)
+            self.set_string_led(i, not muted)
 
     def set_string_led(self, string, on):
         try:
-            with open(LED_BRIGHTNESS_TMPL % string, 'w') as f:
+            with open(self.led_brightnes_file[string], 'w') as f:
                 f.write('255' if on else '0')
         except:
             self.log.exception('Unable to set string led')
 
     def get_brightness(self):
         try:
-            with open(BACKLIGHT_BRIGHTNESS, 'r') as f:
+            with open(self.backlight_file, 'r') as f:
                 val = int(f.read())
             return int(utils.scale(val, 0, 255, 0, 100))
         except:
@@ -331,29 +336,30 @@ class SystemController(EventListener):
     def set_brightness(self, val):
         try:
             val = int(utils.scale(val, 0, 100, 0, 255))
-            with open(BACKLIGHT_BRIGHTNESS, 'w') as f:
+            with open(self.backlight_file, 'w') as f:
                 f.write(str(val))
         except:
             self.log.exception('Unable to set brightness')
 
     def set_volume(self, volume):
         try:
-            self.mixer.setvolume(utils.midi2percent(volume), alsaaudio.MIXER_CHANNEL_ALL)
+            if self.mixer:
+                self.mixer.setvolume(utils.midi2percent(volume), alsaaudio.MIXER_CHANNEL_ALL)
         except:
             self.log.exception('Unable to set main volume')
 
     @property
     def mixer(self):
-        if self._mixer is None:
-            self._mixer = alsaaudio.Mixer(ALSA_MIXER)
+        if self._mixer is None and self.alsa_mixer_name != 'disabled':
+            self._mixer = alsaaudio.Mixer(self.alsa_mixer_name)
         return self._mixer
 
     def update_udc_configuration(self):
         try:
-            with open(UDC_CONFIG, 'r') as f:
+            with open(self.udc_config_file, 'r') as f:
                 self.state.midi.udc_config = int(f.read())
         except:
-            pass
+            self.log.exception('Unable to determine UDC config')
 
 
 class MIDIController(EventListener):

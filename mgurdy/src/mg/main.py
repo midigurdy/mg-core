@@ -9,15 +9,10 @@ from mg.conf import settings, find_config_file
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--uitest', action='store_true')
-    parser.add_argument('--noui', action='store_true')
-    parser.add_argument('--input-config', default='input.json')
+    parser.add_argument('--config')
     parser.add_argument('--dump-midi', action='store_true')
     parser.add_argument('--debug-fs', action='store_true')
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--data-dir', default='/data')
-    parser.add_argument('--webroot-dir', default='/srv/www')
-    parser.add_argument('--http-port', default=80)
     parser.add_argument('--traceback', action='store_true')
     args = parser.parse_args()
 
@@ -36,34 +31,31 @@ def start(args):
     prctl.set_proctitle('mg-main')
     prctl.set_name('mg-main')
 
+    if args.config:
+        settings.load(args.config)
+
     configure_logging(debug=args.debug)
 
-    for key in ('webroot_dir', 'http_port', 'input_config'):
-        setattr(settings, key, getattr(args, key))
-    settings.set_data_dir(args.data_dir)
     settings.create_dirs()
 
     from mg.fluidsynth.api import FluidSynth
     from mg.state import State
     from mg.controller import SynthController, SystemController, MIDIController
 
-    state = State()
+    state = State(settings)
 
-    menu, input_manager, event_handler = start_ui(
-        state=state,
-        ui_test=args.uitest,
-        no_ui=args.noui)
+    menu, input_manager, event_handler = start_ui(state, settings, args.debug)
 
     fluid = FluidSynth()
 
     synth_ctrl = SynthController(fluid, state)
     synth_ctrl.start_listening()
 
-    system_ctrl = SystemController(state)
+    system_ctrl = SystemController(state, settings)
     system_ctrl.start_listening()
-    system_ctrl.set_string_led(1, 0)
-    system_ctrl.set_string_led(2, 0)
-    system_ctrl.set_string_led(3, 0)
+    system_ctrl.set_string_led(0, False)
+    system_ctrl.set_string_led(1, False)
+    system_ctrl.set_string_led(2, False)
     system_ctrl.update_udc_configuration()
 
     midi_ctrl = MIDIController(input_manager)
@@ -180,7 +172,7 @@ def start_fluidsynth(synth, dump_midi, debug=False):
     synth.ladspa.activate()
 
 
-def start_ui(state, ui_test, no_ui):
+def start_ui(state, settings, menu_debug):
     from queue import Queue
 
     from mg.input.manager import InputManager
@@ -193,18 +185,19 @@ def start_ui(state, ui_test, no_ui):
     from mg.ui.pages.config import PresetConfigDeck
     from mg.ui.pages.strings import MelodyDeck, DroneDeck, TrompetteDeck
 
-    if no_ui:
+    if settings.display_device == 'disabled':
+        # use dummy display
         from mg.ui.display.base import BaseDisplay
         display = BaseDisplay(128, 32)
-    elif ui_test:
-        display = Display(128, 32, '/tmp/mgimage', mmap=False)
     else:
-        display = Display(128, 32, '/dev/fb0', mmap=True)
+        display = Display(128, 32,
+                          settings.display_device,
+                          mmap=settings.display_mmap)
 
     event_queue = Queue()
 
     menu = Menu(event_queue, state, display)
-    menu.debug = ui_test
+    menu.debug = menu_debug
     menu.register_page('home', Home)
     menu.register_page('melody', MelodyDeck)
     menu.register_page('drone', DroneDeck)
@@ -249,7 +242,7 @@ def configure_logging(debug=False):
         },
         'loggers': {
             'system': {
-                'level': 'CRITICAL' if debug else 'WARNING',
+                'level': 'DEBUG' if debug else 'WARNING',
                 'formatter': 'default',
             },
             'signals': {
