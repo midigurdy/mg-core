@@ -3,7 +3,7 @@ import os
 import argparse
 import prctl
 
-from mg.utils import background_task
+from mg.utils import background_task, OneLineExceptionFormatter
 from mg.conf import settings, find_config_file
 
 
@@ -19,6 +19,7 @@ def main():
     try:
         start(args)
     except Exception as e:
+        logging.error(f'Fatal error: {e}')
         if args.traceback:
             raise
         else:
@@ -34,7 +35,10 @@ def start(args):
     if args.config:
         settings.load(args.config)
 
-    configure_logging(debug=args.debug)
+    if args.debug:
+        settings.log_level = 'debug'
+
+    configure_logging(settings)
 
     settings.create_dirs()
 
@@ -218,44 +222,33 @@ def start_ui(state, settings, menu_debug):
     return menu, input_manager, event_handler
 
 
-def configure_logging(debug=False):
-    logging.config.dictConfig({
-        'version': 1,
-        'formatters': {
-            'default': {
-                'class': 'mg.utils.OneLineExceptionFormatter',
-                'format': '{asctime} {levelname} - {name} - {processName} - {message}',
-                'style': '{',
-            }
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'level': 'DEBUG',
-                'formatter': 'default',
-            },
-            'syslog': {
-                'class': 'logging.handlers.SysLogHandler',
-                'address': '/dev/log',
-                'formatter': 'default',
-            },
-        },
-        'loggers': {
-            'system': {
-                'level': 'DEBUG' if debug else 'WARNING',
-                'formatter': 'default',
-            },
-            'signals': {
-                'level': 'DEBUG' if debug else 'WARNING',
-                'formatter': 'default',
-            },
-            'fluidsynth': {
-                'level': 'DEBUG' if debug else 'WARNING',
-                'formatter': 'default',
-            },
-        },
-        'root': {
-            'level': 'WARNING',
-            'handlers': ['console', 'syslog'],
-        },
-    })
+def configure_logging(settings):
+    if settings.log_method == 'syslog':
+        handler = logging.handlers.SysLogHandler(settings.log_file)
+    elif settings.log_method == 'file':
+        handler = logging.FileHandler(settings.log_file)
+    elif settings.log_method == 'console':
+        handler = logging.StreamHandler()
+    else:
+        raise Exception('Invalid logger, use syslog, file or console')
+
+    if settings.log_oneline:
+        formatter_class = OneLineExceptionFormatter
+    else:
+        formatter_class = logging.Formatter
+
+    formatter = formatter_class(
+        fmt='{asctime} {levelname} - {name} - {processName} - {message}',
+        style='{')
+    handler.setFormatter(formatter)
+
+    handler.setLevel(settings.log_level.upper())
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(settings.log_level.upper())
+
+    for entry in settings.log_levels.split(','):
+        toks = entry.split(':')
+        if len(toks) != 2:
+            continue
+        name, level = toks
+        logging.getLogger(name.strip()).setLevel(level.strip().upper())

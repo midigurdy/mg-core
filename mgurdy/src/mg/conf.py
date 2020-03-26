@@ -23,6 +23,12 @@ SETTINGS = (
     ('system', 'udc_config', 'str', '/sys/devices/platform/soc@01c00000/1c13000.usb/musb-hdrc.1.auto/gadget/configuration'),
     ('system', 'display_device', 'str', '/dev/fb0'),
     ('system', 'display_mmap', 'boolean', True),
+
+    ('logging', 'log_method', 'str', 'syslog'),
+    ('logging', 'log_level', 'str', 'WARNING'),
+    ('logging', 'log_file', 'str', '/dev/log'),
+    ('logging', 'log_oneline', 'boolean', True),
+    ('logging', 'log_levels', 'str', ''),
 )
 
 
