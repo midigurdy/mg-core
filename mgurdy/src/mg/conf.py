@@ -59,6 +59,14 @@ class Settings:
         config = configparser.ConfigParser(
             interpolation=configparser.ExtendedInterpolation()
         )
+
+        config.add_section('core')
+        # set all core keys so they can be interpolated
+        for section, key, *_ in SETTINGS:
+            if section != 'core':
+                continue
+            config.set(section, key, getattr(self, key))
+
         if not config.read(filename):
             raise FileNotFoundError(filename)
 
