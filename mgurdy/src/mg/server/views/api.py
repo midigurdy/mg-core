@@ -25,8 +25,7 @@ api.add_resource(presets.OrderPresetsView, '/presets/order')
 api.add_resource(sounds.SoundFontListView, '/sounds')
 api.add_resource(sounds.SoundFontView, '/sounds/<string:id>')
 api.add_resource(sounds.SoundFontUploadView,
-                 '/upload/sound/<string:filename>',
-                 '/upload/sound/<string:filename>/<int:overwrite>')
+                 '/upload/sound/<string:filename>')
 
 api.add_resource(instrument.InstrumentView, '/instrument')
 

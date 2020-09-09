@@ -20,7 +20,7 @@ class UploadError(Exception):
 
 
 class SoundFontUploadView(StateResource):
-    def post(self, filename=None, overwrite=None):
+    def post(self, filename=None):
         filename = secure_filename(filename)
 
         if not re.search(r'\.sf[23]$', filename, re.I):
