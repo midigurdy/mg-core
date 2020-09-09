@@ -176,6 +176,6 @@ class RawMIDIPort:
             pfds = ffi.new('struct pollfd *')
             ret = lib.snd_rawmidi_poll_descriptors(self.rmidi[0], pfds, 1)
             if ret < 0:
-                raise IOError(-ret, 'Unable to get pollfds for {}: {}'.format(self.device))
+                raise IOError(-ret, 'Unable to get pollfds for {}: {}'.format(self.device, ret))
             self.pollfds = pfds
         return self.pollfds[0].fd
