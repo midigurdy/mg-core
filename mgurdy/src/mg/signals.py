@@ -28,7 +28,7 @@ class Signals:
         except ValueError:
             log.error('handler {} not registered for event {}!'.format(handler, event))
         except KeyError:
-            log.error('event {} not registered for handler!'.format(event, handler))
+            log.error('event {} not registered for handler {}!'.format(event, handler))
 
     def emit(self, name, data=None):
         if data is None:
