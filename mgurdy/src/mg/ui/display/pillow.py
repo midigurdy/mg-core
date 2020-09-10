@@ -62,5 +62,5 @@ class PillowDisplay(BaseDisplay):
     def __del__(self):
         try:
             self.output.close()
-        except:
+        except Exception:
             pass

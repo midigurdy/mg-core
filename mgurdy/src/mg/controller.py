@@ -321,7 +321,7 @@ class SystemController(EventListener):
         try:
             with open(self.led_brightnes_file[string], 'w') as f:
                 f.write('255' if on else '0')
-        except:
+        except Exception:
             self.log.exception('Unable to set string led')
 
     def get_brightness(self):
@@ -329,7 +329,7 @@ class SystemController(EventListener):
             with open(self.backlight_file, 'r') as f:
                 val = int(f.read())
             return int(utils.scale(val, 0, 255, 0, 100))
-        except:
+        except Exception:
             self.log.exception('Unable to get brightness')
             return 0
 
@@ -338,14 +338,14 @@ class SystemController(EventListener):
             val = int(utils.scale(val, 0, 100, 0, 255))
             with open(self.backlight_file, 'w') as f:
                 f.write(str(val))
-        except:
+        except Exception:
             self.log.exception('Unable to set brightness')
 
     def set_volume(self, volume):
         try:
             if self.mixer:
                 self.mixer.setvolume(utils.midi2percent(volume), alsaaudio.MIXER_CHANNEL_ALL)
-        except:
+        except Exception:
             self.log.exception('Unable to set main volume')
 
     @property
@@ -358,7 +358,7 @@ class SystemController(EventListener):
         try:
             with open(self.udc_config_file, 'r') as f:
                 self.state.midi.udc_config = int(f.read())
-        except:
+        except Exception:
             self.log.exception('Unable to determine UDC config')
 
 
@@ -429,7 +429,7 @@ class MIDIController(EventListener):
         try:
             with open(filename, 'rb') as f:
                 config = json.load(f)
-        except:
+        except Exception:
             log.exception('Unable to open midi device config')
             return
         config['device'] = port.device

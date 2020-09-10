@@ -404,5 +404,5 @@ class MGImage:
     def __del__(self):
         try:
             lib.mg_image_destroy(self.img)
-        except:
+        except Exception:
             pass

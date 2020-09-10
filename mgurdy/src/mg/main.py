@@ -82,7 +82,7 @@ def start(args):
     db_path = os.path.join(settings.data_dir, 'mg.db')
     try:
         db.initialize(db_path)
-    except:
+    except Exception:
         log.exception('Unable to initialize database!')
     db.migrate(db_path)
 

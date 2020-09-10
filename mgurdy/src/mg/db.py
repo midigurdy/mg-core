@@ -60,14 +60,14 @@ class Preset(BaseModel):
     def get_data(self):
         try:
             return self.data_schema.loads(self.data).data
-        except:
+        except Exception:
             log.exception('Unable to read data on preset {}'.format(self.id))
             return {}
 
     def set_data(self, data):
         try:
             self.data = self.data_schema.dumps(data).data
-        except:
+        except Exception:
             log.exception('Unable to store data on preset {}'.format(self.id))
             self.data = '{}'
 
@@ -105,7 +105,7 @@ def load_mapping_ranges(name):
         return None
     try:
         return schema.MappingSchema().loads(entry.data).data['ranges']
-    except:
+    except Exception:
         log.exception('Unable to read mapping "%s" from database', name)
 
 
@@ -113,12 +113,12 @@ def save_mapping_ranges(name, ranges):
     entry, _created = Config.get_or_create(name=name)
     try:
         entry.data = schema.MappingSchema().dumps({'ranges': ranges}).data
-    except:
+    except Exception:
         log.exception('Unable to serialize mapping "%s"', name)
         raise
     try:
         entry.save()
-    except:
+    except Exception:
         log.exception('Unable to write mapping "%s" to database', name)
         raise
 
@@ -126,7 +126,7 @@ def save_mapping_ranges(name, ranges):
 def delete_mapping_ranges(name):
     try:
         Config.delete().where(Config.name == name).execute()
-    except:
+    except Exception:
         log.exception('Unable to delete mapping "%s"', name)
 
 
@@ -137,7 +137,7 @@ def load_key_calibration():
         return None
     try:
         return schema.KeyCalibrationSchema(many=True).loads(entry.data).data
-    except:
+    except Exception:
         log.exception('Unable to read key calibration from database')
 
 
@@ -145,12 +145,12 @@ def save_key_calibration(calib):
     entry, _created = Config.get_or_create(name='key_calibration')
     try:
         entry.data = schema.KeyCalibrationSchema(many=True).dumps(calib).data
-    except:
+    except Exception:
         log.exception('Unable to serialize key calibration')
         raise
     try:
         entry.save()
-    except:
+    except Exception:
         log.exception('Unable to write key calibration')
         raise
 
@@ -158,7 +158,7 @@ def save_key_calibration(calib):
 def delete_key_calibration():
     try:
         Config.delete().where(Config.name == 'key_calibration').execute()
-    except:
+    except Exception:
         log.exception('Unable to delete key calibration')
 
 
@@ -169,7 +169,7 @@ def load_misc_config():
         return None
     try:
         return schema.MiscSchema().loads(entry.data).data
-    except:
+    except Exception:
         log.exception('Unable to read misc config')
 
 
@@ -177,12 +177,12 @@ def save_misc_config(config):
     entry, _created = Config.get_or_create(name='misc')
     try:
         entry.data = schema.MiscSchema().dumps(config).data
-    except:
+    except Exception:
         log.exception('Unable to serialize misc config')
         raise
     try:
         entry.save()
-    except:
+    except Exception:
         log.exception('Unable to write misc_config')
         raise
 
@@ -195,7 +195,7 @@ def load_midi_config(port_id):
         return None
     try:
         return schema.MidiSchema().loads(entry.data).data
-    except:
+    except Exception:
         log.exception('Unable to read midi config')
 
 
@@ -204,12 +204,12 @@ def save_midi_config(port_id, config):
     entry, _created = Config.get_or_create(name=config_key)
     try:
         entry.data = schema.MidiSchema().dumps(config).data
-    except:
+    except Exception:
         log.exception('Unable to serialize midi config')
         raise
     try:
         entry.save()
-    except:
+    except Exception:
         log.exception('Unable to write midi config')
         raise
 
@@ -222,7 +222,7 @@ def initialize(filepath):
 def get_schema_version():
     try:
         return Version.get(Version.name == 'schema').version
-    except:
+    except Exception:
         return None
 
 
@@ -235,7 +235,7 @@ def migrate(filepath):
     if version is None:
         try:
             DB.close()
-        except:
+        except Exception:
             pass
         if os.path.isfile(filepath):
             os.unlink(filepath)

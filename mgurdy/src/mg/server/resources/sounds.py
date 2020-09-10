@@ -54,7 +54,7 @@ class SoundFontUploadView(StateResource):
         except UploadError as e:
             try:
                 os.unlink(tmp.name)
-            except:
+            except Exception:
                 pass
             abort(400, message=str(e))
 
@@ -79,7 +79,7 @@ class SoundFontView(StateResource):
             return abort(404)
         try:
             return SoundFont(filepath).as_dict()
-        except:
+        except Exception:
             abort(500, message='Unable to load sound')
 
     def delete(self, id):

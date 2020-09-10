@@ -5,5 +5,5 @@ def read_firmware_version():
 
 try:
     VERSION = read_firmware_version()
-except:
+except Exception:
     VERSION = 'devel'

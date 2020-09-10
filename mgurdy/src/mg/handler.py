@@ -42,7 +42,7 @@ class EventHandler:
                     raise RuntimeError('Invalid event type %s' % evt.type)
             except KeyboardInterrupt:
                 return
-            except:
+            except Exception:
                 log.exception('Error in event handler')
 
     def handle_state_change_event(self, evt):

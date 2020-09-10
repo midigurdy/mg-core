@@ -63,7 +63,7 @@ class MidiInputEvent:
     def parse_input_cond(self, code):
         try:
             return eval('lambda midi: {}'.format(code), None, None)
-        except:
+        except Exception:
             LOG.exception('Error in input condition')
             return None
 
@@ -74,7 +74,7 @@ class MidiInputEvent:
                 expr = eval('lambda midi: {}'.format(code), None, None)
                 expressions[key] = expr
             return expressions
-        except:
+        except Exception:
             LOG.exception('Error in event expression')
             return None
 

@@ -48,7 +48,7 @@ class Signals:
                 handler(name, dict(data))
                 handled = True
                 log.debug('%s (%s) (%s)', name, handler, data)
-            except:
+            except Exception:
                 log.exception('Error in handler for "{}" signal'.format(name))
                 if self.propagate_exceptions:
                     raise
@@ -57,7 +57,7 @@ class Signals:
                 handler(name, dict(data))
                 handled = True
                 log.debug('%s (__all__ %s) (%s)', name, handler, data)
-            except:
+            except Exception:
                 log.exception('Error in handler for "__all__" signal')
                 if self.propagate_exceptions:
                     raise

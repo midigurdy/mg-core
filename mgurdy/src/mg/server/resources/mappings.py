@@ -35,11 +35,11 @@ class Mapping(Resource):
         ranges = data['ranges']
         try:
             mgcore.set_mapping_ranges(name, ranges)
-        except:
+        except Exception:
             abort(400, message='Unable to apply mapping values')
         try:
             db.save_mapping_ranges(name, ranges)
-        except:
+        except Exception:
             abort(400, message='Unable to save mapping values')
         return self.get(name)
 
@@ -49,7 +49,7 @@ class Mapping(Resource):
         db.delete_mapping_ranges(name)
         try:
             mgcore.reset_mapping_ranges(name)
-        except:
+        except Exception:
             abort(400, message='Unable to reset mapping')
         return self.get(name)
 

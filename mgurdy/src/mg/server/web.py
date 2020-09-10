@@ -27,7 +27,7 @@ class WebServer(threading.Thread):
             app.config['state'] = self.state
             app.config['menu'] = self.menu
             app.run(port=self.port, host='0.0.0.0', debug=self.debug, threaded=True)
-        except:
+        except Exception:
             log.exception('Unable to start webserver on port {}'.format(self.port))
 
 
