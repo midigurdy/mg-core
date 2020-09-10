@@ -51,7 +51,7 @@ class Preset(BaseModel):
 
     @classmethod
     @DB.atomic()
-    def reorder(self, order):
+    def reorder(cls, order):
         num = Preset.update(number=None).execute()
         assert len(order) == num
         for (number, pid) in enumerate(order):
