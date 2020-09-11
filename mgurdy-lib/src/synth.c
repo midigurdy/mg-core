@@ -23,11 +23,8 @@ static void update_keynoise_model(struct mg_core *mg);
 
 static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count,
-        int expression, int prev_expression);
-
-static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
-        int *active_keys, int active_count,
-        int expression, int prev_expression);
+        int expression, int prev_expression,
+        int velocity_switching);
 
 static void update_keyboard_melody(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count);
@@ -166,7 +163,8 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
 
 static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count,
-        int expression, int prev_expression)
+        int expression, int prev_expression,
+        int velocity_switching)
 {
     struct mg_voice *model = &st->model;
     struct mg_note *note;
@@ -202,100 +200,12 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
 
         /* ...and configure note parameters */
 
-        /* Velocity switch based on the previous wheel speed */
-        note->velocity = (prev_expression < MG_MELODY_EXPRESSION_THRESHOLD) ? 1 : 31;
-
-        return;
-    }
-
-    /* We have at least one pressed key and the wheel is moving. */
-    mg_string_clear_notes(st);
-    st->base_note_count = 0;
-
-    /* Start processing from highest to lowest key */
-    key_idx = active_count - 1;
-
-    /* Determine string pitch using the highest key */
-    key_num = active_keys[key_idx];
-    key = &mg->keys[key_num];
-
-    model->pitch = 0x2000 + (
-            mg->state.pitchbend_factor *
-            multimap(key->smoothed_pressure,
-                mg->state.pressure_to_pitch.ranges,
-                mg->state.pressure_to_pitch.count));
-
-    /* Now go though all pressed keys in reverse order and set up the
-     * corresponding notes. In monophonic mode, we do this only once for
-     * the highest key. */
-    do {
-        key_num = active_keys[key_idx];
-        key = &mg->keys[key_num];
-
-        note = enable_voice_note(model, st->base_note + key_num + 1);
-
-        /* Velocity switching:
-        * If the key for the note we're enabling has recently been pressed,
-        * then use the key velocity to determine the note velocity
-        * (63 values, from 64 to 127).
-        *
-        * If the key for the note we're enabling was already pressed for longer,
-        * then use the fixed velocity of 32.
-        */
-        if (key->active_since < mg->state.base_note_delay) {
-            note->velocity = 64 + multimap(key->velocity,
-                    mg->state.keyvel_to_tangent.ranges,
-                    mg->state.keyvel_to_tangent.count);
+        if (velocity_switching) {
+            /* Velocity switch based on the previous wheel speed */
+            note->velocity = (prev_expression < MG_MELODY_EXPRESSION_THRESHOLD) ? 1 : 31;
         } else {
-            note->velocity = 32;
+            note->velocity = 120;
         }
-
-        key_idx--;
-
-    } while (key_idx >= 0 && st->polyphonic);
-}
-
-
-static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
-        int *active_keys, int active_count,
-        int expression, int prev_expression)
-{
-    struct mg_voice *model = &st->model;
-    struct mg_note *note;
-    struct mg_key *key;
-    int key_idx;
-    int key_num;
-
-    model->expression = expression;
-
-    /* The wheel is not moving, so we clear all notes */
-    if (expression == 0) {
-        mg_string_clear_notes(st);
-        st->base_note_count = mg->state.base_note_delay;
-        return;
-    }
-
-    /* If no key is pressed or the highest key is below the capo key,
-     * output the base note or capo key note. */
-    if (active_count == 0 || (active_keys[active_count - 1] < st->empty_key)) {
-
-        /* If a base note delay is set, wait for that number of iterations before reacting */
-        if (st->base_note_count < mg->state.base_note_delay) {
-            st->base_note_count++;
-            return;
-        }
-
-        model->pitch = 0x2000; // no key pressed, no pitch bend.
-
-        mg_string_clear_notes(st);
-
-        /* Determine base note MIDI number, taking capo into account */
-        note = enable_voice_note(model, st->base_note + st->empty_key);
-
-        /* ...and configure note parameters */
-
-        /* Velocity switch based on the previous wheel speed */
-        note->velocity = 120;
 
         return;
     }
@@ -326,7 +236,25 @@ static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
 
         note = enable_voice_note(model, st->base_note + key_num + 1);
 
-        note->velocity = 120;
+        if (velocity_switching) {
+            /* Velocity switching:
+            * If the key for the note we're enabling has recently been pressed,
+            * then use the key velocity to determine the note velocity
+            * (63 values, from 64 to 127).
+            *
+            * If the key for the note we're enabling was already pressed for longer,
+            * then use the fixed velocity of 32.
+            */
+            if (key->active_since < mg->state.base_note_delay) {
+                note->velocity = 64 + multimap(key->velocity,
+                        mg->state.keyvel_to_tangent.ranges,
+                        mg->state.keyvel_to_tangent.count);
+            } else {
+                note->velocity = 32;
+            }
+        } else {
+            note->velocity = 120;
+        }
 
         key_idx--;
 
@@ -418,10 +346,12 @@ static void update_melody_model(struct mg_core *mg)
         }
 
         if (st->mode == MG_MODE_MIDIGURDY) {
-            update_midigurdy_melody(mg, st, active_keys, active_count, expression, prev_expression);
+            // with velocity switching
+            update_midigurdy_melody(mg, st, active_keys, active_count, expression, prev_expression, 1);
         }
         else if (st->mode == MG_MODE_GENERIC) {
-            update_generic_melody(mg, st, active_keys, active_count, expression, prev_expression);
+            // without velocity switching
+            update_midigurdy_melody(mg, st, active_keys, active_count, expression, prev_expression, 0);
         }
         else {
             update_keyboard_melody(mg, st, active_keys, active_count);
