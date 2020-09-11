@@ -330,7 +330,7 @@ static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
         /* ...and configure note parameters */
 
         /* Velocity switch based on the previous wheel speed */
-        note->velocity = 64;
+        note->velocity = 120;
 
         return;
     }
