@@ -196,11 +196,6 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
 
         mg_string_clear_notes(st);
 
-        /* No base note in polyphonic mode */
-        if (st->polyphonic) {
-            return;
-        }
-
         /* Determine base note MIDI number, taking capo into account */
         midi_note = st->base_note + st->empty_key;
         if (midi_note > 127) midi_note = 127;
@@ -307,11 +302,6 @@ static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
         model->pitch = 0x2000; // no key pressed, no pitch bend.
 
         mg_string_clear_notes(st);
-
-        /* No base note in polyphonic mode */
-        if (st->polyphonic) {
-            return;
-        }
 
         /* Determine base note MIDI number, taking capo into account */
         midi_note = st->base_note + st->empty_key;
