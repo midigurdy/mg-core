@@ -178,7 +178,7 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
     /* The wheel is not moving, so we clear all notes */
     if (expression == 0) {
         mg_string_clear_notes(st);
-        st->base_note_count = 0;
+        st->base_note_count = mg->state.base_note_delay;
         return;
     }
 
@@ -295,7 +295,7 @@ static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
     /* The wheel is not moving, so we clear all notes */
     if (expression == 0) {
         mg_string_clear_notes(st);
-        st->base_note_count = 0;
+        st->base_note_count = mg->state.base_note_delay;
         return;
     }
 
