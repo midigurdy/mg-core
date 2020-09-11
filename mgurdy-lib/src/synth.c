@@ -21,6 +21,17 @@ static void update_trompette_model(struct mg_core *mg);
 static void update_keynoise_model(struct mg_core *mg);
 
 
+static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
+        int *active_keys, int active_count,
+        int expression, int prev_expression);
+
+static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
+        int *active_keys, int active_count,
+        int expression, int prev_expression);
+
+static void update_keyboard_melody(struct mg_core *mg, struct mg_string *st,
+        int *active_keys, int active_count);
+
 /* Main entry point, called regularly by worker thread. Takes sensor readings
  * and updates the internal state of the instrument model.
  */
@@ -151,6 +162,280 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
 }
 
 
+static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
+        int *active_keys, int active_count,
+        int expression, int prev_expression)
+{
+    struct mg_voice *model = &st->model;
+    struct mg_note *note;
+    struct mg_key *key;
+    int midi_note;
+    int key_idx;
+    int key_num;
+
+    model->expression = expression;
+
+    /* The wheel is not moving, so we clear all notes */
+    if (expression == 0) {
+        mg_string_clear_notes(st);
+        st->base_note_count = 0;
+        return;
+    }
+
+    /* If no key is pressed or the highest key is below the capo key,
+     * output the base note or capo key note. */
+    if (active_count == 0 || (active_keys[active_count - 1] < st->empty_key)) {
+
+        /* If a base note delay is set, wait for that number of iterations before reacting */
+        if (st->base_note_count < mg->state.base_note_delay) {
+            st->base_note_count++;
+            return;
+        }
+
+        model->pitch = 0x2000; // no key pressed, no pitch bend.
+
+        mg_string_clear_notes(st);
+
+        /* No base note in polyphonic mode */
+        if (st->polyphonic) {
+            return;
+        }
+
+        /* Determine base note MIDI number, taking capo into account */
+        midi_note = st->base_note + st->empty_key;
+        if (midi_note > 127) midi_note = 127;
+
+        /* Swich on note... */
+        model->active_notes[model->note_count++] = midi_note;
+        note = &model->notes[midi_note];
+        note->on = 1;
+
+        /* ...and configure note parameters */
+
+        /* Velocity switch based on the previous wheel speed */
+        note->velocity = (prev_expression < MG_MELODY_EXPRESSION_THRESHOLD) ? 1 : 31;
+
+        return;
+    }
+
+    /* We have at least one pressed key and the wheel is moving. */
+    mg_string_clear_notes(st);
+    st->base_note_count = 0;
+
+    /* Start processing from highest to lowest key */
+    key_idx = active_count - 1;
+
+    /* Determine string pitch using the highest key */
+    key_num = active_keys[key_idx];
+    key = &mg->keys[key_num];
+
+    /* Pitch bend disabled in polyphonic mode */
+    if (st->polyphonic) {
+        model->pitch = 0x2000;
+    } else {
+        model->pitch = 0x2000 + (
+                mg->state.pitchbend_factor *
+                multimap(key->smoothed_pressure,
+                    mg->state.pressure_to_pitch.ranges,
+                    mg->state.pressure_to_pitch.count));
+    }
+
+    /* Now go though all pressed keys in reverse order and set up the
+     * corresponding notes. In monophonic mode, we do this only once for
+     * the highest key. */
+    do {
+        key_num = active_keys[key_idx];
+        key = &mg->keys[key_num];
+
+        midi_note = st->base_note + key_num + 1;
+        if (midi_note > 127) midi_note = 127;
+
+        /* Switch on note... */
+        model->active_notes[model->note_count++] = midi_note;
+        note = &model->notes[midi_note];
+        note->on = 1;
+
+        /* ...and configure note parameters */
+
+        /* Velocity switching:
+        * If the key for the note we're enabling has recently been pressed,
+        * then use the key velocity to determine the note velocity
+        * (63 values, from 64 to 127).
+        *
+        * If the key for the note we're enabling was already pressed for longer,
+        * then use the fixed velocity of 32.
+        */
+        if (key->active_since < mg->state.base_note_delay) {
+            note->velocity = 64 + multimap(key->velocity,
+                    mg->state.keyvel_to_tangent.ranges,
+                    mg->state.keyvel_to_tangent.count);
+        } else {
+            note->velocity = 32;
+        }
+
+        key_idx--;
+
+    } while (key_idx >= 0 && st->polyphonic);
+}
+
+
+static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
+        int *active_keys, int active_count,
+        int expression, int prev_expression)
+{
+    struct mg_voice *model = &st->model;
+    struct mg_note *note;
+    struct mg_key *key;
+    int midi_note;
+    int key_idx;
+    int key_num;
+
+    model->expression = expression;
+
+    /* The wheel is not moving, so we clear all notes */
+    if (expression == 0) {
+        mg_string_clear_notes(st);
+        st->base_note_count = 0;
+        return;
+    }
+
+    /* If no key is pressed or the highest key is below the capo key,
+     * output the base note or capo key note. */
+    if (active_count == 0 || (active_keys[active_count - 1] < st->empty_key)) {
+
+        /* If a base note delay is set, wait for that number of iterations before reacting */
+        if (st->base_note_count < mg->state.base_note_delay) {
+            st->base_note_count++;
+            return;
+        }
+
+        model->pitch = 0x2000; // no key pressed, no pitch bend.
+
+        mg_string_clear_notes(st);
+
+        /* No base note in polyphonic mode */
+        if (st->polyphonic) {
+            return;
+        }
+
+        /* Determine base note MIDI number, taking capo into account */
+        midi_note = st->base_note + st->empty_key;
+        if (midi_note > 127) midi_note = 127;
+
+        /* Swich on note... */
+        model->active_notes[model->note_count++] = midi_note;
+        note = &model->notes[midi_note];
+        note->on = 1;
+
+        /* ...and configure note parameters */
+
+        /* Velocity switch based on the previous wheel speed */
+        note->velocity = 64;
+
+        return;
+    }
+
+    /* We have at least one pressed key and the wheel is moving. */
+    mg_string_clear_notes(st);
+    st->base_note_count = 0;
+
+    /* Start processing from highest to lowest key */
+    key_idx = active_count - 1;
+
+    /* Determine string pitch using the highest key */
+    key_num = active_keys[key_idx];
+    key = &mg->keys[key_num];
+
+    /* Pitch bend disabled in polyphonic mode */
+    if (st->polyphonic) {
+        model->pitch = 0x2000;
+    } else {
+        model->pitch = 0x2000 + (
+                mg->state.pitchbend_factor *
+                multimap(key->smoothed_pressure,
+                    mg->state.pressure_to_pitch.ranges,
+                    mg->state.pressure_to_pitch.count));
+    }
+
+    /* Now go though all pressed keys in reverse order and set up the
+     * corresponding notes. In monophonic mode, we do this only once for
+     * the highest key. */
+    do {
+        key_num = active_keys[key_idx];
+        key = &mg->keys[key_num];
+
+        midi_note = st->base_note + key_num + 1;
+        if (midi_note > 127) midi_note = 127;
+
+        /* Switch on note... */
+        model->active_notes[model->note_count++] = midi_note;
+        note = &model->notes[midi_note];
+        note->on = 1;
+
+        /* ...and configure note parameters */
+
+        note->velocity = 120;
+
+        key_idx--;
+
+    } while (key_idx >= 0 && st->polyphonic);
+}
+
+
+static void update_keyboard_melody(struct mg_core *mg, struct mg_string *st,
+        int *active_keys, int active_count)
+{
+    struct mg_voice *model = &st->model;
+    struct mg_note *note;
+    struct mg_key *key;
+    int midi_note;
+    int key_idx;
+    int key_num;
+
+    /* Volume is controlled via velocity */
+    model->expression = 127;
+
+    /* If no key is pressed then the string is silent, like a piano */
+    if (active_count == 0 || (active_keys[active_count - 1] < st->empty_key)) {
+        model->pitch = 0x2000; // no key pressed, no pitch bend.
+        mg_string_clear_notes(st);
+        return;
+    }
+
+    mg_string_clear_notes(st);
+    st->base_note_count = 0;
+
+    /* Start processing from highest to lowest key */
+    key_idx = active_count - 1;
+
+    /* No pitch bend in keyboard mode */
+    model->pitch = 0x2000;
+
+    /* Now go though all pressed keys in reverse order and set up the
+     * corresponding notes. In monophonic mode, we do this only once for
+     * the highest key. */
+    do {
+        key_num = active_keys[key_idx];
+        key = &mg->keys[key_num];
+
+        midi_note = st->base_note + key_num + 1;
+        if (midi_note > 127) midi_note = 127;
+
+        /* Switch on note... */
+        model->active_notes[model->note_count++] = midi_note;
+        note = &model->notes[midi_note];
+        note->on = 1;
+
+        /* ...and configure note parameters */
+        note->velocity = multimap(key->velocity,
+                mg->state.keyvel_to_notevel.ranges,
+                mg->state.keyvel_to_notevel.count);
+
+        key_idx--;
+
+    } while (key_idx >= 0 && st->polyphonic);
+}
+
 /**
  * Update all values in the melody models that depend on a sensor reading.
  */
@@ -161,16 +446,7 @@ static void update_melody_model(struct mg_core *mg)
     int active_keys[KEY_COUNT + 1];
     int active_count = 0;
 
-    int key_num = -1;
-
-    struct mg_key *key;
     struct mg_string *st;
-    struct mg_voice *model;
-    struct mg_note *note;
-
-    int base_note_delay = mg->state.base_note_delay;
-
-    int midi_note;
     int expression = 0;
 
     static int prev_expression = 0;
@@ -190,153 +466,20 @@ static void update_melody_model(struct mg_core *mg)
     /* Update the model of all three melody strings */
     for (s = 0; s < 3; s++) {
         st = &mg->state.melody[s];
-        model = &st->model;
 
         /* If the string is muted, then there's no need to do anything */
         if (st->muted) {
             continue;
         }
 
-        /* In keyboard mode, sound volume is controlled via velocity.
-         * In all other modes, it is controlled via expression. */
-        if (st->mode == MG_MODE_KEYBOARD) {
-            model->expression = 127;
+        if (st->mode == MG_MODE_MIDIGURDY) {
+            update_midigurdy_melody(mg, st, active_keys, active_count, expression, prev_expression);
+        }
+        else if (st->mode == MG_MODE_GENERIC) {
+            update_generic_melody(mg, st, active_keys, active_count, expression, prev_expression);
         }
         else {
-            model->expression = expression;
-        }
-
-        /* In the non-polyphonic mode (the default), only the highest key creates
-         * a note. If no key is pressed, or if the highest pressed key is below the
-         * capo (empty_key), the string base_note note is playing */
-        if (!st->polyphonic) {
-            if (active_count && active_keys[active_count - 1] >= st->empty_key) {
-                mg_string_clear_notes(st);
-                st->base_note_count = 0;
-
-                if (model->expression > 0) {
-                    key_num = active_keys[active_count - 1];  // highest active key number
-                    key = &mg->keys[key_num];
-
-                    midi_note = st->base_note + key_num + 1;
-                    if (midi_note > 127) midi_note = 127;
-                    model->active_notes[model->note_count++] = midi_note;
-
-                    note = &model->notes[midi_note];
-                    note->on = 1;
-
-                    if (st->mode == MG_MODE_GENERIC) {
-                        note->velocity = 120;
-                        note->pressure = 0;
-                        model->pitch = 0x2000 + (
-                                mg->state.pitchbend_factor *
-                                multimap(key->smoothed_pressure,
-                                    mg->state.pressure_to_pitch.ranges,
-                                    mg->state.pressure_to_pitch.count));
-                    }
-                    else if (st->mode == MG_MODE_KEYBOARD) {
-                        note->velocity = multimap(key->velocity,
-                                mg->state.keyvel_to_notevel.ranges,
-                                mg->state.keyvel_to_notevel.count);
-                        note->pressure = 0;
-                        model->pitch = 0x2000;  // no pitch bend in keyboard mode
-                    }
-                    else {  // MG_MODE_MIDIGURDY
-                        /* If the key for the note we're enabling has recently been pressed,
-                         * then use the key velocity to determine the note velocity
-                         * (63 values,from 64 to 127).
-                         *
-                         * If the key for the note we're enabling was already pressed for longer,
-                         * then use the fixed velocity of 32.
-                         */
-                        if (key->active_since < mg->state.base_note_delay) {
-                            note->velocity = 64 + multimap(key->velocity,
-                                    mg->state.keyvel_to_tangent.ranges,
-                                    mg->state.keyvel_to_tangent.count);
-                        } else {
-                            note->velocity = 32;
-                        }
-                        note->pressure = 0;
-                        model->pitch = 0x2000 + (
-                                mg->state.pitchbend_factor *
-                                multimap(key->smoothed_pressure,
-                                    mg->state.pressure_to_pitch.ranges,
-                                    mg->state.pressure_to_pitch.count));
-                    }
-                }
-            }
-            /* We play the empty note (if no key is pressed) only in generic and midigurdy mode */
-            else if (st->mode != MG_MODE_KEYBOARD) {
-                if (st->base_note_count < base_note_delay) {
-                    st->base_note_count++;
-                }
-                else {
-                    mg_string_clear_notes(st);
-
-                    /* Only sound base note if the wheel is moving */
-                    if (model->expression > 0) {
-                        midi_note = st->base_note + st->empty_key;
-                        if (midi_note > 127) midi_note = 127;
-                        note = &model->notes[midi_note];
-                        note->on = 1;
-                        if (st->mode == MG_MODE_MIDIGURDY) {
-                            if (prev_expression < MG_MELODY_EXPRESSION_THRESHOLD) {
-                                note->velocity = 1;
-                            }
-                            else {
-                                note->velocity = 31;
-                            }
-                        } else {
-                            note->velocity = 64; // FIXME: is this a good default for generic?
-                        }
-                        note->pressure = 0; // no key, no pressure...
-                        model->active_notes[model->note_count++] = midi_note;
-                        model->pitch = 0x2000; // no key, no pitch bend!
-                    }
-                }
-            }
-            else {
-                    mg_string_clear_notes(st);
-            }
-        }
-        /* In polyphonic mode, multiple notes can play at the same time. Go
-         * through all pressed keys and add all corresponding notes.
-         * If no key is pressed, the string is quiet. */
-        else {
-            mg_string_clear_notes(st);
-
-            for (i = 0; i < active_count; i++) {
-                key_num = active_keys[i];
-                key = &mg->keys[key_num];
-
-                midi_note = st->base_note + key_num + 1;
-                if (midi_note > 127) midi_note = 127;
-                model->active_notes[model->note_count++] = midi_note;
-
-                note = &model->notes[midi_note];
-                note->on = 1;
-
-                if (st->mode == MG_MODE_GENERIC) {
-                    note->velocity = 120;
-                    note->pressure = 0;
-                }
-                else if (st->mode == MG_MODE_KEYBOARD) {
-                    note->velocity = multimap(key->velocity,
-                            mg->state.keyvel_to_notevel.ranges,
-                            mg->state.keyvel_to_notevel.count);
-                    note->pressure = 0;
-                }
-                else { // MG_MODE_MIDIGURDY
-                    note->velocity = 64 + multimap(key->velocity,
-                            mg->state.keyvel_to_tangent.ranges,
-                            mg->state.keyvel_to_tangent.count);
-                    note->pressure = multimap(key->smoothed_pressure,
-                            mg->state.pressure_to_poly.ranges,
-                            mg->state.pressure_to_poly.count);
-                }
-
-                model->pitch = 0x2000;  // no pitch bend in polyphonic mode for now
-            }
+            update_keyboard_melody(mg, st, active_keys, active_count);
         }
     }
 
@@ -618,7 +761,7 @@ static void update_keynoise_model(struct mg_core *mg)
         if (velocity < 0) {
             velocity = 0;
         }
-        
+
         velocity = multimap(velocity,
                 mg->state.keyvel_to_keynoise.ranges,
                 mg->state.keyvel_to_keynoise.count);
