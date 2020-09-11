@@ -32,6 +32,8 @@ static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
 static void update_keyboard_melody(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count);
 
+static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
+
 /* Main entry point, called regularly by worker thread. Takes sensor readings
  * and updates the internal state of the instrument model.
  */
@@ -169,7 +171,6 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
     struct mg_voice *model = &st->model;
     struct mg_note *note;
     struct mg_key *key;
-    int midi_note;
     int key_idx;
     int key_num;
 
@@ -197,13 +198,7 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
         mg_string_clear_notes(st);
 
         /* Determine base note MIDI number, taking capo into account */
-        midi_note = st->base_note + st->empty_key;
-        if (midi_note > 127) midi_note = 127;
-
-        /* Swich on note... */
-        model->active_notes[model->note_count++] = midi_note;
-        note = &model->notes[midi_note];
-        note->on = 1;
+        note = enable_voice_note(model, st->base_note + st->empty_key);
 
         /* ...and configure note parameters */
 
@@ -237,15 +232,7 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
         key_num = active_keys[key_idx];
         key = &mg->keys[key_num];
 
-        midi_note = st->base_note + key_num + 1;
-        if (midi_note > 127) midi_note = 127;
-
-        /* Switch on note... */
-        model->active_notes[model->note_count++] = midi_note;
-        note = &model->notes[midi_note];
-        note->on = 1;
-
-        /* ...and configure note parameters */
+        note = enable_voice_note(model, st->base_note + key_num + 1);
 
         /* Velocity switching:
         * If the key for the note we're enabling has recently been pressed,
@@ -276,7 +263,6 @@ static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
     struct mg_voice *model = &st->model;
     struct mg_note *note;
     struct mg_key *key;
-    int midi_note;
     int key_idx;
     int key_num;
 
@@ -304,13 +290,7 @@ static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
         mg_string_clear_notes(st);
 
         /* Determine base note MIDI number, taking capo into account */
-        midi_note = st->base_note + st->empty_key;
-        if (midi_note > 127) midi_note = 127;
-
-        /* Swich on note... */
-        model->active_notes[model->note_count++] = midi_note;
-        note = &model->notes[midi_note];
-        note->on = 1;
+        note = enable_voice_note(model, st->base_note + st->empty_key);
 
         /* ...and configure note parameters */
 
@@ -344,15 +324,7 @@ static void update_generic_melody(struct mg_core *mg, struct mg_string *st,
         key_num = active_keys[key_idx];
         key = &mg->keys[key_num];
 
-        midi_note = st->base_note + key_num + 1;
-        if (midi_note > 127) midi_note = 127;
-
-        /* Switch on note... */
-        model->active_notes[model->note_count++] = midi_note;
-        note = &model->notes[midi_note];
-        note->on = 1;
-
-        /* ...and configure note parameters */
+        note = enable_voice_note(model, st->base_note + key_num + 1);
 
         note->velocity = 120;
 
@@ -368,7 +340,6 @@ static void update_keyboard_melody(struct mg_core *mg, struct mg_string *st,
     struct mg_voice *model = &st->model;
     struct mg_note *note;
     struct mg_key *key;
-    int midi_note;
     int key_idx;
     int key_num;
 
@@ -398,13 +369,7 @@ static void update_keyboard_melody(struct mg_core *mg, struct mg_string *st,
         key_num = active_keys[key_idx];
         key = &mg->keys[key_num];
 
-        midi_note = st->base_note + key_num + 1;
-        if (midi_note > 127) midi_note = 127;
-
-        /* Switch on note... */
-        model->active_notes[model->note_count++] = midi_note;
-        note = &model->notes[midi_note];
-        note->on = 1;
+        note = enable_voice_note(model, st->base_note + key_num + 1);
 
         /* ...and configure note parameters */
         note->velocity = multimap(key->velocity,
@@ -477,7 +442,6 @@ static void update_drone_model(struct mg_core *mg)
 {
     int s, i;
     int expression;
-    int midi_note;
     struct mg_string *st;
     struct mg_note *note;
     struct mg_voice *model;
@@ -506,13 +470,9 @@ static void update_drone_model(struct mg_core *mg)
 
         if (model->note_count != st->fixed_note_count) {
             for (i = 0; i < st->fixed_note_count; i++) {
-                midi_note = st->fixed_notes[i];
-
-                note = &model->notes[midi_note];
-                note->on = 1;
+                note = enable_voice_note(model, st->fixed_notes[i]);
                 note->velocity = 127;
                 note->pressure = 0;
-                model->active_notes[model->note_count++] = midi_note;
             }
         }
     }
@@ -522,7 +482,6 @@ static void update_trompette_model(struct mg_core *mg)
 {
     int s, i;
 
-    int midi_note;
     struct mg_string *st;
     struct mg_note *note;
     struct mg_voice *model;
@@ -616,12 +575,8 @@ static void update_trompette_model(struct mg_core *mg)
             }
             else if (model->note_count != st->fixed_note_count) {
                 for (i = 0; i < st->fixed_note_count; i++) {
-                    midi_note = st->fixed_notes[i];
-
-                    note = &model->notes[midi_note];
-                    note->on = 1;
+                    note = enable_voice_note(model, st->fixed_notes[i]);
                     note->velocity = 127; // volume controlled via expression
-                    model->active_notes[model->note_count++] = midi_note;
                 }
             }
         }
@@ -673,12 +628,8 @@ static void update_trompette_model(struct mg_core *mg)
                     }
 
                     for (i = 0; i < st->fixed_note_count; i++) {
-                        midi_note = st->fixed_notes[i];
-
-                        note = &model->notes[midi_note];
-                        note->on = 1;
+                        note = enable_voice_note(model, st->fixed_notes[i]);
                         note->velocity = velocity;
-                        model->active_notes[model->note_count++] = midi_note;
                     }
                 } else {
                     /* Set to -2 so that the speed reported via websockets does
@@ -755,10 +706,19 @@ static void update_keynoise_model(struct mg_core *mg)
         else
             midi_note = 30 + i;
 
-        model->active_notes[model->note_count++] = midi_note;
-
-        note = &model->notes[midi_note];
-        note->on = 1;
+        note = enable_voice_note(model, midi_note);
         note->velocity = velocity;
     }
+}
+
+static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note) {
+    struct mg_note *note;
+
+    if (midi_note > 127) midi_note = 127;
+
+    voice->active_notes[voice->note_count++] = midi_note;
+    note = &voice->notes[midi_note];
+    note->on = 1;
+
+    return note;
 }
