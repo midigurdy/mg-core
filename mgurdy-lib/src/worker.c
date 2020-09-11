@@ -145,10 +145,12 @@ static void position_to_websockets(struct mg_core *mg)
     static int prev_speed = 0;
     static int prev_chien_volume = 0;
     static int prev_chien_speed = 0;
+    static int prev_clients = 0;
     int pos;
     int speed;
     int chien_volume;
     int chien_speed;
+    int clients;
 
     pos = mg->wheel.position;
     speed = mg->wheel.speed;
@@ -163,11 +165,21 @@ static void position_to_websockets(struct mg_core *mg)
     }
 
     if (calls >= MG_WHEEL_REPORT_INTERVAL) {
-        mg_server_report_wheel();
+        clients = mg_server_report_wheel();
+
+        if (clients > prev_clients) {
+            // If we got a new client, record a wheel position so that it gets the
+            // current position automatically. There is the possibility that we
+            // miss new clients if a deconnect happens in the same millisecond as a connect,
+            // but that case is probably so rare that it won't matter.
+            mg_server_record_wheel_data(pos, speed, chien_volume, chien_speed);
+        }
+        prev_clients = clients;
         calls = 0;
     }
-    else if (calls < MG_WHEEL_REPORT_INTERVAL)
+    else {
         calls++;
+    }
 }
 
 static void stack_prefault(void)

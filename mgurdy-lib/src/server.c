@@ -7,6 +7,7 @@
 
 #include "mg.h"
 #include "server.h"
+#include "atomic.h"
 
 static struct lws_context *_context;
 static volatile int _do_write = 0;
@@ -19,7 +20,7 @@ static unsigned char _wheel_buf[LWS_PRE + WHEEL_DATA_SIZE];
 static int _wheel_buf_count = 0;
 static unsigned char _wheel_data[WHEEL_DATA_SIZE];
 static int _wheel_data_count = 0;
-static int _wheel_client_count = 0;
+static atomic_t _wheel_client_count = ATOMIC_INIT(0);
 
 
 #define KEYS_PACKET_SIZE (10)
@@ -92,7 +93,7 @@ void *mg_server_thread(void *args)
     while(!mg->should_stop) {
         lws_service(_context, 1000);
         if (_do_write) {
-            if (_wheel_client_count) {
+            if (atomic_read(&_wheel_client_count)) {
                 lws_callback_on_writable_all_protocol(_context, &_protocols[1]);
             }
             if (_keys_client_count) {
@@ -117,7 +118,7 @@ static int _http_callback(struct lws *wsi, enum lws_callback_reasons reason,
 
 void mg_server_record_wheel_data(int position, int speed, int chien_volume, int chien_speed)
 {
-    if (_wheel_client_count <= 0)
+    if (atomic_read(&_wheel_client_count) <= 0)
         return;
 
     if (_wheel_data_count >= WHEEL_DATA_SIZE - WHEEL_PACKET_SIZE)
@@ -134,10 +135,12 @@ void mg_server_record_wheel_data(int position, int speed, int chien_volume, int 
 }
 
 
-void mg_server_report_wheel()
+int mg_server_report_wheel()
 {
-    if (_wheel_client_count <= 0 || _wheel_data_count == 0 || _wheel_buf_count)
-        return;
+    int client_count = atomic_read(&_wheel_client_count);
+
+    if (client_count <= 0 || _wheel_data_count == 0 || _wheel_buf_count)
+        return client_count;
 
     memcpy(&_wheel_buf[LWS_PRE], _wheel_data, _wheel_data_count);
     _wheel_buf_count = _wheel_data_count;
@@ -147,6 +150,8 @@ void mg_server_report_wheel()
 
     _do_write = 1;
     lws_cancel_service(_context);
+
+    return client_count;
 }
 
 
@@ -155,13 +160,13 @@ static int _wheel_callback(struct lws *wsi, enum lws_callback_reasons reason,
 {
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED:
-            _wheel_client_count++;
+            atomic_inc(&_wheel_client_count);
             // printf("wheel websocket connection established: %d\n", _wheel_client_count);
             break;
         case LWS_CALLBACK_CLOSED:
-            _wheel_client_count--;
+            atomic_dec(&_wheel_client_count);
             // printf("wheel websocket connection closed: %d\n", _wheel_client_count);
-            if (_wheel_client_count == 0) {
+            if (atomic_read(&_wheel_client_count) == 0) {
                 _wheel_buf_count = 0;
             }
             break;

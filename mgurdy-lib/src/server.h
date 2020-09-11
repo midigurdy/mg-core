@@ -5,7 +5,7 @@
 
 void *mg_server_thread(void *args);
 
-void mg_server_report_wheel();
+int mg_server_report_wheel();
 void mg_server_record_wheel_data(int position, int speed, int chien_volume, int chien_speed);
 
 void mg_server_report_keys(const struct mg_key *keys);
