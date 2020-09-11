@@ -384,6 +384,9 @@ class VoiceState(EventEmitter):
                 sound.type in ('melody', 'trompette') and
                 self.mode != 'midigurdy'):
             self.mode = 'midigurdy'
+        elif (sound.soundfont.mode == 'generic' and
+              self.mode == 'midigurdy'):
+            self.mode = 'generic'
 
     def clear_sound(self):
         do_update = False
