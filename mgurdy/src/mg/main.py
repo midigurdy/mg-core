@@ -1,6 +1,7 @@
+import argparse
 import logging.config
 import os
-import argparse
+
 import prctl
 
 from mg.utils import background_task, OneLineExceptionFormatter
@@ -24,7 +25,7 @@ def main():
             raise
         else:
             import sys
-            sys.stderr.write('{}'.format(e))
+            sys.stderr.write(f'{e}')
             sys.exit(2)
 
 
@@ -145,19 +146,19 @@ def start_fluidsynth(synth, dump_midi, debug=False):
     if debug:
         synth.set_logger()
     synth.configure({
-        "audio.driver": "alsa",
-        "audio.periods": 2,
-        "audio.period-size": 64,
-        "audio.realtime-prio": 51,
-        "synth.reverb.active": 0,
-        "synth.chorus.active": 0,
-        "synth.ladspa.active": 1,
-        "synth.overflow.important": 50000,
-        "synth.overflow.important-channels": '4,5,6,7,8,9',
-        "synth.min-note-length": 0,
-        "synth.verbose": 1 if dump_midi else 0,
-        "synth.polyphony": 64,
-        "synth.dynamic-sample-loading": 1,
+        'audio.driver': 'alsa',
+        'audio.periods': 2,
+        'audio.period-size': 64,
+        'audio.realtime-prio': 51,
+        'synth.reverb.active': 0,
+        'synth.chorus.active': 0,
+        'synth.ladspa.active': 1,
+        'synth.overflow.important': 50000,
+        'synth.overflow.important-channels': '4,5,6,7,8,9',
+        'synth.min-note-length': 0,
+        'synth.verbose': 1 if dump_midi else 0,
+        'synth.polyphony': 64,
+        'synth.dynamic-sample-loading': 1,
     })
     synth.start()
 
@@ -215,7 +216,7 @@ def start_ui(state, settings, menu_debug):
     input_manager = InputManager(event_queue)
     config_filename = find_config_file(settings.input_config)
     input_manager.load_config(config_filename)
-    input_manager.register(MdevInput('/tmp/mgurdy', 'mdev Input Handler'))
+    input_manager.register(MdevInput('/tmp/mgurdy', 'mdev Input Handler'))  # noqa
 
     event_handler = EventHandler(event_queue, state, menu)
 

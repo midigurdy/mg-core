@@ -197,7 +197,7 @@ class State(EventEmitter):
                 'key_on_debounce': self.key_on_debounce,
                 'key_off_debounce': self.key_off_debounce,
                 'base_note_delay': self.base_note_delay,
-            }
+            },
         }
 
     def from_misc_dict(self, data, partial=False):

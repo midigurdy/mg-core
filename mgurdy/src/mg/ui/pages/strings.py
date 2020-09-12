@@ -8,7 +8,7 @@ from mg.utils import midi2percent, midi2note
 # is selected when switching between strings / voices
 VOICE_PARAM_STATE = {
     'pos': 0,
-    'active': False
+    'active': False,
 }
 
 
@@ -233,7 +233,7 @@ class SoundListPage(ListPage):
                     items.extend(sounds)
         pos = 0
         voice = self.voice
-        for i, (inum, sf, sound) in enumerate(items):
+        for i, (_inum, sf, sound) in enumerate(items):
             if sound is None:
                 continue
             if (sf.id == voice.soundfont_id and sound.bank == voice.bank and
@@ -343,7 +343,7 @@ class TreeSoundListPage(ListPage):
 
         if self.sf_cursor == -1:
             cursor_pos = 0
-            for i, (inum, sf, sound) in enumerate(items):
+            for i, (_inum, sf, _sound) in enumerate(items):
                 if (sf and sf.id == self.voice.soundfont_id):
                     cursor_pos = i
                     break
@@ -366,7 +366,7 @@ class TreeSoundListPage(ListPage):
         # if we are showing the currently active soundfont, put the cursor
         # on the sound that is currently selected on the voice
         if self.voice.soundfont_id == sf.id:
-            for i, (inum, sf, sound) in enumerate(items):
+            for i, (_inum, _sf, sound) in enumerate(items):
                 if (sound.bank == self.voice.bank and
                         sound.program == self.voice.program):
                     cursor_pos = i
