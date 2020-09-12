@@ -90,7 +90,7 @@ class SynthController(EventListener):
         mgcore.set_string_params(self.string_mute_configs())
 
     def active_preset_voice_mode_changed(self, mode, sender, **kwargs):
-        mgcore.set_string_params([(sender.string, 'mode', VOICE_MODES.index(mode))])
+        mgcore.set_string_params([(sender.string, 'mode', VOICE_MODES.index(sender.get_mode()))])
 
     def active_preset_voice_polyphonic_changed(self, polyphonic, sender, **kwargs):
         mgcore.set_string_params([(sender.string, 'polyphonic', int(sender.polyphonic))])
@@ -165,7 +165,7 @@ class SynthController(EventListener):
 
                 configs.append((string, 'volume', voice.volume))
                 configs.append((string, 'panning', voice.panning))
-                configs.append((string, 'mode', VOICE_MODES.index(voice.mode)))
+                configs.append((string, 'mode', VOICE_MODES.index(voice.get_mode())))
 
                 if voice.type == 'melody':
                     configs.append((string, 'base_note', voice.base_note))
@@ -236,7 +236,7 @@ class SynthController(EventListener):
                                      voice.bank, voice.program)
         configs = [
             (voice.string, 'reset', 0),
-            (voice.string, 'mode', VOICE_MODES.index(voice.mode)),
+            (voice.string, 'mode', VOICE_MODES.index(voice.get_mode())),
             (voice.string, 'bank', voice.bank),
             (voice.string, 'program', voice.program),
         ]

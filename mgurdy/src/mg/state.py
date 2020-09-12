@@ -379,14 +379,10 @@ class VoiceState(EventEmitter):
         self.notify('sound:changed')
         if sound.base_note > -1:
             self.base_note = sound.base_note
+
         # reset the mode back to MidiGurdy when selecting a MidiGurdy specific sound
-        if (sound.soundfont.mode == 'midigurdy' and
-                sound.type in ('melody', 'trompette') and
-                self.mode != 'midigurdy'):
+        if sound.soundfont.mode == 'midigurdy':
             self.mode = 'midigurdy'
-        elif (sound.soundfont.mode == 'generic' and
-              self.mode == 'midigurdy'):
-            self.mode = 'generic'
 
     def clear_sound(self):
         do_update = False
@@ -410,6 +406,22 @@ class VoiceState(EventEmitter):
 
     def is_silent(self):
         return self.muted or not self.soundfont_id or self.base_note < 0
+
+    def has_midigurdy_soundfont(self):
+        from mg.sf2 import SoundFont
+        if not self.soundfont_id:
+            return True
+        sf = SoundFont.by_id(self.soundfont_id)
+        if not sf:
+            return True
+        return sf.mode == 'midigurdy'
+
+    def get_mode(self):
+        if self.has_midigurdy_soundfont():
+            return 'midigurdy'
+        if self.mode == 'keyboard':
+            return 'keyboard'
+        return 'generic'
 
 
 class MIDIPortState(EventEmitter):

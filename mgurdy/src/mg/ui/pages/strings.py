@@ -134,41 +134,39 @@ class FineTuneItem(ValueListItem):
         return self.voice.finetune
 
 
-class MelodyModeItem(ValueListItem):
-    label = 'Mode'
-    minval = 0
-    maxval = 2
-
-    MODES = [
-        ('midigurdy', 'MidiGurdy'),
-        ('generic', 'Hurdy-Gurdy'),
-        ('keyboard', 'Keyboard'),
-    ]
+class KeyboardModeItem(ValueListItem):
+    label = 'Keyboard Mode'
+    min = 0
+    max = 1
 
     def __init__(self, voice):
         super().__init__()
         self.voice = voice
 
     def set_value(self, val):
+        if self.voice.has_midigurdy_soundfont():
+            return
         with self.state.lock():
-            self.voice.mode = self.MODES[val][0]
+            self.voice.mode = 'keyboard' if val == 1 else 'midigurdy'
 
     def get_value(self):
-        return [m[0] for m in self.MODES].index(self.voice.mode)
+        return 1 if self.voice.mode == 'keyboard' else 0
 
     def format_value(self, value):
-        return self.MODES[value][1]
+        return 'On' if value else 'Off'
 
+    def activate(self, parent):
+        self.set_value(0 if self.get_value() else 1)
 
-class TrompetteModeItem(MelodyModeItem):
-    label = 'Mode'
-    minval = 0
-    maxval = 1
-
-    MODES = [
-        ('midigurdy', 'MidiGurdy'),
-        ('generic', 'Percussion'),
-    ]
+    def render_on(self, display, x, y, width):
+        display.puts(x, y, self.get_label())
+        if self.voice.has_midigurdy_soundfont():
+            display.puts(x + width, y, 'N/A', align='right', anchor='right')
+        else:
+            char = chr(33) if self.get_value() else chr(32)
+            display.font_size(9)
+            display.puts(x + width, y, char, align='right', anchor='right')
+            display.font_size(3)
 
 
 class SoundPopupItem(PopupItem):
@@ -504,14 +502,7 @@ class MelodyPage(VoicePage):
         return super().get_items() + [
             CapoItem(self.voice),
             BooleanListItem(self.voice, 'polyphonic', 'Polyphonic'),
-            MelodyModeItem(self.voice),
-        ]
-
-
-class TrompettePage(VoicePage):
-    def get_items(self):
-        return super().get_items() + [
-            TrompetteModeItem(self.voice),
+            KeyboardModeItem(self.voice),
         ]
 
 
@@ -580,7 +571,7 @@ class TrompetteDeck(VoiceDeck):
     next_page_evts = [(Key.fn3, Action.short), (Key.fn3, Action.long)]
 
     pages = [
-        TrompettePage(title='T1', voice_name='preset.trompette.0'),
-        TrompettePage(title='T2', voice_name='preset.trompette.1'),
-        TrompettePage(title='T3', voice_name='preset.trompette.2'),
+        VoicePage(title='T1', voice_name='preset.trompette.0'),
+        VoicePage(title='T2', voice_name='preset.trompette.1'),
+        VoicePage(title='T3', voice_name='preset.trompette.2'),
     ]
