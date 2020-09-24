@@ -195,6 +195,11 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
 
         mg_string_clear_notes(st);
 
+        /* No base note in polyphonic mode unless enabled */
+        if (st->polyphonic && !mg->state.poly_base_note) {
+            return;
+        }
+
         /* Determine base note MIDI number, taking capo into account */
         note = enable_voice_note(model, st->base_note + st->empty_key);
 
@@ -221,11 +226,15 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
     key_num = active_keys[key_idx];
     key = &mg->keys[key_num];
 
-    model->pitch = 0x2000 + (
-            mg->state.pitchbend_factor *
-            multimap(key->smoothed_pressure,
-                mg->state.pressure_to_pitch.ranges,
-                mg->state.pressure_to_pitch.count));
+    if (st->polyphonic && !mg->state.poly_pitch_bend) {
+        model->pitch = 0x2000;
+    } else {
+        model->pitch = 0x2000 + (
+                mg->state.pitchbend_factor *
+                multimap(key->smoothed_pressure,
+                    mg->state.pressure_to_pitch.ranges,
+                    mg->state.pressure_to_pitch.count));
+    }
 
     /* Now go though all pressed keys in reverse order and set up the
      * corresponding notes. In monophonic mode, we do this only once for

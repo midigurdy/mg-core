@@ -32,6 +32,11 @@ PARAMS = {
     'program': lib.MG_PARAM_PROGRAM,
 }
 
+FEATURES = {
+    'poly_base_note': lib.MG_FEATURE_POLY_BASE_NOTE,
+    'poly_pitch_bend': lib.MG_FEATURE_POLY_PITCH_BEND,
+}
+
 MAPPINGS = {
     'pressure_to_poly': {
         'idx': lib.MG_MAP_PRESSURE_TO_POLY,
@@ -233,6 +238,11 @@ class MGCore:
         val = max(0, min(200, val))
         factor = float(val / 200)
         lib.mg_set_pitchbend_factor(factor)
+
+    def set_feature(self, name, enabled):
+        if name not in FEATURES:
+            raise RuntimeError(f'Invalid feature name "{name}"')
+        lib.mg_set_feature(FEATURES[name], 1 if enabled else 0)
 
     def set_key_on_debounce(self, val):
         lib.mg_set_key_on_debounce(val)

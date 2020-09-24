@@ -109,6 +109,9 @@ int mg_state_init(struct mg_state *state)
     state->key_off_debounce = 10;
     state->base_note_delay = 20;
 
+    state->poly_base_note = 1; // default on
+    state->poly_pitch_bend = 1; // default on
+
     mg_reset_mapping_ranges(MG_MAP_PRESSURE_TO_PITCH);
     mg_reset_mapping_ranges(MG_MAP_PRESSURE_TO_POLY);
     mg_reset_mapping_ranges(MG_MAP_SPEED_TO_MELODY_VOLUME);

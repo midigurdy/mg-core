@@ -35,6 +35,9 @@ class State(EventEmitter):
             self.chien_sens_reverse = False
             self.multi_chien_threshold = False
 
+            self.poly_base_note = True
+            self.poly_pitch_bend = True
+
             self.ui = UIState()
             self.synth = SynthState()
             self.power = PowerState(
@@ -198,6 +201,10 @@ class State(EventEmitter):
                 'key_off_debounce': self.key_off_debounce,
                 'base_note_delay': self.base_note_delay,
             },
+            'features': {
+                'poly_base_note': self.poly_base_note,
+                'poly_pitch_bend': self.poly_pitch_bend,
+            },
         }
 
     def from_misc_dict(self, data, partial=False):
@@ -206,6 +213,10 @@ class State(EventEmitter):
         _set(self.ui, 'brightness', ui, 'brightness', 80, partial)
         _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
         _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
+
+        features = data.get('features', {})
+        _set(self, 'poly_base_note', features, 'poly_base_note', True, partial)
+        _set(self, 'poly_pitch_bend', features, 'poly_pitch_bend', True, partial)
 
         keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)
@@ -287,9 +298,8 @@ class PowerState(EventEmitter):
         self.source = self.get_power_source()
         self.battery_voltage = self.get_battery_voltage()
         self.battery_percent = max(min(round(
-            (self.battery_voltage - self.battery_min_voltage) /
-            (self.battery_max_voltage - self.battery_min_voltage) *
-            100), 100), 0)
+            (self.battery_voltage - self.battery_min_voltage) / (
+                self.battery_max_voltage - self.battery_min_voltage) * 100), 100), 0)
 
     def start_update(self):
         self._timer = PeriodicTimer(3, self.update_state)

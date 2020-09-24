@@ -208,6 +208,8 @@ struct mg_state {
     int key_on_debounce;
     int key_off_debounce;
     int base_note_delay;
+    int poly_base_note;
+    int poly_pitch_bend;
 
     struct mg_map pressure_to_poly;
     struct mg_map pressure_to_pitch;
@@ -410,6 +412,11 @@ enum mg_map_enum {
     MG_MAP_CHIEN_THRESHOLD_TO_RANGE,
 };
 
+enum mg_feature {
+    MG_FEATURE_POLY_BASE_NOTE,
+    MG_FEATURE_POLY_PITCH_BEND,
+};
+
 struct mg_string_config {
     int string;
     int param;
@@ -425,6 +432,7 @@ extern int mg_set_pitchbend_factor(float factor);
 extern int mg_set_key_on_debounce(int num);
 extern int mg_set_key_off_debounce(int num);
 extern int mg_set_base_note_delay(int num);
+extern int mg_set_feature(int num, int enabled);
 extern int mg_set_string(struct mg_string_config *configs);
 extern int mg_get_wheel_gain(void);
 extern int mg_get_mapping(struct mg_map *dst, int idx);

@@ -196,6 +196,30 @@ int mg_set_base_note_delay(int num)
     return mg_state_unlock(s);
 }
 
+
+int mg_set_feature(int num, int enabled)
+{
+    int err = 0;
+    struct mg_state *s = &mg_core.state;
+
+    err = mg_state_lock(s);
+    if (err)
+        return err;
+
+    switch (num) {
+        case MG_FEATURE_POLY_BASE_NOTE:
+            s->poly_base_note = enabled;
+            break;
+
+        case MG_FEATURE_POLY_PITCH_BEND:
+            s->poly_pitch_bend = enabled;
+            break;
+    }
+
+    return mg_state_unlock(s);
+}
+
+
 int mg_set_pitchbend_factor(float factor)
 {
     int err = 0;

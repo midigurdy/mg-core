@@ -64,6 +64,11 @@ enum mg_map_enum {
     MG_MAP_CHIEN_THRESHOLD_TO_RANGE,
 };
 
+enum mg_feature {
+    MG_FEATURE_POLY_BASE_NOTE,
+    MG_FEATURE_POLY_PITCH_BEND,
+};
+
 #define MG_MAP_MAX_RANGES 20
 
 struct mg_map {
@@ -86,6 +91,7 @@ int mg_set_pitchbend_factor(float factor);
 int mg_set_key_on_debounce(int num);
 int mg_set_key_off_debounce(int num);
 int mg_set_base_note_delay(int num);
+int mg_set_feature(int num, int enabled);
 int mg_set_string(struct mg_string_config *configs);
 int mg_get_wheel_gain(void);
 int mg_get_mapping(struct mg_map *dst, int idx);

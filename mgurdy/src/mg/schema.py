@@ -116,6 +116,11 @@ class MiscUISchema(Schema):
     multi_chien_threshold = fields.Boolean(default=False)
 
 
+class MiscFeaturesSchema(Schema):
+    poly_base_note = fields.Boolean(default=False)
+    poly_pitch_bend = fields.Boolean(default=False)
+
+
 class MiscKeyboardSchema(Schema):
     key_on_debounce = fields.Int(default=2, validate=debounce_range)
     key_off_debounce = fields.Int(default=10, validate=debounce_range)
@@ -124,6 +129,7 @@ class MiscKeyboardSchema(Schema):
 
 class MiscSchema(Schema):
     ui = fields.Nested(MiscUISchema)
+    features = fields.Nested(MiscFeaturesSchema)
     keyboard = fields.Nested(MiscKeyboardSchema)
 
 
