@@ -48,6 +48,7 @@ class Deck(Page):
     by next_page_evts,  similar to a deck of cards.
     """
     pages = []
+    max_page_idx = None
     next_page_evts = [(Key.select, Action.short), (Key.select, Action.long)]
 
     def __init__(self):
@@ -65,7 +66,7 @@ class Deck(Page):
         super().hide()
 
     def show_child(self, idx):
-        if idx > len(self.pages) - 1:
+        if idx > len(self.pages) - 1 or self.max_page_idx is not None and idx > self.max_page_idx:
             self.page_index = 0
         else:
             self.page_index = idx

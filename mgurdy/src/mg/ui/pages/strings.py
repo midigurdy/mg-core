@@ -2,6 +2,7 @@ from .base import PopupItem, ListPage, Deck, ConfigList, ValueListItem, BooleanL
 
 from mg.input import Action, Key
 from mg.utils import midi2percent, midi2note
+from mg.ui.display import blit
 
 
 # used to synchronize the state of the voice param pages, so that the same parameter
@@ -525,6 +526,19 @@ class KeynoisePage(VoicePage):
 
 
 class VoiceDeck(Deck):
+    single_label = None
+
+    state_events = [
+        'multi_strings:changed',
+    ]
+
+    def handle_state_event(self, name, data):
+        self.show_child()
+        self.render()
+
+    @property
+    def max_page_idx(self):
+        return None if self.state.multi_strings else 0
 
     @property
     def idle_timeout(self):
@@ -537,17 +551,23 @@ class VoiceDeck(Deck):
         d = self.menu.display
         d.clear()
         d.font_size(1)
-        for i, page in enumerate(self.pages):
-            if page == self.active_page:
-                d.rect(0, i * 11, 11, (i + 1) * 11 - 2, color=1, fill=1)
-                d.puts(1, 2 + i * 11, page.title, color=0)
-            else:
-                d.puts(1, 2 + i * 11, page.title)
-            d.line(12, 0, 12, 32)
+        if self.state.multi_strings:
+            for i, page in enumerate(self.pages):
+                if page == self.active_page:
+                    d.rect(0, i * 11, 11, (i + 1) * 11 - 2, color=1, fill=1)
+                    d.puts(1, 2 + i * 11, page.title, color=0)
+                else:
+                    d.puts(1, 2 + i * 11, page.title)
+                d.line(12, 0, 12, 32)
+        elif self.single_label:
+            d.blit(0, 0, self.single_label.data, self.single_label.width)
+
         super().render()
 
 
 class MelodyDeck(VoiceDeck):
+    single_label = blit.LABEL_MELODY
+
     next_page_evts = [(Key.fn2, Action.short), (Key.fn2, Action.long)]
 
     pages = [
@@ -558,6 +578,8 @@ class MelodyDeck(VoiceDeck):
 
 
 class DroneDeck(VoiceDeck):
+    single_label = blit.LABEL_DRONE
+
     next_page_evts = [(Key.fn1, Action.short), (Key.fn1, Action.long)]
 
     pages = [
@@ -568,6 +590,8 @@ class DroneDeck(VoiceDeck):
 
 
 class TrompetteDeck(VoiceDeck):
+    single_label = blit.LABEL_TROMPETTE
+
     next_page_evts = [(Key.fn3, Action.short), (Key.fn3, Action.long)]
 
     pages = [
