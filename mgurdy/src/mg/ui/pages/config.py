@@ -381,12 +381,12 @@ class ConfigPage(ConfigList):
             CoarseTuneItem(),
             FineTuneItem(),
             PitchbendRangeItem(),
-            SynthGainItem(),
             PopupItem('Keynoise' + chr(127), KeynoisePage(
                 'Keynoise',
                 voice_name='preset.keynoise.0',
                 sync_state=False)),
             PopupItem('MIDI' + chr(127), MIDIPage()),
+            SynthGainItem(),
             Spacer(),
             BrightnessItem(),
             DisplayTimeoutItem(),
