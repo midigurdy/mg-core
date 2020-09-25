@@ -124,6 +124,25 @@ class SynthGainItem(ValueListItem):
         return '{:3d}%'.format(midi2percent(val))
 
 
+class PreloadPresetsItem(ValueListItem):
+    def get_label(self):
+        if self.state.presets_preloaded:
+            return 'Unload Presets'
+        else:
+            return 'Preload Presets'
+
+    def format_value(self, val):
+        return ''
+
+    def activate(self, *args, **kwargs):
+        if self.state.presets_preloaded:
+            with self.menu.lock_state('Unloading presets...'):
+                self.state.unpreload_presets()
+        else:
+            with self.menu.lock_state('Preloading presets...'):
+                self.state.preload_presets()
+
+
 class Spacer(ValueListItem):
     label = '--------------------'
 
@@ -371,6 +390,8 @@ class ConfigPage(ConfigList):
             Spacer(),
             BrightnessItem(),
             DisplayTimeoutItem(),
+            Spacer(),
+            PreloadPresetsItem(),
         ]
 
 
