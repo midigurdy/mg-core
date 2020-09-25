@@ -7,6 +7,7 @@ from mg.utils import PeriodicTimer
 from mg.db import Preset, load_midi_config
 from mg.sf2 import SoundFont
 from mg.alsa.api import RawMIDI
+from mg.mglib import mgcore
 
 
 log = logging.getLogger('state')
@@ -38,6 +39,8 @@ class State(EventEmitter):
             self.poly_base_note = True
             self.poly_pitch_bend = True
             self.multi_strings = True
+
+            self.presets_preloaded = False
 
             self.ui = UIState()
             self.synth = SynthState()
@@ -87,8 +90,23 @@ class State(EventEmitter):
                 log.exception('Unable to resolve obj path "{}"'.format(path))
         return cached
 
+    def preload_presets(self):
+        mgcore.halt_midi_output()
+        try:
+            current_id = self.preset.id
+            for preset in Preset.select().order_by(Preset.number):
+                self.load_preset(preset.id, preload=True)
+            self.load_preset(current_id)
+            self.presets_preloaded = True
+        finally:
+            mgcore.resume_midi_output()
+
+    def unpreload_presets(self):
+        signals.emit('clear:preload')
+        self.presets_preloaded = False
+
     # FIXME: database access should not happen in this class!
-    def load_preset(self, preset_id):
+    def load_preset(self, preset_id, preload=False):
         try:
             preset = Preset.get(Preset.id == int(preset_id))
         except Preset.DoesNotExist:
@@ -97,6 +115,9 @@ class State(EventEmitter):
         with self.lock():
             with signals.suppress():
                 self.from_preset_dict(preset.get_data())
+                self.preset.id = preset_id
+            if preload:
+                signals.emit('active:preset:preload')
             signals.emit('active:preset:changed')
             self.last_preset_number = preset.number
 

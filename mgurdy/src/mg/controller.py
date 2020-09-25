@@ -49,6 +49,8 @@ class SynthController(EventListener):
         'active:preset:voice:panning:changed',
         'active:preset:voice:finetune:changed',
         'active:preset:voice:chien_threshold:changed',
+        'active:preset:preload',
+        'clear:preload',
     ]
 
     def __init__(self, fluid, state):
@@ -151,6 +153,18 @@ class SynthController(EventListener):
         if id in self.fluid.get_loaded_fonts():
             self.configure_all_voices(clear_sounds=True)
 
+    def active_preset_preload(self, **kwargs):
+        for voice in self.state.preset.voices:
+            if not voice.get_sound():
+                continue
+            if not self.fluid.preload_sound(
+                    voice.soundfont_id, voice.bank,
+                    voice.program, self.state.preset.id):
+                break
+
+    def clear_preload(self, *kwargs):
+        self.fluid.clear_preload_sounds()
+
     def configure_all_voices(self, clear_sounds=False):
         mgcore.halt_midi_output()
         try:
@@ -206,7 +220,7 @@ class SynthController(EventListener):
         configs = []
         for voice in self.state.preset.voices:
             string = '%s%d' % (voice.type, voice.number)
-            if not voice.soundfont_id:
+            if not voice.get_sound():
                 configs.append((string, 'mute', 1))
             else:
                 muted = voice.muted or (not self.state.multi_strings and voice.number > 1)

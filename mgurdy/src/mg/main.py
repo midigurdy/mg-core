@@ -158,6 +158,7 @@ def start_fluidsynth(synth, dump_midi, debug=False):
         'synth.verbose': 1 if dump_midi else 0,
         'synth.polyphony': 64,
         'synth.dynamic-sample-loading': 1,
+        'synth.midi-channels': 64,
     })
     synth.start()
 

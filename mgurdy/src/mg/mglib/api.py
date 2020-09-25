@@ -201,6 +201,7 @@ class MGCore:
         self.synth = None
         self.started = False
         self.outputs = {}
+        self.halted = 0
 
         if lib.mg_initialize():
             raise RuntimeError('Unable to initialize mgcore')
@@ -227,8 +228,13 @@ class MGCore:
     def halt_midi_output(self):
         if lib.mg_halt_midi_output(1):
             raise RuntimeError('Unable to halt midi output')
+        self.halted += 1
 
     def resume_midi_output(self):
+        if self.halted > 0:
+            self.halted -= 1
+        if self.halted > 0:
+            return
         if lib.mg_halt_midi_output(0):
             raise RuntimeError('Unable to resume midi output')
 

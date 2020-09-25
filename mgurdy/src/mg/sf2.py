@@ -15,7 +15,9 @@ FILENAME_PATTERN = re.compile(r'\.sf[23]$', re.I)
 
 
 class SoundFont(object):
-    def __init__(self, filepath=None):
+    FILE_CACHE = {}
+
+    def __init__(self, filepath=None, mtime=None):
         if filepath and not filepath.startswith('/'):
             filepath = os.path.join(settings.sound_dir, filepath)
 
@@ -25,6 +27,7 @@ class SoundFont(object):
             self.id = self.filename
             self.filesize = os.path.getsize(filepath)
 
+        self.mtime = mtime
         self.sounds = []
         self.name = ''
         self.copyright = ''
@@ -39,18 +42,26 @@ class SoundFont(object):
                 self.parse_file(f)
 
     @classmethod
+    def from_cache(cls, filepath):
+        mtime = os.path.getmtime(filepath)
+        sf = cls.FILE_CACHE.get(filepath)
+        if not sf or sf.mtime != mtime:
+            cls.FILE_CACHE[filepath] = cls(filepath, mtime)
+        return cls.FILE_CACHE[filepath]
+
+    @classmethod
     def load_all(cls):
         sounds = []
         for path in glob.glob(os.path.join(settings.sound_dir, '*')):
             if FILENAME_PATTERN.search(path):
-                sounds.append(cls(path))
+                sounds.append(cls.from_cache(path))
         return sorted(sounds, key=lambda x: x.name + x.id)
 
     @classmethod
     def by_id(cls, id):
         filepath = os.path.join(settings.sound_dir, '{}'.format(id))
         try:
-            return cls(filepath)
+            return cls.from_cache(filepath)
         except FileNotFoundError:
             return None
 

@@ -45,6 +45,15 @@ class FluidSynth(object):
             'mode': 0,
         }
         self.set_logger()
+        self.preload_channels = [
+            {
+                'channel': c,
+                'soundfont': None,
+                'bank': None,
+                'program': None,
+                'owners': set(),
+            } for c in range(16, 64)
+        ]
 
     def set_logger(self):
         lib.fluid_set_log_function(lib.FLUID_PANIC, fs_log, ffi.NULL)
@@ -116,6 +125,43 @@ class FluidSynth(object):
         if ret != lib.FLUID_OK:
             raise FluidSynthError('Unable to clear channel')
         del self.channels[channel]
+
+    def preload_sound(self, font_filename, bank, program, owner):
+        entry = self._find_preloaded_sound(font_filename, bank, program)
+        if not entry:
+            entry = self._get_free_preload_slot()
+            if not entry:
+                return False
+            entry['soundfont'] = font_filename
+            entry['bank'] = bank
+            entry['program'] = program
+            self.set_channel_sound(entry['channel'], font_filename, bank, program)
+        entry['owners'].add(owner)
+        return True
+
+    def clear_preload_sounds(self, owner=None):
+        for entry in self.preload_channels:
+            if owner and owner in entry['owners']:
+                entry['owners'].remove(owner)
+            if owner is None or not entry['owners']:
+                self.clear_channel_sound(entry['channel'])
+                entry['soundfont'] = None
+                entry['bank'] = None
+                entry['program'] = None
+                entry['owners'] = set()
+
+    def _find_preloaded_sound(self, font_filename, bank, program):
+        for entry in self.preload_channels:
+            if (entry['soundfont'] == font_filename and
+                    entry['bank'] == bank and
+                    entry['program'] == program):
+                return entry
+
+    def _get_free_preload_slot(self):
+        for entry in self.preload_channels:
+            if entry['soundfont'] is None:
+                return entry
+        raise RuntimeError('No more preload slots left!')
 
     def clear_all_channel_sounds(self):
         for channel, sfid in self.channels.items():
