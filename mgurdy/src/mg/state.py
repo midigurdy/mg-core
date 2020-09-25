@@ -37,6 +37,7 @@ class State(EventEmitter):
 
             self.poly_base_note = True
             self.poly_pitch_bend = True
+            self.multi_strings = True
 
             self.ui = UIState()
             self.synth = SynthState()
@@ -204,6 +205,7 @@ class State(EventEmitter):
             'features': {
                 'poly_base_note': self.poly_base_note,
                 'poly_pitch_bend': self.poly_pitch_bend,
+                'multi_strings': self.multi_strings,
             },
         }
 
@@ -217,6 +219,7 @@ class State(EventEmitter):
         features = data.get('features', {})
         _set(self, 'poly_base_note', features, 'poly_base_note', True, partial)
         _set(self, 'poly_pitch_bend', features, 'poly_pitch_bend', True, partial)
+        _set(self, 'multi_strings', features, 'multi_strings', True, partial)
 
         keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)
