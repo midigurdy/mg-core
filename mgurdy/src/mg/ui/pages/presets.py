@@ -33,7 +33,7 @@ class PresetsPage(ListPage):
 
     def select_item(self, item):
         if item.id:
-            with self.menu.lock_state('Loading preset...'):
+            with self.menu.lock_state(f'Loading preset {item.number}...'):
                 self.state.load_preset(item.id)
             self.menu.goto('home')
         else:

@@ -146,7 +146,7 @@ class StateActionHandler:
             preset = Preset.get(Preset.number == preset_number)
         except Preset.DoesNotExist:
             return
-        with self.menu.lock_state('Loading preset...'):
+        with self.menu.lock_state(f'Loading preset {preset.number}...'):
             self.state.load_preset(preset.id)
 
     def load_next_preset(self, evt):
@@ -158,7 +158,7 @@ class StateActionHandler:
                 preset = Preset.select().order_by(Preset.number).get()
             except Preset.DoesNotExist:
                 return
-        with self.menu.lock_state('Loading preset...'):
+        with self.menu.lock_state(f'Loading preset {preset.number}...'):
             self.state.load_preset(preset.id)
 
     def load_prev_preset(self, evt):
@@ -170,7 +170,7 @@ class StateActionHandler:
                 preset = Preset.select().order_by(Preset.number.desc()).get()
             except Preset.DoesNotExist:
                 return
-        with self.menu.lock_state('Loading preset...'):
+        with self.menu.lock_state(f'Loading preset {preset.number}...'):
             self.state.load_preset(preset.id)
 
     def toggle_string_mute(self, evt):

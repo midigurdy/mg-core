@@ -98,8 +98,6 @@ def start(args):
         if ranges:
             mgcore.set_mapping_ranges(name, ranges)
 
-    menu.message('Loading preset')
-
     # set default global settings
     state.main_volume = 120
     state.reverb_volume = 25
@@ -117,6 +115,7 @@ def start(args):
 
     try:
         preset = db.Preset.get()  # noqa
+        menu.message(f'Loading preset {preset.number}...')
         with state.lock():
             state.load_preset(preset.id)
     except db.Preset.DoesNotExist:
