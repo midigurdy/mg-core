@@ -112,6 +112,7 @@ void mg_image_clear(struct mg_image *img, int x0, int y0, int x1, int y1);
 void mg_image_line(struct mg_image *img, int x0, int y0, int x1, int y1, int c);
 void mg_image_point(struct mg_image *img, int x, int y, int c);
 char *mg_image_data(struct mg_image *img);
+void mg_image_blit(struct mg_image *img, int x, int y, const int *data, int len, int width);
 int mg_image_load_font(struct mg_image *img, char *filename);
 void mg_image_puts(struct mg_image *img, int face_id,
                    const char *text, int x, int y, int color,

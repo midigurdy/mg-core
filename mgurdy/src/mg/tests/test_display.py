@@ -4,6 +4,68 @@ import pytest  # noqa
 from mg.ui.display import Display
 
 
+def test_blit(tmpdir):
+    out = tmpdir.join('img').ensure()
+    disp = Display(8, 8, str(out))
+
+    pattern1 = [
+        1, -1, 0,
+        0, 1, 0,
+        0, -1, 1,
+    ]
+    pattern2 = [
+        -1, -1, 1,
+        -1, -1, -1,
+        1, -1, -1,
+    ]
+    with disp as d:
+        d.blit(1, 2, pattern1, 3)
+        d.blit(1, 2, pattern2, 3)
+
+    assert img_eq(
+        '''
+        ........
+        ........
+        .O.O....
+        ..O.....
+        .O.O....
+        ........
+        ........
+        ........
+        ''', disp, out)
+
+
+def test_blit_string(tmpdir):
+    out = tmpdir.join('img').ensure()
+    disp = Display(8, 8, str(out))
+
+    pattern1 = (
+        'O .'
+        '.O.'
+        '. O'
+    )
+    pattern2 = (
+        '  O'
+        '   '
+        'O  '
+    )
+    with disp as d:
+        d.blit_string(1, 2, pattern1, 3)
+        d.blit_string(1, 2, pattern2, 3)
+
+    assert img_eq(
+        '''
+        ........
+        ........
+        .O.O....
+        ..O.....
+        .O.O....
+        ........
+        ........
+        ........
+        ''', disp, out)
+
+
 def test_single_pixel(tmpdir):
     out = tmpdir.join('img').ensure()
     disp = Display(8, 8, str(out))

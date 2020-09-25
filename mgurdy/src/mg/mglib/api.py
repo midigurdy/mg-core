@@ -381,6 +381,10 @@ class MGImage:
     def write(self, filename):
         lib.mg_image_write(self.img, filename.encode())
 
+    def blit(self, x, y, data, width):
+        data = ffi.new(f'int[]', data)
+        lib.mg_image_blit(self.img, x, y, data, len(data), width)
+
     def puts(self, x, y, text, font, color, spacing, align, anchor, max_width=0, x_offset=0):
         if align == 'center':
             align_id = 1
