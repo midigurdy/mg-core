@@ -546,7 +546,7 @@ class ListPage(Page):
             if highlight:
                 d.rect(self.x_offset, i * font.char_height, 124,
                        (i + 1) * font.char_height, fill=1)
-            d.puts(self.x_offset, i * font.char_height + font.line_spacing,
+            d.puts(self.x_offset, i * (font.char_height + font.line_spacing),
                    cursor_char + self.item_label(item),
                    color=0 if highlight else 1)
 
