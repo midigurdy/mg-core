@@ -15,12 +15,14 @@ class Home(Page):
         'ui:string_group:changed',
         'power:source:changed',
         'power:battery_percent:changed',
+        'multi_strings:changed',
     ]
 
     def handle_state_event(self, name, data):
         if name == 'power:battery_percent:changed' and self.state.power.source != 'bat':
             return
-        if name == 'ui:string_group:changed' and self.state.ui.string_group > 0:
+        if (name == 'ui:string_group:changed' and self.state.ui.string_group > 0 and
+                self.state.multi_strings):
             self.render(self.state.ui.string_group)
             time.sleep(0.10)
         self.render()
@@ -42,7 +44,10 @@ class Home(Page):
                 (66, 0, self.state.preset.trompette)
             )
             for x, y, st in strings:
-                self.draw_string_box(d, x, y, st, hide_group)
+                if self.state.multi_strings:
+                    self.draw_multi_string_box(d, x, y, st, hide_group)
+                else:
+                    self.draw_string_box(d, x, y, st[0], hide_group)
 
             d.font_size(1)
             for x, label in labels:
@@ -67,6 +72,37 @@ class Home(Page):
             d.line(bx + 1, 5, bx + 11, 0)
 
     def draw_string_box(self, d, x, y, string, hide_group=-1):
+        pad = 1
+        w = 26
+        h = 21
+
+        x = x + pad
+        y = y + pad
+        w = w - 2 * pad
+        h = h - 2 * pad
+
+        tx = x + w // 2 + 1
+        ty = y + 3
+
+        # Box with "rounded" edges
+        d.rect(x, y, x + w, y + h, color=1,
+               fill=0 if string.is_silent() else 1)
+        d.point(x, y, 0)
+        d.point(x + w, y, 0)
+        d.point(x, y + h, 0)
+        d.point(x + w, y + h, 0)
+
+        if string.soundfont_id is not None:
+            note = midi2note(string.base_note, False)
+        else:
+            note = '-'
+
+        d.font_size(7)
+        d.puts(tx, ty, note, anchor='center', align='center',
+               color=1 if string.is_silent() else 0)
+        d.font_size(1)
+
+    def draw_multi_string_box(self, d, x, y, strings, hide_group=-1):
         w = 26
         c = 14
         h1 = 12
@@ -75,44 +111,44 @@ class Home(Page):
 
         d.rect(x, y, x + w, y + 12,
                color=0,
-               fill=0 if string[0].is_silent() else 1)
+               fill=0 if strings[0].is_silent() else 1)
 
         if hide_group != 0:
-            if string[0].soundfont_id is not None:
-                note = midi2note(string[0].base_note, False)
+            if strings[0].soundfont_id is not None:
+                note = midi2note(strings[0].base_note, False)
             else:
                 note = '-'
             d.puts(x + c, y + 2, note,
                    anchor='center', align='center',
-                   color=1 if string[0].is_silent() else 0)
+                   color=1 if strings[0].is_silent() else 0)
 
         d.font_size(1)
 
         d.rect(x, y + h1, x + 13, y + h1 + h2,
                color=0,
-               fill=0 if string[1].is_silent() else 1)
+               fill=0 if strings[1].is_silent() else 1)
 
         if hide_group != 1:
-            if string[1].soundfont_id is not None:
-                note = midi2note(string[1].base_note, False)
+            if strings[1].soundfont_id is not None:
+                note = midi2note(strings[1].base_note, False)
             else:
                 note = '-'
             d.puts(x + 7, y + h1 + 2, note,
                    anchor='center', align='center',
-                   color=1 if string[1].is_silent() else 0)
+                   color=1 if strings[1].is_silent() else 0)
 
         d.rect(x + 13, y + h1, x + w, y + h1 + h2,
                color=0,
-               fill=0 if string[2].is_silent() else 1)
+               fill=0 if strings[2].is_silent() else 1)
 
         if hide_group != 2:
-            if string[2].soundfont_id is not None:
-                note = midi2note(string[2].base_note, False)
+            if strings[2].soundfont_id is not None:
+                note = midi2note(strings[2].base_note, False)
             else:
                 note = '-'
             d.puts(x + w - 6, y + h1 + 2, note,
                    anchor='center', align='center',
-                   color=1 if string[2].is_silent() else 0)
+                   color=1 if strings[2].is_silent() else 0)
 
         d.rect(x, y, x + w, y + h1 + h2,
                color=1)
