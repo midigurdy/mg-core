@@ -208,8 +208,10 @@ struct mg_state {
     int key_on_debounce;
     int key_off_debounce;
     int base_note_delay;
+
     int poly_base_note;
     int poly_pitch_bend;
+    int multi_strings;
 
     struct mg_map pressure_to_poly;
     struct mg_map pressure_to_pitch;
@@ -415,6 +417,7 @@ enum mg_map_enum {
 enum mg_feature {
     MG_FEATURE_POLY_BASE_NOTE,
     MG_FEATURE_POLY_PITCH_BEND,
+    MG_FEATURE_MULTI_STRINGS,
 };
 
 struct mg_string_config {

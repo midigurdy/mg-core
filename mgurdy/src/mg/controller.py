@@ -28,6 +28,7 @@ class SynthController(EventListener):
         'base_note_delay:changed',
         'poly_base_note:changed',
         'poly_pitch_bend:changed',
+        'multi_strings:changed',
         'sound:changed',
         'sound:deleted',
         'synth:gain:changed',
@@ -74,6 +75,9 @@ class SynthController(EventListener):
 
     def poly_pitch_bend_changed(self, poly_pitch_bend, **kwargs):
         mgcore.set_feature('poly_pitch_bend', poly_pitch_bend)
+
+    def multi_strings_changed(self, multi_strings, **kwargs):
+        mgcore.set_feature('multi_strings', multi_strings)
 
     def reverb_volume_changed(self, reverb_volume, **kwargs):
         self.set_reverb_volume(reverb_volume)
