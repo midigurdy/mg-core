@@ -210,16 +210,19 @@ class State(EventEmitter):
         }
 
     def from_misc_dict(self, data, partial=False):
-        ui = data.get('ui', {})
-        _set(self.ui, 'timeout', ui, 'timeout', 10, partial)
-        _set(self.ui, 'brightness', ui, 'brightness', 80, partial)
-        _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
-        _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
-
         features = data.get('features', {})
         _set(self, 'poly_base_note', features, 'poly_base_note', True, partial)
         _set(self, 'poly_pitch_bend', features, 'poly_pitch_bend', True, partial)
         _set(self, 'multi_strings', features, 'multi_strings', True, partial)
+
+        ui = data.get('ui', {})
+        _set(self.ui, 'timeout', ui, 'timeout', 10, partial)
+        _set(self.ui, 'brightness', ui, 'brightness', 80, partial)
+        _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
+        if self.multi_strings:
+            _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
+        else:
+            self.multi_chien_threshold = False
 
         keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)

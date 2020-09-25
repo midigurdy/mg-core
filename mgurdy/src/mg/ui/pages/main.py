@@ -168,6 +168,7 @@ class ChienThresholdPage(Slider):
     state_events = [
         'active:preset:voice:chien_threshold:changed',
         'multi_chien_threshold:changed',
+        'multi_strings:changed',
     ]
     minval = 0
     maxval = 100
@@ -186,8 +187,8 @@ class ChienThresholdPage(Slider):
         return self.state.chien_sens_reverse
 
     def handle_state_event(self, name, data):
-        if name == 'multi_chien_threshold:changed':
-            if self.state.multi_chien_threshold:
+        if name in ('multi_chien_threshold:changed', 'multi_strings:changed'):
+            if self.state.multi_chien_threshold and self.state.multi_strings:
                 self.menu.goto('multi_chien_threshold')
             return
         # prevent rendering three times if all chiens have changed
@@ -212,6 +213,7 @@ class MultiChienThresholdPage(Page):
     state_events = [
         'active:preset:voice:chien_threshold:changed',
         'multi_chien_threshold:changed',
+        'multi_strings:changed',
     ]
 
     def __init__(self):
@@ -229,8 +231,8 @@ class MultiChienThresholdPage(Page):
         return self.state.chien_sens_reverse
 
     def handle_state_event(self, name, data):
-        if name == 'multi_chien_threshold:changed':
-            if not self.state.multi_chien_threshold:
+        if name in ('multi_chien_threshold:changed', 'multi_strings:changes'):
+            if not self.state.multi_chien_threshold or not self.state.multi_strings:
                 self.menu.goto('chien_threshold')
             return
         # prevent rendering three times if all chiens have changed
