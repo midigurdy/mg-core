@@ -112,15 +112,23 @@ class EventHandler:
             self.state.toggle_voice_mute('drone', whole_group=True)
             return
 
-        # lid modifier buttons toggle active string group
         if evt.name in (Key.mod1, Key.mod2):
-            if evt.action == Action.down:
-                self.mod_keys |= 1 if evt.name == Key.mod1 else 2
-            elif evt.action == Action.up:
-                self.mod_keys &= 2 if evt.name == Key.mod1 else 1
-            group = min([self.mod_keys, 2])
-            self.state.ui.string_group = group
-            return
+            # lid modifier buttons toggle active string group in multi string mode
+            if self.state.multi_strings:
+                if evt.action == Action.down:
+                    self.mod_keys |= 1 if evt.name == Key.mod1 else 2
+                elif evt.action == Action.up:
+                    self.mod_keys &= 2 if evt.name == Key.mod1 else 1
+                group = min([self.mod_keys, 2])
+                self.state.ui.string_group = group
+                return
+            # and next / prev preset in single string mode
+            else:
+                if evt.pressed(Key.mod2):
+                    self.state_action_handler.load_next_preset(evt)
+                elif evt.pressed(Key.mod1):
+                    self.state_action_handler.load_prev_preset(evt)
+                return
 
 
 class StateActionHandler:
