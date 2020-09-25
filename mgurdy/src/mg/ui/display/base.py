@@ -72,6 +72,12 @@ class BaseDisplay:
         be 'left' (or None), 'right' or 'center'.
         """
 
+    def blit(self, x, y, data, width):
+        pass
+
+    def blit_string(self, x, y, pattern, width):
+        pass
+
     def scrolltext(self, x, y, width, text, color=1, initial_delay=0, shift_delay=0, end_delay=0):
         """
         Write the supplied string onto the display, but bounded in a 'scrollbox'

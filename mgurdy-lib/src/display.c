@@ -735,6 +735,38 @@ exit:
     return ret;
 }
 
+
+void mg_image_blit(struct mg_image *img, int x, int y, const int *data, int len, int width)
+{
+    pthread_mutex_lock(&img->mutex);
+
+    int row;
+    int col;
+    int ix, iy;
+    int pixel;
+    int rows = len / width;
+
+    for (row=0; row < rows; row++) {
+        for(col=0; col < width; col++) {
+            pixel = data[row * width + col];
+            if (pixel == -1) {
+                continue;
+            }
+
+            ix = x + col;
+            iy = y + row;
+
+            if (ix >= img->width || iy >= img->height) {
+                continue;
+            }
+
+            img->data[iy * img->width + ix] = pixel;
+        }
+    }
+
+    pthread_mutex_unlock(&img->mutex);
+}
+
 void mg_image_get_data(struct mg_image *img, char *buffer)
 {
     pthread_mutex_lock(&img->mutex);

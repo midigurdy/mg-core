@@ -208,8 +208,10 @@ struct mg_state {
     int key_on_debounce;
     int key_off_debounce;
     int base_note_delay;
+
     int poly_base_note;
     int poly_pitch_bend;
+    int multi_strings;
 
     struct mg_map pressure_to_poly;
     struct mg_map pressure_to_pitch;
@@ -415,6 +417,7 @@ enum mg_map_enum {
 enum mg_feature {
     MG_FEATURE_POLY_BASE_NOTE,
     MG_FEATURE_POLY_PITCH_BEND,
+    MG_FEATURE_MULTI_STRINGS,
 };
 
 struct mg_string_config {
@@ -477,6 +480,7 @@ extern void mg_image_destroy(struct mg_image *img);
 extern void mg_image_clear(struct mg_image *img, int x0, int y0, int x1, int y1);
 extern void mg_image_line(struct mg_image *img, int x0, int y0, int x1, int y1, int c);
 extern void mg_image_point(struct mg_image *img, int x, int y, int c);
+extern void mg_image_blit(struct mg_image *img, int x, int y, const int *data, int len, int width);
 extern char *mg_image_data(struct mg_image *img);
 extern int mg_image_load_font(struct mg_image *img, const char *filename);
 extern void mg_image_puts(struct mg_image *img, int face_id,

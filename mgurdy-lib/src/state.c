@@ -111,6 +111,7 @@ int mg_state_init(struct mg_state *state)
 
     state->poly_base_note = 1; // default on
     state->poly_pitch_bend = 1; // default on
+    state->multi_strings = 1; // default on
 
     mg_reset_mapping_ranges(MG_MAP_PRESSURE_TO_PITCH);
     mg_reset_mapping_ranges(MG_MAP_PRESSURE_TO_POLY);

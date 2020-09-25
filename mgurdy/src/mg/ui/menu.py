@@ -71,7 +71,7 @@ class Menu:
 
         # turning the encoder automatically switches to chien sensitivity page
         if evt.name == Key.encoder:
-            if self.state.multi_chien_threshold:
+            if self.state.multi_chien_threshold and self.state.multi_strings:
                 self.push('multi_chien_threshold')
             else:
                 self.push('chien_threshold')

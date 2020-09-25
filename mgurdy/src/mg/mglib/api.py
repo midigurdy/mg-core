@@ -35,6 +35,7 @@ PARAMS = {
 FEATURES = {
     'poly_base_note': lib.MG_FEATURE_POLY_BASE_NOTE,
     'poly_pitch_bend': lib.MG_FEATURE_POLY_PITCH_BEND,
+    'multi_strings': lib.MG_FEATURE_MULTI_STRINGS,
 }
 
 MAPPINGS = {
@@ -380,6 +381,10 @@ class MGImage:
 
     def write(self, filename):
         lib.mg_image_write(self.img, filename.encode())
+
+    def blit(self, x, y, data, width):
+        data = ffi.new(f'int[]', data)
+        lib.mg_image_blit(self.img, x, y, data, len(data), width)
 
     def puts(self, x, y, text, font, color, spacing, align, anchor, max_width=0, x_offset=0):
         if align == 'center':

@@ -30,6 +30,13 @@ class MGDisplay(BaseDisplay):
     def rect(self, x1, y1, x2, y2, color=1, fill=-1):
         self.img.rect(x1, y1, x2, y2, color, fill)
 
+    def blit(self, x, y, data, width):
+        self.img.blit(x, y, data, width)
+
+    def blit_string(self, x, y, pattern, width):
+        data = [-1 if p == ' ' else 0 if p == '.' else 1 for p in pattern]
+        self.img.blit(x, y, data, width)
+
     def update(self):
         self.img.write(self.filename)
 

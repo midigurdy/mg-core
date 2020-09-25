@@ -60,7 +60,7 @@ class PresetView(Resource):
 class LoadPresetView(StateResource):
     def post(self, id):
         preset = get_object_or_404(Preset, Preset.id == id)
-        with self.state.lock('Loading preset...', goto_home=True):
+        with self.state.lock(f'Loading preset {preset.number}...', goto_home=True):
             self.state.load_preset(preset.id)
         return None, 204
 

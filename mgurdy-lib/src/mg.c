@@ -214,6 +214,10 @@ int mg_set_feature(int num, int enabled)
         case MG_FEATURE_POLY_PITCH_BEND:
             s->poly_pitch_bend = enabled;
             break;
+
+        case MG_FEATURE_MULTI_STRINGS:
+            s->multi_strings = enabled;
+            break;
     }
 
     return mg_state_unlock(s);
