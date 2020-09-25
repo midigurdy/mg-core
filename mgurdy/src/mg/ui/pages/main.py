@@ -3,7 +3,6 @@ from .base import Page, Slider, Deck
 
 from mg.input import Action, Key
 from mg.utils import midi2percent, midi2note
-from mg.signals import signals
 
 
 class Home(Page):
