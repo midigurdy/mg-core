@@ -93,7 +93,7 @@ class Home(Page):
         d.point(x + w, y + h, 0)
 
         if string.soundfont_id is not None:
-            note = midi2note(string.base_note, False)
+            note = midi2note(string.base_note + self.state.coarse_tune, False)
         else:
             note = '-'
 
@@ -115,7 +115,7 @@ class Home(Page):
 
         if hide_group != 0:
             if strings[0].soundfont_id is not None:
-                note = midi2note(strings[0].base_note, False)
+                note = midi2note(strings[0].base_note + self.state.coarse_tune, False)
             else:
                 note = '-'
             d.puts(x + c, y + 2, note,
@@ -130,7 +130,7 @@ class Home(Page):
 
         if hide_group != 1:
             if strings[1].soundfont_id is not None:
-                note = midi2note(strings[1].base_note, False)
+                note = midi2note(strings[1].base_note + self.state.coarse_tune, False)
             else:
                 note = '-'
             d.puts(x + 7, y + h1 + 2, note,
@@ -143,7 +143,7 @@ class Home(Page):
 
         if hide_group != 2:
             if strings[2].soundfont_id is not None:
-                note = midi2note(strings[2].base_note, False)
+                note = midi2note(strings[2].base_note + self.state.coarse_tune, False)
             else:
                 note = '-'
             d.puts(x + w - 6, y + h1 + 2, note,
