@@ -78,6 +78,7 @@ class SynthController(EventListener):
 
     def multi_strings_changed(self, multi_strings, **kwargs):
         mgcore.set_feature('multi_strings', multi_strings)
+        mgcore.set_string_params(self.string_mute_configs())
 
     def reverb_volume_changed(self, reverb_volume, **kwargs):
         self.set_reverb_volume(reverb_volume)
@@ -168,7 +169,8 @@ class SynthController(EventListener):
                         voice.soundfont_id,
                         voice.bank,
                         voice.program)
-                    configs.append((string, 'mute', int(voice.muted)))
+                    muted = voice.muted or (not self.state.multi_strings and voice.number > 1)
+                    configs.append((string, 'mute', int(muted)))
                     configs.append((string, 'bank', voice.bank))
                     configs.append((string, 'program', voice.program))
                 else:
@@ -207,7 +209,8 @@ class SynthController(EventListener):
             if not voice.soundfont_id:
                 configs.append((string, 'mute', 1))
             else:
-                configs.append((string, 'mute', int(voice.muted)))
+                muted = voice.muted or (not self.state.multi_strings and voice.number > 1)
+                configs.append((string, 'mute', int(muted)))
         return configs
 
     def base_note_configs(self):
@@ -252,7 +255,9 @@ class SynthController(EventListener):
             (voice.string, 'bank', voice.bank),
             (voice.string, 'program', voice.program),
         ]
-        if not voice.muted:
+
+        muted = voice.muted or (not self.state.multi_strings and voice.number > 1)
+        if not muted:
             configs.append((voice.string, 'mute', 0))
         mgcore.set_string_params(configs)
         self.set_voice_fine_tune(voice)
