@@ -544,12 +544,18 @@ class VoiceDeck(Deck):
         d.clear()
         d.font_size(1)
         if self.state.string_count > 1:
+            if self.state.string_count == 2:
+                h = 17
+                l_offset = 4
+            else:
+                h = 11
+                l_offset = 2
             for i, page in enumerate(self.pages[:self.state.string_count]):
                 if page == self.active_page:
-                    d.rect(0, i * 11, 11, (i + 1) * 11 - 2, color=1, fill=1)
-                    d.puts(1, 2 + i * 11, page.title, color=0)
+                    d.rect(0, i * h, 11, (i + 1) * h - 2, color=1, fill=1)
+                    d.puts(1, l_offset + i * h, page.title, color=0)
                 else:
-                    d.puts(1, 2 + i * 11, page.title)
+                    d.puts(1, l_offset + i * h, page.title)
                 d.line(12, 0, 12, 32)
         elif self.single_label:
             d.blit(0, 0, self.single_label.data, self.single_label.width)
