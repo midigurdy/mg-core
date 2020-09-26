@@ -35,6 +35,7 @@ class State(EventEmitter):
             self.base_note_delay = 20
             self.chien_sens_reverse = False
             self.multi_chien_threshold = False
+            self.group_button_mode = 'groups'
 
             self.poly_base_note = True
             self.poly_pitch_bend = True
@@ -217,6 +218,7 @@ class State(EventEmitter):
                 'brightness': self.ui.brightness,
                 'chien_sens_reverse': self.chien_sens_reverse,
                 'multi_chien_threshold': self.multi_chien_threshold,
+                'group_button_mode': self.group_button_mode,
             },
             'keyboard': {
                 'key_on_debounce': self.key_on_debounce,
@@ -242,8 +244,10 @@ class State(EventEmitter):
         _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
         if self.multi_strings:
             _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
+            _set(self, 'group_button_mode', ui, 'group_button_mode', 'groups', partial)
         else:
             self.multi_chien_threshold = False
+            self.group_button_mode = 'presets'
 
         keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)

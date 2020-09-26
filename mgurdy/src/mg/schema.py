@@ -114,6 +114,7 @@ class MiscUISchema(Schema):
     brightness = fields.Int(default=80, validate=percent_range)
     chien_sens_reverse = fields.Boolean(default=False)
     multi_chien_threshold = fields.Boolean(default=False)
+    group_button_mode = fields.Str(default='groups')
 
 
 class MiscFeaturesSchema(Schema):
