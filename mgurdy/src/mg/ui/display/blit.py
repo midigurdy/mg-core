@@ -38,7 +38,7 @@ LABEL_MELODY = StringBlit(
     ..........................O...O.
     ...........................OOO..
     ................................
-    """, reverse=True, rotate='right')
+    """, reverse=True, rotate='left')
 
 
 LABEL_DRONE = StringBlit(
@@ -56,7 +56,7 @@ LABEL_DRONE = StringBlit(
     ................................
     ................................
     ................................
-    """, reverse=True, rotate='right')
+    """, reverse=True, rotate='left')
 
 
 LABEL_TROMPETTE = StringBlit(
@@ -74,7 +74,7 @@ LABEL_TROMPETTE = StringBlit(
     .........................O......
     .........................O......
     ................................
-    """, reverse=True, rotate='right')
+    """, reverse=True, rotate='left')
 
 SBOX_1 = (
     StringBlit(
