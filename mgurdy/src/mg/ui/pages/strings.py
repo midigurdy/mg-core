@@ -528,17 +528,9 @@ class KeynoisePage(VoicePage):
 class VoiceDeck(Deck):
     single_label = None
 
-    state_events = [
-        'multi_strings:changed',
-    ]
-
-    def handle_state_event(self, name, data):
-        self.show_child()
-        self.render()
-
     @property
     def max_page_idx(self):
-        return None if self.state.multi_strings else 0
+        return self.state.string_count - 1
 
     @property
     def idle_timeout(self):
@@ -551,8 +543,8 @@ class VoiceDeck(Deck):
         d = self.menu.display
         d.clear()
         d.font_size(1)
-        if self.state.multi_strings:
-            for i, page in enumerate(self.pages):
+        if self.state.string_count > 1:
+            for i, page in enumerate(self.pages[:self.state.string_count]):
                 if page == self.active_page:
                     d.rect(0, i * 11, 11, (i + 1) * 11 - 2, color=1, fill=1)
                     d.puts(1, 2 + i * 11, page.title, color=0)

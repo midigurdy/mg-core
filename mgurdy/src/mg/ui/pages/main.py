@@ -3,6 +3,7 @@ from .base import Page, Slider, Deck
 
 from mg.input import Action, Key
 from mg.utils import midi2percent, midi2note
+from mg.ui.display import blit
 
 
 class Home(Page):
@@ -15,14 +16,14 @@ class Home(Page):
         'ui:string_group:changed',
         'power:source:changed',
         'power:battery_percent:changed',
-        'multi_strings:changed',
+        'string_count:changed',
     ]
 
     def handle_state_event(self, name, data):
         if name == 'power:battery_percent:changed' and self.state.power.source != 'bat':
             return
         if (name == 'ui:string_group:changed' and self.state.ui.string_group > 0 and
-                self.state.multi_strings):
+                self.state.string_count > 1):
             self.render(self.state.ui.string_group)
             time.sleep(0.10)
         self.render()
@@ -33,25 +34,25 @@ class Home(Page):
     def render(self, hide_group=-1):
         with self.menu.display as d:
             labels = (
-                (3, 'Drone'),
-                (33, 'Melody'),
-                (68, 'Tromp'),
                 (100, 'Preset'),
             )
-            strings = (
-                (2, 0, self.state.preset.drone),
-                (34, 0, self.state.preset.melody),
-                (66, 0, self.state.preset.trompette)
-            )
-            for x, y, st in strings:
-                if self.state.multi_strings:
-                    self.draw_multi_string_box(d, x, y, st, hide_group)
-                else:
-                    self.draw_string_box(d, x, y, st[0], hide_group)
-
             d.font_size(1)
             for x, label in labels:
                 d.puts(x, 24, label)
+
+            for x, y, strings, label in (
+                (0, 0, self.state.preset.drone, 'Drone'),
+                (33, 0, self.state.preset.melody, 'Melody'),
+                (66, 0, self.state.preset.trompette, 'Tromp'),
+            ):
+                if self.state.string_count == 1:
+                    self.draw_string_boxes1(d, x, y, strings[0], label)
+                elif self.state.string_count == 2:
+                    self.draw_string_boxes2(d, x, y, strings[:2], label)
+                elif self.state.string_count == 3:
+                    self.draw_string_boxes3(d, x, y, strings, label)
+
+            d.font_size(1)
 
             d.puts(114, 14, '{}'.format(self.state.last_preset_number or '-'),
                    align='center', anchor='center')
@@ -71,95 +72,63 @@ class Home(Page):
             # diagonal line
             d.line(bx + 1, 5, bx + 11, 0)
 
-    def draw_string_box(self, d, x, y, string, hide_group=-1):
-        pad = 1
-        w = 26
-        h = 21
-
-        x = x + pad
-        y = y + pad
-        w = w - 2 * pad
-        h = h - 2 * pad
-
-        tx = x + w // 2 + 1
-        ty = y + 3
-
-        # Box with "rounded" edges
-        d.rect(x, y, x + w, y + h, color=1,
-               fill=0 if string.is_silent() else 1)
-        d.point(x, y, 0)
-        d.point(x + w, y, 0)
-        d.point(x, y + h, 0)
-        d.point(x + w, y + h, 0)
-
+    def _string_note(self, string):
         if string.soundfont_id is not None:
-            note = midi2note(string.base_note + self.state.coarse_tune, False)
-        else:
-            note = '-'
+            return midi2note(string.base_note + self.state.coarse_tune, False)
+
+    def draw_string_boxes1(self, d, x, y, string, label):
+        d.font_size(1)
+        d.puts(x + 13, 24, label, anchor='center', align='center')
+
+        silent = string.is_silent()
+
+        box = blit.SBOX_1[0 if silent else 1]
+        d.blit(x + 1, y + 2, box.data, box.width)
 
         d.font_size(7)
-        d.puts(tx, ty, note, anchor='center', align='center',
-               color=1 if string.is_silent() else 0)
-        d.font_size(1)
+        note = self._string_note(string)
+        if note:
+            d.puts(x + 13, y + 4, note, anchor='center', align='center', color=1 if silent else 0)
 
-    def draw_multi_string_box(self, d, x, y, strings, hide_group=-1):
-        w = 26
-        c = 14
-        h1 = 12
-        h2 = 9
+    def draw_string_boxes2(self, d, x, y, strings, label):
+        d.font_size(1)
+        d.puts(x + 13, 24, label, anchor='center', align='center')
+
+        d.font_size(3)
+        for string in strings:
+            silent = string.is_silent()
+
+            box = blit.SBOX_2[0 if silent else 1]
+            d.blit(x + 1, y, box.data, box.width)
+
+            note = self._string_note(string)
+            if note:
+                d.puts(x + 14, y + 1, note, anchor='center', align='center', color=1 if silent else 0)
+            y += 12
+
+    def draw_string_boxes3(self, d, x, y, strings, label):
+        box = {
+            'Drone': blit.SBOX_DRONE,
+            'Melody': blit.SBOX_MELODY,
+            'Tromp': blit.SBOX_TROMPETTE,
+        }[label]
+        d.blit(x, y, box.data, box.width)
+
+        x += box.width
+
         d.font_size(3)
 
-        d.rect(x, y, x + w, y + 12,
-               color=0,
-               fill=0 if strings[0].is_silent() else 1)
+        for string in strings:
+            silent = string.is_silent()
 
-        if hide_group != 0:
-            if strings[0].soundfont_id is not None:
-                note = midi2note(strings[0].base_note + self.state.coarse_tune, False)
-            else:
-                note = '-'
-            d.puts(x + c, y + 2, note,
-                   anchor='center', align='center',
-                   color=1 if strings[0].is_silent() else 0)
+            if not silent:
+                d.blit(x, y, blit.SBOX_3.data, blit.SBOX_3.width)
 
-        d.font_size(1)
+            note = self._string_note(string)
+            if note:
+                d.puts(x + 9, y, note, anchor='center', align='center', color=1 if silent else 0)
 
-        d.rect(x, y + h1, x + 13, y + h1 + h2,
-               color=0,
-               fill=0 if strings[1].is_silent() else 1)
-
-        if hide_group != 1:
-            if strings[1].soundfont_id is not None:
-                note = midi2note(strings[1].base_note + self.state.coarse_tune, False)
-            else:
-                note = '-'
-            d.puts(x + 7, y + h1 + 2, note,
-                   anchor='center', align='center',
-                   color=1 if strings[1].is_silent() else 0)
-
-        d.rect(x + 13, y + h1, x + w, y + h1 + h2,
-               color=0,
-               fill=0 if strings[2].is_silent() else 1)
-
-        if hide_group != 2:
-            if strings[2].soundfont_id is not None:
-                note = midi2note(strings[2].base_note + self.state.coarse_tune, False)
-            else:
-                note = '-'
-            d.puts(x + w - 6, y + h1 + 2, note,
-                   anchor='center', align='center',
-                   color=1 if strings[2].is_silent() else 0)
-
-        d.rect(x, y, x + w, y + h1 + h2,
-               color=1)
-
-        d.point(x, y, 0)
-        d.point(x + w, y, 0)
-        d.point(x, y + h1 + h2, 0)
-        d.point(x + w, y + h1 + h2, 0)
-        d.point(x, y + h1, 0)
-        d.point(x + w, y + h1, 0)
-        d.point(x + 13, y + h1 + h2, 0)
+            y += 11
 
 
 class ChienThresholdPage(Slider):
@@ -167,8 +136,6 @@ class ChienThresholdPage(Slider):
     render_on_input = True
     state_events = [
         'active:preset:voice:chien_threshold:changed',
-        'multi_chien_threshold:changed',
-        'multi_strings:changed',
     ]
     minval = 0
     maxval = 100
@@ -187,10 +154,6 @@ class ChienThresholdPage(Slider):
         return self.state.chien_sens_reverse
 
     def handle_state_event(self, name, data):
-        if name in ('multi_chien_threshold:changed', 'multi_strings:changed'):
-            if self.state.multi_chien_threshold and self.state.multi_strings:
-                self.menu.goto('multi_chien_threshold')
-            return
         # prevent rendering three times if all chiens have changed
         thresholds = self.state.preset.get_chien_thresholds()
         if self.thresholds != thresholds:
@@ -212,8 +175,6 @@ class MultiChienThresholdPage(Page):
     maxval = 100
     state_events = [
         'active:preset:voice:chien_threshold:changed',
-        'multi_chien_threshold:changed',
-        'multi_strings:changed',
     ]
 
     def __init__(self):
@@ -231,10 +192,6 @@ class MultiChienThresholdPage(Page):
         return self.state.chien_sens_reverse
 
     def handle_state_event(self, name, data):
-        if name in ('multi_chien_threshold:changed', 'multi_strings:changes'):
-            if not self.state.multi_chien_threshold or not self.state.multi_strings:
-                self.menu.goto('chien_threshold')
-            return
         # prevent rendering three times if all chiens have changed
         thresholds = self.state.preset.get_chien_thresholds()
         if self.thresholds != thresholds:

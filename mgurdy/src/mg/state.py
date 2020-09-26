@@ -39,7 +39,7 @@ class State(EventEmitter):
 
             self.poly_base_note = True
             self.poly_pitch_bend = True
-            self.multi_strings = True
+            self.string_count = 1
 
             self.presets_preloaded = False
 
@@ -228,7 +228,7 @@ class State(EventEmitter):
             'features': {
                 'poly_base_note': self.poly_base_note,
                 'poly_pitch_bend': self.poly_pitch_bend,
-                'multi_strings': self.multi_strings,
+                'string_count': self.string_count,
             },
         }
 
@@ -236,13 +236,13 @@ class State(EventEmitter):
         features = data.get('features', {})
         _set(self, 'poly_base_note', features, 'poly_base_note', True, partial)
         _set(self, 'poly_pitch_bend', features, 'poly_pitch_bend', True, partial)
-        _set(self, 'multi_strings', features, 'multi_strings', True, partial)
+        _set(self, 'string_count', features, 'string_count', 1, partial)
 
         ui = data.get('ui', {})
         _set(self.ui, 'timeout', ui, 'timeout', 10, partial)
         _set(self.ui, 'brightness', ui, 'brightness', 80, partial)
         _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
-        if self.multi_strings:
+        if self.string_count > 1:
             _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
             _set(self, 'group_button_mode', ui, 'group_button_mode', 'groups', partial)
         else:

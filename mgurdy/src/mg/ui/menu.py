@@ -21,8 +21,11 @@ class Menu:
         self.idle_timer = PeriodicTimer(1, self.check_idle)
         self.idle_timer.start()
 
-        signals.register('state:locked', self.enqueue_state_event)
-        signals.register('state:unlocked', self.enqueue_state_event)
+        for name in ('state:locked',
+                     'state:unlocked',
+                     'string_count:changed',
+                     'multi_chien_threshold:changed'):
+            signals.register(name, self.enqueue_state_event)
 
     def check_idle(self):
         with self.page_lock:
@@ -71,7 +74,7 @@ class Menu:
 
         # turning the encoder automatically switches to chien sensitivity page
         if evt.name == Key.encoder:
-            if self.state.multi_chien_threshold and self.state.multi_strings:
+            if self.state.multi_chien_threshold and self.state.string_count > 1:
                 self.push('multi_chien_threshold')
             else:
                 self.push('chien_threshold')
@@ -85,6 +88,11 @@ class Menu:
                 self.goto('home')
             else:
                 self.pop()
+        # state changes that change the setup of the menu system should return to
+        # home screen, to avoid having to dynamically react to these changes in the
+        # individual pages
+        elif evt.name in ('string_count:changed', 'multi_chien_threshold:changed'):
+            self.goto('home')
         page = self.current_page()
         page.handle_state_event(evt.name, evt.data)
 

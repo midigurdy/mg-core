@@ -28,7 +28,6 @@ class SynthController(EventListener):
         'base_note_delay:changed',
         'poly_base_note:changed',
         'poly_pitch_bend:changed',
-        'multi_strings:changed',
         'sound:changed',
         'sound:deleted',
         'synth:gain:changed',
@@ -51,6 +50,7 @@ class SynthController(EventListener):
         'active:preset:voice:chien_threshold:changed',
         'active:preset:preload',
         'clear:preload',
+        'string_count:changed',
     ]
 
     def __init__(self, fluid, state):
@@ -78,7 +78,7 @@ class SynthController(EventListener):
     def poly_pitch_bend_changed(self, poly_pitch_bend, **kwargs):
         mgcore.set_feature('poly_pitch_bend', poly_pitch_bend)
 
-    def multi_strings_changed(self, multi_strings, **kwargs):
+    def string_count_changed(self, string_count, **kwargs):
         mgcore.set_string_params(self.string_mute_configs())
 
     def reverb_volume_changed(self, reverb_volume, **kwargs):
@@ -182,7 +182,7 @@ class SynthController(EventListener):
                         voice.soundfont_id,
                         voice.bank,
                         voice.program)
-                    muted = voice.muted or (not self.state.multi_strings and voice.number > 1)
+                    muted = voice.muted or voice.number > self.state.string_count
                     configs.append((string, 'mute', int(muted)))
                     configs.append((string, 'bank', voice.bank))
                     configs.append((string, 'program', voice.program))
@@ -222,7 +222,7 @@ class SynthController(EventListener):
             if not voice.get_sound():
                 configs.append((string, 'mute', 1))
             else:
-                muted = voice.muted or (not self.state.multi_strings and voice.number > 1)
+                muted = voice.muted or voice.number > self.state.string_count
                 configs.append((string, 'mute', int(muted)))
         return configs
 
@@ -269,7 +269,7 @@ class SynthController(EventListener):
             (voice.string, 'program', voice.program),
         ]
 
-        muted = voice.muted or (not self.state.multi_strings and voice.number > 1)
+        muted = voice.muted or voice.number > self.state.string_count
         if not muted:
             configs.append((voice.string, 'mute', 0))
         mgcore.set_string_params(configs)

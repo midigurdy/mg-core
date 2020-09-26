@@ -120,7 +120,7 @@ class MiscUISchema(Schema):
 class MiscFeaturesSchema(Schema):
     poly_base_note = fields.Boolean(default=True)
     poly_pitch_bend = fields.Boolean(default=True)
-    multi_strings = fields.Boolean(default=True)
+    string_count = fields.Int(default=1, validate=validate.Range(min=1, max=3))
 
 
 class MiscKeyboardSchema(Schema):
