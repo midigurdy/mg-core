@@ -35,7 +35,6 @@ PARAMS = {
 FEATURES = {
     'poly_base_note': lib.MG_FEATURE_POLY_BASE_NOTE,
     'poly_pitch_bend': lib.MG_FEATURE_POLY_PITCH_BEND,
-    'multi_strings': lib.MG_FEATURE_MULTI_STRINGS,
 }
 
 MAPPINGS = {

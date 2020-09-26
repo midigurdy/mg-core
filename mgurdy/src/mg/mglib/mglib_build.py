@@ -67,7 +67,6 @@ enum mg_map_enum {
 enum mg_feature {
     MG_FEATURE_POLY_BASE_NOTE,
     MG_FEATURE_POLY_PITCH_BEND,
-    MG_FEATURE_MULTI_STRINGS,
 };
 
 #define MG_MAP_MAX_RANGES 20

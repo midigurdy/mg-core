@@ -79,7 +79,6 @@ class SynthController(EventListener):
         mgcore.set_feature('poly_pitch_bend', poly_pitch_bend)
 
     def multi_strings_changed(self, multi_strings, **kwargs):
-        mgcore.set_feature('multi_strings', multi_strings)
         mgcore.set_string_params(self.string_mute_configs())
 
     def reverb_volume_changed(self, reverb_volume, **kwargs):
