@@ -41,9 +41,9 @@ class Home(Page):
                 d.puts(x, 24, label)
 
             for x, y, strings, label in (
-                (0, 0, self.state.preset.drone, 'Drone'),
-                (33, 0, self.state.preset.melody, 'Melody'),
-                (66, 0, self.state.preset.trompette, 'Tromp'),
+                (1, 0, self.state.preset.drone, 'Drone'),
+                (34, 0, self.state.preset.melody, 'Melody'),
+                (67, 0, self.state.preset.trompette, 'Tromp'),
             ):
                 if self.state.string_count == 1:
                     self.draw_string_boxes1(d, x, y, strings[0], label)
@@ -115,20 +115,19 @@ class Home(Page):
         d.blit(x, y, box.data, box.width)
 
         x += box.width
-
         d.font_size(3)
 
         for string in strings:
             silent = string.is_silent()
 
-            if not silent:
-                d.blit(x, y, blit.SBOX_3.data, blit.SBOX_3.width)
-
             note = self._string_note(string)
-            if note:
-                d.puts(x + 9, y, note, anchor='center', align='center', color=1 if silent else 0)
+            box = blit.SBOX_3[0 if silent else 1]
+            d.blit(x, y, box.data, box.width)
 
-            y += 11
+            if note:
+                d.puts(x + 10, y + 1, note, anchor='center', align='center', color=1 if silent else 0)
+
+            y += 10
 
 
 class ChienThresholdPage(Slider):
