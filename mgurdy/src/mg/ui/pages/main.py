@@ -33,13 +33,6 @@ class Home(Page):
 
     def render(self, hide_group=-1):
         with self.menu.display as d:
-            labels = (
-                (100, 'Preset'),
-            )
-            d.font_size(1)
-            for x, label in labels:
-                d.puts(x, 24, label)
-
             for x, y, strings, label in (
                 (0, 0, self.state.preset.drone, 'Drone'),
                 (34, 0, self.state.preset.melody, 'Melody'),
@@ -53,6 +46,7 @@ class Home(Page):
                     self.draw_string_boxes3(d, x, y, strings, label)
 
             d.font_size(1)
+            d.puts(100, 24, 'Preset')
 
             d.puts(114, 14, '{}'.format(self.state.last_preset_number or '-'),
                    align='center', anchor='center')
