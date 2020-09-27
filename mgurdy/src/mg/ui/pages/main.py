@@ -29,7 +29,7 @@ class Home(Page):
         self.render()
 
     def timeout(self):
-        self.render()
+        self.render()  # FIXME: why is this needed? It depends on the display timeout!
 
     def render(self, hide_group=-1):
         with self.menu.display as d:
