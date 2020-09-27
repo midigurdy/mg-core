@@ -242,8 +242,8 @@ SBOX_DRONE = StringBlit(
     """
     OOO............
     O..O...........
-    O..O..OOO...OO.
-    O..O..O..O.O..O
+    O..O..O.OO..OO.
+    O..O..OO...O..O
     O..O..O....O..O
     OOO...O.....OO.
     """, rotate='left')
@@ -254,8 +254,8 @@ SBOX_TROMPETTE = StringBlit(
     """
     OOOOO.........
     ..O...........
-    ..O..OOO...OO.
-    ..O..O..O.O..O
+    ..O..O.OO..OO.
+    ..O..OO...O..O
     ..O..O....O..O
     ..O..O.....OO.
     """, rotate='left')
