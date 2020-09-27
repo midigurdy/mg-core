@@ -30,6 +30,14 @@
                 "input": {"type": 1, "code": 45, "value": 0},
                 "event": {"type": "input", "name": "fn2", "action": "up"}
             },
+            {
+                "input": {"type": 1, "code": 31, "value": 1},
+                "event": {"type": "input", "name": "fn2", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 17, "value": 1},
+                "event": {"type": "input", "name": "fn2", "action": "long"}
+            },
 
             {
                 "input": {"type": 1, "code": 46, "value": 1},
@@ -38,6 +46,14 @@
             {
                 "input": {"type": 1, "code": 46, "value": 0},
                 "event": {"type": "input", "name": "fn3", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 32, "value": 1},
+                "event": {"type": "input", "name": "fn3", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 18, "value": 1},
+                "event": {"type": "input", "name": "fn3", "action": "long"}
             },
 
             {
@@ -48,6 +64,14 @@
                 "input": {"type": 1, "code": 47, "value": 0},
                 "event": {"type": "input", "name": "fn4", "action": "up"}
             },
+            {
+                "input": {"type": 1, "code": 33, "value": 1},
+                "event": {"type": "input", "name": "fn4", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 19, "value": 1},
+                "event": {"type": "input", "name": "fn4", "action": "long"}
+            },
 
             {
                 "input": {"type": 1, "code": 49, "value": 1},
@@ -56,6 +80,14 @@
             {
                 "input": {"type": 1, "code": 49, "value": 0},
                 "event": {"type": "input", "name": "top1", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 34, "value": 1},
+                "event": {"type": "input", "name": "top1", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 20, "value": 1},
+                "event": {"type": "input", "name": "top1", "action": "long"}
             },
 
             {
@@ -66,6 +98,14 @@
                 "input": {"type": 1, "code": 50, "value": 0},
                 "event": {"type": "input", "name": "top2", "action": "up"}
             },
+            {
+                "input": {"type": 1, "code": 35, "value": 1},
+                "event": {"type": "input", "name": "top2", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 21, "value": 1},
+                "event": {"type": "input", "name": "top2", "action": "long"}
+            },
 
             {
                 "input": {"type": 1, "code": 51, "value": 1},
@@ -74,6 +114,14 @@
             {
                 "input": {"type": 1, "code": 51, "value": 0},
                 "event": {"type": "input", "name": "top3", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 36, "value": 1},
+                "event": {"type": "input", "name": "top3", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 22, "value": 1},
+                "event": {"type": "input", "name": "top3", "action": "long"}
             },
 
             {
@@ -84,6 +132,14 @@
                 "input": {"type": 1, "code": 52, "value": 0},
                 "event": {"type": "input", "name": "mod1", "action": "up"}
             },
+            {
+                "input": {"type": 1, "code": 37, "value": 1},
+                "event": {"type": "input", "name": "mod1", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 23, "value": 1},
+                "event": {"type": "input", "name": "mod1", "action": "long"}
+            },
 
             {
                 "input": {"type": 1, "code": 53, "value": 1},
@@ -93,6 +149,14 @@
                 "input": {"type": 1, "code": 53, "value": 0},
                 "event": {"type": "input", "name": "mod2", "action": "up"}
             },
+            {
+                "input": {"type": 1, "code": 38, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 24, "value": 1},
+                "event": {"type": "input", "name": "mod2", "action": "long"}
+            },
 
             {
                 "input": {"type": 1, "code": 28, "value": 1},
@@ -101,6 +165,14 @@
             {
                 "input": {"type": 1, "code": 28, "value": 0},
                 "event": {"type": "input", "name": "select", "action": "up"}
+            },
+            {
+                "input": {"type": 1, "code": 43, "value": 1},
+                "event": {"type": "input", "name": "select", "action": "short"}
+            },
+            {
+                "input": {"type": 1, "code": 27, "value": 1},
+                "event": {"type": "input", "name": "select", "action": "long"}
             },
             {
                 "input": {"type": 1, "code": 105, "value": 1},
@@ -129,3 +201,4 @@
         ]
     }
 ]
+
