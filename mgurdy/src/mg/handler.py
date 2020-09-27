@@ -94,39 +94,51 @@ class EventHandler:
 
         # lid buttons toggle string state
         if evt.short_pressed(Key.top1):
-            self.state.toggle_voice_mute('trompette')
+            self.state.toggle_voice_mute(2)
             return
         if evt.long_pressed(Key.top1):
-            self.state.toggle_voice_mute('trompette', whole_group=True)
+            self.state.toggle_voice_mute(2, whole_group=True)
             return
         if evt.short_pressed(Key.top2):
-            self.state.toggle_voice_mute('melody')
+            self.state.toggle_voice_mute(1)
             return
         if evt.long_pressed(Key.top2):
-            self.state.toggle_voice_mute('melody', whole_group=True)
+            self.state.toggle_voice_mute(1, whole_group=True)
             return
         if evt.short_pressed(Key.top3):
-            self.state.toggle_voice_mute('drone')
+            self.state.toggle_voice_mute(0)
             return
         if evt.long_pressed(Key.top3):
-            self.state.toggle_voice_mute('drone', whole_group=True)
+            self.state.toggle_voice_mute(0, whole_group=True)
             return
 
-        if self.state.group_button_mode == 'groups':
-            if evt.name in (Key.mod1, Key.mod2):
-                if evt.action == Action.down:
-                    self.mod_keys |= 1 if evt.name == Key.mod1 else 2
-                elif evt.action == Action.up:
-                    self.mod_keys &= 2 if evt.name == Key.mod1 else 1
-                group = min([self.mod_keys, 2])
-                self.state.ui.string_group = group
-                return
-        else:  # presets mode
-            if evt.pressed(Key.mod2):
-                self.state_action_handler.load_next_preset(evt)
-            elif evt.pressed(Key.mod1):
-                self.state_action_handler.load_prev_preset(evt)
+        if evt.name == Key.mod1:
+            self.handle_mod1(evt)
             return
+
+        if evt.name == Key.mod2:
+            self.handle_mod2(evt)
+            return
+
+    def handle_mod1(self, evt):
+        print('mod1', evt, self.state.group_button_mode)
+        if self.state.group_button_mode == 'groups':
+            if evt.action in (Action.down, Action.up):
+                self.state.modify_string_group(1, evt.action == Action.down)
+        elif evt.action == Action.short:
+            self.state.inc_string_group(-1)
+        elif evt.action == Action.long:
+            self.state_action_handler.load_prev_preset(evt)
+
+    def handle_mod2(self, evt):
+        print('mod2', evt, self.state.group_button_mode)
+        if self.state.group_button_mode == 'groups':
+            if evt.action in (Action.down, Action.up):
+                self.state.modify_string_group(2, evt.action == Action.down)
+        elif evt.action == Action.short:
+            self.state.inc_string_group(1)
+        elif evt.action == Action.long:
+            self.state_action_handler.load_next_preset(evt)
 
 
 class StateActionHandler:

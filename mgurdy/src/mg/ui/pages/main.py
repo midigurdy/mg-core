@@ -3,6 +3,7 @@ from .base import Page, Slider, Deck
 
 from mg.input import Action, Key
 from mg.utils import midi2percent, midi2note
+from mg.state import STRING_TYPES
 from mg.ui.display import blit
 
 
@@ -29,17 +30,15 @@ class Home(Page):
 
     def render(self, hide_group=-1):
         with self.menu.display as d:
-            for x, y, strings, label in (
-                (0, 0, self.state.preset.drone, 'Drone'),
-                (34, 0, self.state.preset.melody, 'Melody'),
-                (67, 0, self.state.preset.trompette, 'Tromp'),
-            ):
+
+            for i, stype in enumerate(STRING_TYPES):
+                x = i * 34
                 if self.state.string_count == 1:
-                    self.draw_string_boxes1(d, x, y, strings[0], label)
+                    self.draw_string_boxes1(d, x, 0, stype)
                 elif self.state.string_count == 2:
-                    self.draw_string_boxes2(d, x, y, strings[:2], label)
+                    self.draw_string_boxes2(d, x, 0, stype)
                 elif self.state.string_count == 3:
-                    self.draw_string_boxes3(d, x, y, strings, label)
+                    self.draw_string_boxes3(d, x, 0, stype)
 
             d.font_size(1)
             d.puts(100, 24, 'Preset')
@@ -66,9 +65,12 @@ class Home(Page):
         if string.soundfont_id is not None:
             return midi2note(string.base_note + self.state.coarse_tune, False)
 
-    def draw_string_boxes1(self, d, x, y, string, label):
+    def draw_string_boxes1(self, d, x, y, stype):
+        string = self.state.preset.voices_by_type(stype['name'])[0]
+        x += 1
+
         d.font_size(1)
-        d.puts(x + 13, 24, label, anchor='center', align='center')
+        d.puts(x + 13, 24, stype['label'], anchor='center', align='center')
 
         silent = string.is_silent()
 
@@ -80,14 +82,16 @@ class Home(Page):
         if note:
             d.puts(x + 13, y + 4, note, anchor='center', align='center', color=1 if silent else 0)
 
-    def draw_string_boxes2(self, d, x, y, strings, label):
+    def draw_string_boxes2(self, d, x, y, stype):
+
         d.font_size(1)
-        d.puts(x + 14, 24, label, anchor='center', align='center')
+        d.puts(x + 14, 24, stype['label'], anchor='center', align='center')
 
         d.font_size(3)
-        for i, string in enumerate(strings):
+        strings = self.state.preset.voices_by_type(stype['name'])
+        for string in strings[:2]:
             silent = string.is_silent()
-            active = i == self.state.ui.string_group
+            active = self.state.voice_is_active(string)
 
             widget = blit.SBOX_2_ACTIVE if active else blit.SBOX_2
             box = widget[0 if silent else 1]
@@ -98,20 +102,25 @@ class Home(Page):
                 d.puts(x + 15, y + 1, note, anchor='center', align='center', color=1 if silent else 0)
             y += 12
 
-    def draw_string_boxes3(self, d, x, y, strings, label):
+    def draw_string_boxes3(self, d, x, y, stype):
         box = {
-            'Drone': blit.SBOX_DRONE,
-            'Melody': blit.SBOX_MELODY,
-            'Tromp': blit.SBOX_TROMPETTE,
-        }[label]
+            'drone': blit.SBOX_DRONE,
+            'melody': blit.SBOX_MELODY,
+            'trompette': blit.SBOX_TROMPETTE,
+        }[stype['name']]
 
-        d.blit(x, y + self.state.ui.string_group * 10, box.data, box.width)
+        d.blit(x, 31 - box.height, box.data, box.width)
 
-        x += box.width
+        x += box.width + 3
         d.font_size(3)
 
-        for string in strings:
+        strings = self.state.preset.voices_by_type(stype['name'])
+        for i, string in enumerate(strings):
             silent = string.is_silent()
+
+            if self.state.voice_is_active(string):
+                d.line(x - 2, i * 10 + 1, x - 2, (i + 1) * 10 - 1)
+                d.line(x + 19, i * 10 + 1, x + 19, (i + 1) * 10 - 1)
 
             note = self._string_note(string)
             box = blit.SBOX_3[0 if silent else 1]
@@ -191,7 +200,7 @@ class MultiChienThresholdPage(Page):
 
     def set_value(self, inc):
         self.thresholds = self.state.preset.get_chien_thresholds()
-        for i in (0, 1, 2):
+        for i in range(self.state.string_count):
             if self.chien_idx == 0 or i == (self.chien_idx - 1):
                 self.thresholds[i] = max(self.minval, min(self.maxval, self.thresholds[i] + inc))
         with self.state.lock():
@@ -221,7 +230,7 @@ class MultiChienThresholdPage(Page):
             return True
         elif ev.pressed(Key.select):
             self.chien_idx += 1
-            self.chien_idx = self.chien_idx % 4
+            self.chien_idx = self.chien_idx % (self.state.string_count + 1)
             self.render()
             return True
 
@@ -235,7 +244,7 @@ class MultiChienThresholdPage(Page):
             margin = 4
 
             # Output a slider for each trompette string
-            for i in (0, 1, 2):
+            for i in range(self.state.string_count):
                 val = self.state.preset.trompette[i].chien_threshold
                 active = (i == (self.chien_idx - 1) or self.chien_idx == 0)
 

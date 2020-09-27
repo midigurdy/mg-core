@@ -115,6 +115,7 @@ class MiscUISchema(Schema):
     chien_sens_reverse = fields.Boolean(default=False)
     multi_chien_threshold = fields.Boolean(default=False)
     group_button_mode = fields.Str(default='groups')
+    string_group_by_type = fields.Boolean(default=False)
 
 
 class MiscFeaturesSchema(Schema):

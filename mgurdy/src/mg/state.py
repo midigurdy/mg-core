@@ -13,11 +13,19 @@ from mg.mglib import mgcore
 log = logging.getLogger('state')
 
 
+STRING_TYPES = (
+    {'name': 'drone', 'label': 'Drone', 'group': 1},
+    {'name': 'melody', 'label': 'Melody', 'group': 0},
+    {'name': 'trompette', 'label': 'Tromp', 'group': 2},
+)
+
+
 class State(EventEmitter):
     def __init__(self, settings):
         super().__init__()
         self._lock = threading.RLock()
         self._obj_path_cache = {}
+        self._mod_levels = []
 
         with signals.suppress():
             self.preset = PresetState(prefix='active:preset')
@@ -219,6 +227,7 @@ class State(EventEmitter):
                 'chien_sens_reverse': self.chien_sens_reverse,
                 'multi_chien_threshold': self.multi_chien_threshold,
                 'group_button_mode': self.group_button_mode,
+                'string_group_by_type': self.ui.string_group_by_type,
             },
             'keyboard': {
                 'key_on_debounce': self.key_on_debounce,
@@ -241,39 +250,109 @@ class State(EventEmitter):
         ui = data.get('ui', {})
         _set(self.ui, 'timeout', ui, 'timeout', 10, partial)
         _set(self.ui, 'brightness', ui, 'brightness', 80, partial)
+        if _set(self.ui, 'string_group_by_type', ui, 'string_group_by_type', False, partial):
+            self.ui.string_group = self.default_string_group()
         _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
-        if self.string_count > 1:
-            _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
-            _set(self, 'group_button_mode', ui, 'group_button_mode', 'groups', partial)
-        else:
-            self.multi_chien_threshold = False
-            self.group_button_mode = 'presets'
+        _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
+        _set(self, 'group_button_mode', ui, 'group_button_mode', 'groups', partial)
 
         keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)
         _set(self, 'key_off_debounce', keyboard, 'key_off_debounce', 10, partial)
         _set(self, 'base_note_delay', keyboard, 'base_note_delay', 20, partial)
 
-    def toggle_voice_mute(self, vtype, whole_group=False):
+    def voice_is_active(self, voice):
+        if self.ui.string_group_by_type:
+            stype = STRING_TYPES[self.ui.string_group]
+            return stype['name'] == voice.type
+        else:
+            return self.ui.string_group + 1 == voice.number
+
+    def modify_string_group(self, mod_level, active, force=False):
+        if self.ui.string_group_by_type:
+            stype = STRING_TYPES[mod_level]
+            group = stype['group']
+        else:
+            group = mod_level
+
+        if force:
+            self.ui.string_group = group
+            self._mod_levels = []
+            return
+
+        if active:
+            if group not in self._mod_levels:
+                self._mod_levels.append(group)
+            self.ui.string_group = group
+        else:
+            try:
+                self._mod_levels.remove(group)
+                group = self._mod_levels[-1]
+            except (ValueError, IndexError):
+                group = self.default_string_group()
+            self.ui.string_group = group
+
+    def inc_string_group(self, val, wrap=True):
+        if self.ui.string_group_by_type:
+            group_count = 3
+        else:
+            group_count = self.string_count
+
+        group = self.ui.string_group + val
+
+        if wrap:
+            group = group % group_count
+        else:
+            group = max(0, min(group_count - 1, group))
+
+        self.ui.string_group = group
+
+    def default_string_group(self):
+        if self.ui.string_group_by_type:
+            return 1
+        else:
+            return 0
+
+    def active_voice_list(self, string_group=None, string_group_by_type=None):
+        if string_group is None:
+            string_group = self.ui.string_group
+
+        if string_group_by_type is None:
+            string_group_by_type = self.ui.string_group_by_type
+
+        if string_group_by_type:
+            stype = STRING_TYPES[string_group]
+            voices = getattr(self.preset, stype['name'])
+            return voices[:self.string_count]
+        else:
+            return (self.preset.drone[string_group],
+                    self.preset.melody[string_group],
+                    self.preset.trompette[string_group])
+
+    def toggle_voice_mute(self, idx, whole_group=False):
         """
         Toggle the voice muted state for a particular voice type. If
         whole_group is set, it toggles all voices in that group, otherwise
         only the voice of the currently active voice group.
         """
-        voice = getattr(self.preset, vtype)
         if whole_group:
-            muted = all(v.muted for v in voice)
-            for v in voice:
+            voices = self.active_voice_list(idx, not self.ui.string_group_by_type)
+            muted = all(v.muted for v in voices)
+            for v in voices:
                 v.muted = not muted
         else:
-            group = self.ui.string_group
-            voice[group].muted = not voice[group].muted
+            voices = self.active_voice_list()
+            try:
+                voices[idx].muted = not voices[idx].muted
+            except IndexError:
+                pass  # happens if string count is set to a lower number
 
 
 class UIState(EventEmitter):
     def __init__(self):
         super().__init__(prefix='ui')
         self.string_group = 0
+        self.string_group_by_type = False
         self.brightness = 100
         self.timeout = 10
 
@@ -613,6 +692,11 @@ class PresetState(EventEmitter):
         except IndexError:
             log.error('Invalid string number: {}'.format(number))
 
+    def voices_by_type(self, stype):
+        if stype in ('melody', 'drone', 'trompette', 'keynoise'):
+            return getattr(self, stype)
+        raise RuntimeError(f'Invalid string type "{stype}"')
+
     def set_chien_thresholds(self, thresholds):
         num = len(thresholds or [])
         for i in (0, 1, 2):
@@ -629,6 +713,10 @@ class PresetState(EventEmitter):
 
 def _set(state, attr, data, name, default=None, partial=False):
     if name in data:
-        setattr(state, attr, data[name])
+        if getattr(state, attr) != data[name]:
+            setattr(state, attr, data[name])
+            return True
     elif not partial:
-        setattr(state, attr, default)
+        if getattr(state, attr) != default:
+            setattr(state, attr, default)
+            return True

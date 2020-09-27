@@ -195,32 +195,32 @@ SBOX_3 = (
     StringBlit(
         #        |   #
         """
-        .OOOOOOOOOOOOOOOOO.
-        O.................O
-        O.................O
-        O.................O
-        O.................O
-        O.................O
-        O.................O
-        O.................O
-        O.................O
-        O.................O
-        .OOOOOOOOOOOOOOOOO.
+        .OOOOOOOOOOOOOOOO.
+        O................O
+        O................O
+        O................O
+        O................O
+        O................O
+        O................O
+        O................O
+        O................O
+        O................O
+        .OOOOOOOOOOOOOOOO.
         """),
     StringBlit(
         #        |   #
         """
-        .OOOOOOOOOOOOOOOOO.
-        OOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOO
-        .OOOOOOOOOOOOOOOOO.
+        .OOOOOOOOOOOOOOOO.
+        OOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOO
+        .OOOOOOOOOOOOOOOO.
         """),
 )
 
@@ -228,49 +228,34 @@ SBOX_3 = (
 SBOX_MELODY = StringBlit(
     #        |         |         | #
     """
-    .........
-    .........
-    ..O...O..
-    ..O...O..
-    ..OO.OO..
-    ..O.O.O..
-    ..O...O..
-    ..O...O..
-    ..O...O..
-    .........
-    .........
-    """)
+    O...O.......OO.
+    OO.OO...OO...O.
+    O.O.O..O..O..O.
+    O...O..OOOO..O.
+    O...O..O.....O.
+    O...O...OO..OOO
+    """, rotate='left')
 
 
 SBOX_DRONE = StringBlit(
     #        |         |         | #
     """
-    .........
-    .........
-    .OOO.....
-    .O..O....
-    .O..O....
-    .O..O.OO.
-    .O..O.O..
-    .O..O.O..
-    .OOO..O..
-    .........
-    .........
-    """)
+    OOO............
+    O..O...........
+    O..O..OOO...OO.
+    O..O..O..O.O..O
+    O..O..O....O..O
+    OOO...O.....OO.
+    """, rotate='left')
 
 
 SBOX_TROMPETTE = StringBlit(
     #        |         |         | #
     """
-    .........
-    .........
-    ..OOOOO..
-    ....O....
-    ....O....
-    ....O....
-    ....O....
-    ....O....
-    ....O....
-    .........
-    .........
-    """)
+    OOOOO.........
+    ..O...........
+    ..O..OOO...OO.
+    ..O..O..O.O..O
+    ..O..O....O..O
+    ..O..O.....OO.
+    """, rotate='left')

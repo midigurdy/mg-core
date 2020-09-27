@@ -301,6 +301,7 @@ class SystemController(EventListener):
         'main_volume:changed',
         'ui:brightness:changed',
         'ui:string_group:changed',
+        'ui:string_group_by_type:changed',
         'active:preset:changed',
         'active:preset:voice:muted:changed',
         'active:preset:voice:sound:changed',
@@ -311,9 +312,9 @@ class SystemController(EventListener):
 
         self.backlight_file = settings.backlight_control
         self.led_brightnes_file = (
-            settings.led_brightness_1,
-            settings.led_brightness_2,
             settings.led_brightness_3,
+            settings.led_brightness_2,
+            settings.led_brightness_1,
         )
         self.alsa_mixer_name = settings.alsa_mixer
         self.udc_config_file = settings.udc_config
@@ -330,6 +331,9 @@ class SystemController(EventListener):
     def ui_string_group_changed(self, **kwargs):
         self.update_string_leds()
 
+    def ui_string_group_by_type_changed(self, **kwargs):
+        self.update_string_leds()
+
     def active_preset_changed(self, **kwargs):
         self.update_string_leds()
         self.set_volume(self.state.main_volume)
@@ -342,10 +346,13 @@ class SystemController(EventListener):
         self.update_string_leds()
 
     def update_string_leds(self):
-        group = self.state.ui.string_group
-        for i, name in enumerate(('trompette', 'melody', 'drone')):
-            muted = getattr(self.state.preset, name)[group].is_silent()
-            self.set_string_led(i, not muted)
+        voices = self.state.active_voice_list()
+        for i in range(3):
+            try:
+                voice = voices[i]
+                self.set_string_led(i, not voice.is_silent())
+            except IndexError:
+                self.set_string_led(i, 0)
 
     def set_string_led(self, string, on):
         try:

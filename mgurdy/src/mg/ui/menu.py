@@ -24,7 +24,8 @@ class Menu:
         for name in ('state:locked',
                      'state:unlocked',
                      'string_count:changed',
-                     'multi_chien_threshold:changed'):
+                     'multi_chien_threshold:changed',
+                     'ui:string_group_by_type:changed'):
             signals.register(name, self.enqueue_state_event)
 
     def check_idle(self):
@@ -91,7 +92,11 @@ class Menu:
         # state changes that change the setup of the menu system should return to
         # home screen, to avoid having to dynamically react to these changes in the
         # individual pages
-        elif evt.name in ('string_count:changed', 'multi_chien_threshold:changed'):
+        elif evt.name in (
+            'string_count:changed',
+            'multi_chien_threshold:changed',
+            'ui:string_group_by_type:changed',
+        ):
             self.goto('home')
         page = self.current_page()
         page.handle_state_event(evt.name, evt.data)
