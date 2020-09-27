@@ -22,10 +22,6 @@ class Home(Page):
     def handle_state_event(self, name, data):
         if name == 'power:battery_percent:changed' and self.state.power.source != 'bat':
             return
-        if (name == 'ui:string_group:changed' and self.state.ui.string_group > 0 and
-                self.state.string_count > 1):
-            self.render(self.state.ui.string_group)
-            time.sleep(0.10)
         self.render()
 
     def timeout(self):
