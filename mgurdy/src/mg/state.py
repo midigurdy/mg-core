@@ -19,6 +19,18 @@ STRING_TYPES = (
     {'name': 'trompette', 'label': 'Tromp', 'group': 2},
 )
 
+MOD_KEY_MODES = (
+    'group_preset_next',
+    'group_preset_prev',
+    'preset_next',
+    'preset_prev',
+    'preset',
+    'group_next',
+    'group_prev',
+    'group1',
+    'group2',
+)
+
 
 class State(EventEmitter):
     def __init__(self, settings):
@@ -43,7 +55,8 @@ class State(EventEmitter):
             self.base_note_delay = 20
             self.chien_sens_reverse = False
             self.multi_chien_threshold = False
-            self.group_button_mode = 'groups'
+            self.mod1_key_mode = 'preset_prev'
+            self.mod2_key_mode = 'preset_next'
 
             self.poly_base_note = True
             self.poly_pitch_bend = True
@@ -226,7 +239,8 @@ class State(EventEmitter):
                 'brightness': self.ui.brightness,
                 'chien_sens_reverse': self.chien_sens_reverse,
                 'multi_chien_threshold': self.multi_chien_threshold,
-                'group_button_mode': self.group_button_mode,
+                'mod1_key_mode': self.mod1_key_mode,
+                'mod2_key_mode': self.mod2_key_mode,
                 'string_group_by_type': self.ui.string_group_by_type,
             },
             'keyboard': {
@@ -254,7 +268,8 @@ class State(EventEmitter):
             self.ui.string_group = self.default_string_group()
         _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
         _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
-        _set(self, 'group_button_mode', ui, 'group_button_mode', 'groups', partial)
+        _set(self, 'mod1_key_mode', ui, 'mod1_key_mode', 'preset_prev', partial)
+        _set(self, 'mod2_key_mode', ui, 'mod2_key_mode', 'preset_next', partial)
 
         keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)
@@ -292,7 +307,7 @@ class State(EventEmitter):
                 group = self.default_string_group()
             self.ui.string_group = group
 
-    def inc_string_group(self, val, wrap=True):
+    def inc_string_group(self, val, wrap=False):
         if self.ui.string_group_by_type:
             group_count = 3
         else:

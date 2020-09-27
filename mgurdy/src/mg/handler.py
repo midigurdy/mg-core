@@ -113,32 +113,55 @@ class EventHandler:
             return
 
         if evt.name == Key.mod1:
-            self.handle_mod1(evt)
+            self.handle_mod_key(evt, self.state.mod1_key_mode)
             return
 
         if evt.name == Key.mod2:
-            self.handle_mod2(evt)
+            self.handle_mod_key(evt, self.state.mod2_key_mode)
             return
 
-    def handle_mod1(self, evt):
-        print('mod1', evt, self.state.group_button_mode)
-        if self.state.group_button_mode == 'groups':
+    def handle_mod_key(self, evt, mode):
+        if mode == 'group1':
             if evt.action in (Action.down, Action.up):
                 self.state.modify_string_group(1, evt.action == Action.down)
-        elif evt.action == Action.short:
-            self.state.inc_string_group(-1)
-        elif evt.action == Action.long:
-            self.state_action_handler.load_prev_preset(evt)
 
-    def handle_mod2(self, evt):
-        print('mod2', evt, self.state.group_button_mode)
-        if self.state.group_button_mode == 'groups':
+        elif mode == 'group2':
             if evt.action in (Action.down, Action.up):
                 self.state.modify_string_group(2, evt.action == Action.down)
-        elif evt.action == Action.short:
-            self.state.inc_string_group(1)
-        elif evt.action == Action.long:
-            self.state_action_handler.load_next_preset(evt)
+
+        elif mode == 'group_next':
+            if evt.action in (Action.short, Action.long):
+                self.state.inc_string_group(1)
+
+        elif mode == 'group_prev':
+            if evt.action in (Action.short, Action.long):
+                self.state.inc_string_group(-1)
+
+        elif mode == 'preset_next':
+            if evt.action in (Action.short, Action.long):
+                self.state_action_handler.load_next_preset(evt)
+
+        elif mode == 'preset_prev':
+            if evt.action in (Action.short, Action.long):
+                self.state_action_handler.load_prev_preset(evt)
+
+        elif mode == 'preset':
+            if evt.action == Action.short:
+                self.state_action_handler.load_next_preset(evt)
+            if evt.action == Action.long:
+                self.state_action_handler.load_prev_preset(evt)
+
+        elif mode == 'group_preset_next':
+            if evt.action == Action.short:
+                self.state.inc_string_group(1)
+            elif evt.action == Action.long:
+                self.state_action_handler.load_next_preset(evt)
+
+        elif mode == 'group_preset_prev':
+            if evt.action == Action.short:
+                self.state.inc_string_group(-1)
+            elif evt.action == Action.long:
+                self.state_action_handler.load_prev_preset(evt)
 
 
 class StateActionHandler:
