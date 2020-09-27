@@ -127,95 +127,150 @@ SBOX_2 = (
     StringBlit(
         #        |         |      #
         """
-        .OOOOOOOOOOOOOOOOOOOOOO.
-        O......................O
-        O......................O
-        O......................O
-        O......................O
-        O......................O
-        O......................O
-        O......................O
-        O......................O
-        O......................O
-        .OOOOOOOOOOOOOOOOOOOOOO.
+        ...OOOOOOOOOOOOOOOOOOOOOO...
+        ..O......................O..
+        ..O......................O..
+        ..O......................O..
+        ..O......................O..
+        ..O......................O..
+        ..O......................O..
+        ..O......................O..
+        ..O......................O..
+        ..O......................O..
+        ...OOOOOOOOOOOOOOOOOOOOOO...
         """),
 
     StringBlit(
         #        |         |      #
         """
-        .OOOOOOOOOOOOOOOOOOOOOO.
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        OOOOOOOOOOOOOOOOOOOOOOOO
-        .OOOOOOOOOOOOOOOOOOOOOO.
+        ...OOOOOOOOOOOOOOOOOOOOOO...
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ..OOOOOOOOOOOOOOOOOOOOOOOO..
+        ...OOOOOOOOOOOOOOOOOOOOOO...
         """),
 )
 
-SBOX_3 = StringBlit(
-    #        |   #
-    """
-    .OOOOOOOOOOOOOO.
-    .OOOOOOOOOOOOOOO
-    .OOOOOOOOOOOOOOO
-    .OOOOOOOOOOOOOOO
-    .OOOOOOOOOOOOOOO
-    .OOOOOOOOOOOOOOO
-    .OOOOOOOOOOOOOOO
-    .OOOOOOOOOOOOOOO
-    .OOOOOOOOOOOOOOO
-    .OOOOOOOOOOOOOO.
-    """)
+SBOX_2_ACTIVE = (
+    StringBlit(
+        #        |         |      #
+        """
+        ...OOOOOOOOOOOOOOOOOOOOOO...
+        O.O......................O.O
+        O.O......................O.O
+        O.O......................O.O
+        O.O......................O.O
+        O.O......................O.O
+        O.O......................O.O
+        O.O......................O.O
+        O.O......................O.O
+        O.O......................O.O
+        ...OOOOOOOOOOOOOOOOOOOOOO...
+        """),
+
+    StringBlit(
+        #        |         |      #
+        """
+        ...OOOOOOOOOOOOOOOOOOOOOO...
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        O.OOOOOOOOOOOOOOOOOOOOOOOO.O
+        ...OOOOOOOOOOOOOOOOOOOOOO...
+        """),
+)
+
+SBOX_3 = (
+    StringBlit(
+        #        |   #
+        """
+        .OOOOOOOOOOOOOOOOO.
+        O.................O
+        O.................O
+        O.................O
+        O.................O
+        O.................O
+        O.................O
+        O.................O
+        O.................O
+        O.................O
+        .OOOOOOOOOOOOOOOOO.
+        """),
+    StringBlit(
+        #        |   #
+        """
+        .OOOOOOOOOOOOOOOOO.
+        OOOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOOO
+        OOOOOOOOOOOOOOOOOOO
+        .OOOOOOOOOOOOOOOOO.
+        """),
+)
 
 
 SBOX_MELODY = StringBlit(
     #        |         |         | #
     """
-    O..............................O
-    .............O..........O.......
-    .O...O.......O..........O.......
-    .O...O..OOO..O..OO...OO.O.O...O.
-    .OO.OO.O...O.O.O..O.O..OO.O...O.
-    .O.O.O.OOOOO.O.O..O.O...O.O..OO.
-    .O...O.O.....O.O..O.O..OO..OO.O.
-    .O...O..OOO..O..OO...OO.O.....O.
-    ...........................OOO..
-    ................................
-    """, reverse=True, rotate='left')
+    .........
+    .........
+    ..O...O..
+    ..O...O..
+    ..OO.OO..
+    ..O.O.O..
+    ..O...O..
+    ..O...O..
+    ..O...O..
+    .........
+    .........
+    """)
 
 
 SBOX_DRONE = StringBlit(
     #        |         |         | #
     """
-    O..............................O
-    ..OOOO..........................
-    ...O..O.........................
-    ...O..O.O.OO..OOO..O.OO...OOO...
-    ...O..O.OO...O...O.OO..O.O...O..
-    ...O..O.O....O...O.O...O.OOOOO..
-    ...O..O.O....O...O.O...O.O......
-    ..OOOO..O.....OOO..O...O..OOO...
-    ................................
-    ................................
-    """, reverse=True, rotate='left')
+    .........
+    .........
+    .OOO.....
+    .O..O....
+    .O..O....
+    .O..O.OO.
+    .O..O.O..
+    .O..O.O..
+    .OOO..O..
+    .........
+    .........
+    """)
 
 
 SBOX_TROMPETTE = StringBlit(
     #        |         |         | #
     """
-    O..............................O
-    ..OOOOO.........................
-    ....O...........................
-    ....O...O.OO..OOO..OO.O..O.OO...
-    ....O...OO...O...O.O.O.O.OO..O..
-    ....O...O....O...O.O.O.O.O...O..
-    ....O...O....O...O.O.O.O.OO..O..
-    ....O...O.....OOO..O...O.O.OO...
-    .........................O......
-    ................................
-    """, reverse=True, rotate='left')
+    .........
+    .........
+    ..OOOOO..
+    ....O....
+    ....O....
+    ....O....
+    ....O....
+    ....O....
+    ....O....
+    .........
+    .........
+    """)
