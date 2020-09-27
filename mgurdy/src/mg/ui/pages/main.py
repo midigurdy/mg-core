@@ -41,7 +41,7 @@ class Home(Page):
                 d.puts(x, 24, label)
 
             for x, y, strings, label in (
-                (1, 0, self.state.preset.drone, 'Drone'),
+                (0, 0, self.state.preset.drone, 'Drone'),
                 (34, 0, self.state.preset.melody, 'Melody'),
                 (67, 0, self.state.preset.trompette, 'Tromp'),
             ):
@@ -92,18 +92,20 @@ class Home(Page):
 
     def draw_string_boxes2(self, d, x, y, strings, label):
         d.font_size(1)
-        d.puts(x + 13, 24, label, anchor='center', align='center')
+        d.puts(x + 14, 24, label, anchor='center', align='center')
 
         d.font_size(3)
-        for string in strings:
+        for i, string in enumerate(strings):
             silent = string.is_silent()
+            active = i == self.state.ui.string_group
 
-            box = blit.SBOX_2[0 if silent else 1]
-            d.blit(x + 1, y, box.data, box.width)
+            widget = blit.SBOX_2_ACTIVE if active else blit.SBOX_2
+            box = widget[0 if silent else 1]
+            d.blit(x, y, box.data, box.width)
 
             note = self._string_note(string)
             if note:
-                d.puts(x + 14, y + 1, note, anchor='center', align='center', color=1 if silent else 0)
+                d.puts(x + 15, y + 1, note, anchor='center', align='center', color=1 if silent else 0)
             y += 12
 
     def draw_string_boxes3(self, d, x, y, strings, label):
@@ -112,7 +114,8 @@ class Home(Page):
             'Melody': blit.SBOX_MELODY,
             'Tromp': blit.SBOX_TROMPETTE,
         }[label]
-        d.blit(x, y, box.data, box.width)
+
+        d.blit(x, y + self.state.ui.string_group * 10, box.data, box.width)
 
         x += box.width
         d.font_size(3)
