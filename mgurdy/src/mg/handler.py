@@ -137,6 +137,12 @@ class EventHandler:
             if evt.action in (Action.short, Action.long):
                 self.state.inc_string_group(-1, wrap=self.state.wrap_groups)
 
+        elif mode == 'group':
+            if evt.action == Action.short:
+                self.state.inc_string_group(1, wrap=self.state.wrap_groups)
+            elif evt.action == Action.long:
+                self.state.inc_string_group(-1, wrap=self.state.wrap_groups)
+
         elif mode == 'preset_next':
             if evt.action in (Action.short, Action.long):
                 self.state_action_handler.load_next_preset(evt, wrap=self.state.wrap_presets)

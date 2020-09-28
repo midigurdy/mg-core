@@ -27,6 +27,7 @@ MOD_KEY_MODES = (
     'preset',
     'group_next',
     'group_prev',
+    'group',
     'group1',
     'group2',
 )
