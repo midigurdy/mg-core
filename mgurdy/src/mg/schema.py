@@ -116,6 +116,8 @@ class MiscUISchema(Schema):
     multi_chien_threshold = fields.Boolean(default=False)
     mod1_key_mode = fields.Str(default='preset_prev')
     mod2_key_mode = fields.Str(default='preset_next')
+    wrap_groups = fields.Boolean(default=True)
+    wrap_presets = fields.Boolean(default=True)
     string_group_by_type = fields.Boolean(default=False)
 
 

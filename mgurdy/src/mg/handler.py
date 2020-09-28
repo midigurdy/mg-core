@@ -131,37 +131,37 @@ class EventHandler:
 
         elif mode == 'group_next':
             if evt.action in (Action.short, Action.long):
-                self.state.inc_string_group(1)
+                self.state.inc_string_group(1, wrap=self.state.wrap_groups)
 
         elif mode == 'group_prev':
             if evt.action in (Action.short, Action.long):
-                self.state.inc_string_group(-1)
+                self.state.inc_string_group(-1, wrap=self.state.wrap_groups)
 
         elif mode == 'preset_next':
             if evt.action in (Action.short, Action.long):
-                self.state_action_handler.load_next_preset(evt)
+                self.state_action_handler.load_next_preset(evt, wrap=self.state.wrap_presets)
 
         elif mode == 'preset_prev':
             if evt.action in (Action.short, Action.long):
-                self.state_action_handler.load_prev_preset(evt)
+                self.state_action_handler.load_prev_preset(evt, wrap=self.state.wrap_presets)
 
         elif mode == 'preset':
             if evt.action == Action.short:
-                self.state_action_handler.load_next_preset(evt)
+                self.state_action_handler.load_next_preset(evt, wrap=self.state.wrap_presets)
             if evt.action == Action.long:
-                self.state_action_handler.load_prev_preset(evt)
+                self.state_action_handler.load_prev_preset(evt, wrap=self.state.wrap_presets)
 
         elif mode == 'group_preset_next':
             if evt.action == Action.short:
-                self.state.inc_string_group(1)
+                self.state.inc_string_group(1, wrap=self.state.wrap_groups)
             elif evt.action == Action.long:
-                self.state_action_handler.load_next_preset(evt)
+                self.state_action_handler.load_next_preset(evt, wrap=self.state.wrap_presets)
 
         elif mode == 'group_preset_prev':
             if evt.action == Action.short:
-                self.state.inc_string_group(-1)
+                self.state.inc_string_group(-1, wrap=self.state.wrap_groups)
             elif evt.action == Action.long:
-                self.state_action_handler.load_prev_preset(evt)
+                self.state_action_handler.load_prev_preset(evt, wrap=self.state.wrap_presets)
 
 
 class StateActionHandler:
@@ -182,11 +182,13 @@ class StateActionHandler:
         with self.menu.lock_state(f'Loading preset {preset.number}...'):
             self.state.load_preset(preset.id)
 
-    def load_next_preset(self, evt):
+    def load_next_preset(self, evt, wrap=False):
         number = self.state.last_preset_number + 1
         try:
             preset = Preset.get(Preset.number == number)
         except Preset.DoesNotExist:
+            if not wrap:
+                return
             try:
                 preset = Preset.select().order_by(Preset.number).get()
             except Preset.DoesNotExist:
@@ -194,11 +196,13 @@ class StateActionHandler:
         with self.menu.lock_state(f'Loading preset {preset.number}...'):
             self.state.load_preset(preset.id)
 
-    def load_prev_preset(self, evt):
+    def load_prev_preset(self, evt, wrap=False):
         number = self.state.last_preset_number - 1
         try:
             preset = Preset.get(Preset.number == number)
         except Preset.DoesNotExist:
+            if not wrap:
+                return
             try:
                 preset = Preset.select().order_by(Preset.number.desc()).get()
             except Preset.DoesNotExist:

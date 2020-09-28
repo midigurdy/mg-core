@@ -57,6 +57,8 @@ class State(EventEmitter):
             self.multi_chien_threshold = False
             self.mod1_key_mode = 'preset_prev'
             self.mod2_key_mode = 'preset_next'
+            self.wrap_groups = True
+            self.wrap_presets = True
 
             self.poly_base_note = True
             self.poly_pitch_bend = True
@@ -241,6 +243,8 @@ class State(EventEmitter):
                 'multi_chien_threshold': self.multi_chien_threshold,
                 'mod1_key_mode': self.mod1_key_mode,
                 'mod2_key_mode': self.mod2_key_mode,
+                'wrap_groups': self.wrap_groups,
+                'wrap_presets': self.wrap_presets,
                 'string_group_by_type': self.ui.string_group_by_type,
             },
             'keyboard': {
@@ -270,6 +274,8 @@ class State(EventEmitter):
         _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
         _set(self, 'mod1_key_mode', ui, 'mod1_key_mode', 'preset_prev', partial)
         _set(self, 'mod2_key_mode', ui, 'mod2_key_mode', 'preset_next', partial)
+        _set(self, 'wrap_groups', ui, 'wrap_groups', True, partial)
+        _set(self, 'wrap_presets', ui, 'wrap_presets', True, partial)
 
         keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)
