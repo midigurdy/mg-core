@@ -154,7 +154,7 @@ class EventHandler:
         elif mode == 'preset':
             if evt.action == Action.short:
                 self.state_action_handler.load_next_preset(evt, wrap=self.state.wrap_presets)
-            if evt.action == Action.long:
+            elif evt.action == Action.long:
                 self.state_action_handler.load_prev_preset(evt, wrap=self.state.wrap_presets)
 
         elif mode == 'group_preset_next':
