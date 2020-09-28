@@ -137,6 +137,7 @@ class MiscSchema(Schema):
     ui = fields.Nested(MiscUISchema)
     features = fields.Nested(MiscFeaturesSchema)
     keyboard = fields.Nested(MiscKeyboardSchema)
+    instrument_mode = fields.Str(default='simple_three')
 
 
 class MidiSchema(Schema):

@@ -33,6 +33,55 @@ MOD_KEY_MODES = (
 )
 
 
+INSTRUMENT_MODES = {
+    'simple_three': {
+        'string_count': 1,
+        'mod1_key_mode': 'preset_prev',
+        'mod2_key_mode': 'preset_next',
+        'wrap_presets': False,
+        'wrap_groups': False,
+        'multi_chien_threshold': False,
+        'string_group_by_type': False,
+    },
+    'simple_six': {
+        'string_count': 2,
+        'mod1_key_mode': 'preset',
+        'mod2_key_mode': 'group_next',
+        'wrap_presets': False,
+        'wrap_groups': True,
+        'multi_chien_threshold': False,
+        'string_group_by_type': False,
+    },
+    'nine_rows': {
+        'string_count': 3,
+        'mod1_key_mode': 'group_preset_prev',
+        'mod2_key_mode': 'group_preset_next',
+        'wrap_presets': False,
+        'wrap_groups': False,
+        'multi_chien_threshold': False,
+        'string_group_by_type': False,
+    },
+    'nine_cols': {
+        'string_count': 3,
+        'mod1_key_mode': 'preset',
+        'mod2_key_mode': 'group',
+        'wrap_presets': False,
+        'wrap_groups': True,
+        'multi_chien_threshold': False,
+        'string_group_by_type': True,
+    },
+    'old_mg': {
+        'string_count': 3,
+        'mod1_key_mode': 'group1',
+        'mod2_key_mode': 'group2',
+        'wrap_presets': False,
+        'wrap_groups': False,
+        'multi_chien_threshold': False,
+        'string_group_by_type': False,
+    },
+}
+
+
 class State(EventEmitter):
     def __init__(self, settings):
         super().__init__()
@@ -54,16 +103,19 @@ class State(EventEmitter):
             self.key_on_debounce = 2
             self.key_off_debounce = 10
             self.base_note_delay = 20
-            self.chien_sens_reverse = False
-            self.multi_chien_threshold = False
+
+            self.instrument_mode = 'simple_three'
+            self.string_count = 1
             self.mod1_key_mode = 'preset_prev'
             self.mod2_key_mode = 'preset_next'
-            self.wrap_groups = True
             self.wrap_presets = True
+            self.wrap_groups = True
+            self.multi_chien_threshold = False
+
+            self.chien_sens_reverse = False
 
             self.poly_base_note = True
             self.poly_pitch_bend = True
-            self.string_count = 1
 
             self.presets_preloaded = False
 
@@ -258,30 +310,46 @@ class State(EventEmitter):
                 'poly_pitch_bend': self.poly_pitch_bend,
                 'string_count': self.string_count,
             },
+            'instrument_mode': self.instrument_mode,
         }
 
     def from_misc_dict(self, data, partial=False):
         features = data.get('features', {})
+        ui = data.get('ui', {})
+        keyboard = data.get('keyboard', {})
+
         _set(self, 'poly_base_note', features, 'poly_base_note', True, partial)
         _set(self, 'poly_pitch_bend', features, 'poly_pitch_bend', True, partial)
-        _set(self, 'string_count', features, 'string_count', 1, partial)
 
-        ui = data.get('ui', {})
         _set(self.ui, 'timeout', ui, 'timeout', 10, partial)
         _set(self.ui, 'brightness', ui, 'brightness', 80, partial)
-        if _set(self.ui, 'string_group_by_type', ui, 'string_group_by_type', False, partial):
-            self.ui.string_group = self.default_string_group()
         _set(self, 'chien_sens_reverse', ui, 'chien_sens_reverse', False, partial)
-        _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
-        _set(self, 'mod1_key_mode', ui, 'mod1_key_mode', 'preset_prev', partial)
-        _set(self, 'mod2_key_mode', ui, 'mod2_key_mode', 'preset_next', partial)
-        _set(self, 'wrap_groups', ui, 'wrap_groups', True, partial)
-        _set(self, 'wrap_presets', ui, 'wrap_presets', True, partial)
 
-        keyboard = data.get('keyboard', {})
         _set(self, 'key_on_debounce', keyboard, 'key_on_debounce', 2, partial)
         _set(self, 'key_off_debounce', keyboard, 'key_off_debounce', 10, partial)
         _set(self, 'base_note_delay', keyboard, 'base_note_delay', 20, partial)
+
+        _set(self, 'instrument_mode', data, 'instrument_mode', 'simple_three', partial)
+
+        mode = INSTRUMENT_MODES.get(self.instrument_mode)
+        if mode:
+            self.string_count = mode['string_count']
+            self.mod1_key_mode = mode['mod1_key_mode']
+            self.mod2_key_mode = mode['mod2_key_mode']
+            self.wrap_presets = mode['wrap_presets']
+            self.wrap_groups = mode['wrap_groups']
+            self.multi_chien_threshold = mode['multi_chien_threshold']
+            self.ui.string_group_by_type = mode['string_group_by_type']
+        else:
+            _set(self, 'string_count', features, 'string_count', 1, partial)
+            _set(self, 'mod1_key_mode', ui, 'mod1_key_mode', 'preset_prev', partial)
+            _set(self, 'mod2_key_mode', ui, 'mod2_key_mode', 'preset_next', partial)
+            _set(self, 'wrap_presets', ui, 'wrap_presets', False, partial)
+            _set(self, 'wrap_groups', ui, 'wrap_groups', False, partial)
+            _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
+            _set(self.ui, 'string_group_by_type', ui, 'string_group_by_type', False, partial)
+
+        self.ui.string_group = self.default_string_group()
 
     def voice_is_active(self, voice):
         if self.ui.string_group_by_type:
