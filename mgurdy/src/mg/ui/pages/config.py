@@ -1,4 +1,4 @@
-from .base import ConfigList, ValueListItem, Page, BooleanListItem
+from .base import ConfigList, ValueListItem, Page, BooleanListItem, ListPage
 from .presets import PresetsPage
 
 from mg.input import Key
@@ -368,6 +368,32 @@ class MIDIPage(ConfigList):
             return [NoMIDIDevices()]
 
 
+class InstrumentModePage(ListPage):
+    def load_items(self, *args, **kwargs):
+        self.set_items([
+            ('simple_three', '3 Strings'),
+            ('simple_six', '6 Strings'),
+            ('nine_rows', '9 Strings, by number'),
+            ('nine_cols', '9 Strings, by type'),
+            ('old_mg', 'Old MG Mode'),
+            ('custom', 'Custom - use Web'),
+        ])
+
+    def show(self, *args, **kwargs):
+        idx = 5
+        for i, item in enumerate(self.items):
+            if item[0] == self.state.instrument_mode:
+                idx = i
+                break
+        self.set_cursor(idx)
+        self.set_highlight(idx)
+        return super().show(*args, **kwargs)
+
+    def select_item(self, item):
+        self.state.set_instrument_mode(item[0])
+        self.menu.goto('home')
+
+
 class ConfigPage(ConfigList):
     @property
     def idle_timeout(self):
@@ -381,12 +407,13 @@ class ConfigPage(ConfigList):
             CoarseTuneItem(),
             FineTuneItem(),
             PitchbendRangeItem(),
+            SynthGainItem(),
             PopupItem('Keynoise' + chr(127), KeynoisePage(
                 'Keynoise',
                 voice_name='preset.keynoise.0',
                 sync_state=False)),
             PopupItem('MIDI' + chr(127), MIDIPage()),
-            SynthGainItem(),
+            PopupItem('Instrument mode' + chr(127), InstrumentModePage()),
             Spacer(),
             BrightnessItem(),
             DisplayTimeoutItem(),

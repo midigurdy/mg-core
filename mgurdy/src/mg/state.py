@@ -331,16 +331,7 @@ class State(EventEmitter):
 
         _set(self, 'instrument_mode', data, 'instrument_mode', 'simple_three', partial)
 
-        mode = INSTRUMENT_MODES.get(self.instrument_mode)
-        if mode:
-            self.string_count = mode['string_count']
-            self.mod1_key_mode = mode['mod1_key_mode']
-            self.mod2_key_mode = mode['mod2_key_mode']
-            self.wrap_presets = mode['wrap_presets']
-            self.wrap_groups = mode['wrap_groups']
-            self.multi_chien_threshold = mode['multi_chien_threshold']
-            self.ui.string_group_by_type = mode['string_group_by_type']
-        else:
+        if not self.set_instrument_mode(self.instrument_mode):
             _set(self, 'string_count', features, 'string_count', 1, partial)
             _set(self, 'mod1_key_mode', ui, 'mod1_key_mode', 'preset_prev', partial)
             _set(self, 'mod2_key_mode', ui, 'mod2_key_mode', 'preset_next', partial)
@@ -348,8 +339,22 @@ class State(EventEmitter):
             _set(self, 'wrap_groups', ui, 'wrap_groups', False, partial)
             _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
             _set(self.ui, 'string_group_by_type', ui, 'string_group_by_type', False, partial)
+            self.ui.string_group = self.default_string_group()
 
+    def set_instrument_mode(self, name):
+        self.instrument_mode = name
+        mode = INSTRUMENT_MODES.get(name)
+        if not mode:
+            return False
+        self.string_count = mode['string_count']
+        self.mod1_key_mode = mode['mod1_key_mode']
+        self.mod2_key_mode = mode['mod2_key_mode']
+        self.wrap_presets = mode['wrap_presets']
+        self.wrap_groups = mode['wrap_groups']
+        self.multi_chien_threshold = mode['multi_chien_threshold']
+        self.ui.string_group_by_type = mode['string_group_by_type']
         self.ui.string_group = self.default_string_group()
+        return True
 
     def voice_is_active(self, voice):
         if self.ui.string_group_by_type:
