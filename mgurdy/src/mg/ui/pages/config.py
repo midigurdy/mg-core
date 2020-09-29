@@ -3,6 +3,7 @@ from .presets import PresetsPage
 
 from mg.input import Key
 from mg.utils import midi2percent
+from mg.signals import signals
 from mg import db
 
 from .base import PopupItem
@@ -391,6 +392,7 @@ class InstrumentModePage(ListPage):
 
     def select_item(self, item):
         self.state.set_instrument_mode(item[0])
+        signals.emit('misc_config:updated')
         self.menu.goto('home')
 
 

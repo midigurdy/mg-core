@@ -2,6 +2,7 @@ from flask import request
 from flask_restful import abort
 
 from mg.schema import MiscSchema
+from mg.signals import signals
 from mg import db
 
 from .base import StateResource
@@ -25,6 +26,7 @@ class MiscView(StateResource):
         if errors:
             abort(400, errors=errors)
         self.state.from_misc_dict(data, partial=True)
+        signals.emit('misc_config:updated')
         return self.get()
 
     def post(self):
@@ -39,4 +41,5 @@ class MiscView(StateResource):
             abort(400, errors=errors)
         self.state.from_misc_dict(data, partial=False)
         db.save_misc_config(self.state.to_misc_dict())
+        signals.emit('misc_config:updated')
         return self.get()
