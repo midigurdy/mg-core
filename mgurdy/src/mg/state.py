@@ -40,7 +40,6 @@ INSTRUMENT_MODES = {
         'mod2_key_mode': 'preset_next',
         'wrap_presets': False,
         'wrap_groups': False,
-        'multi_chien_threshold': False,
         'string_group_by_type': False,
     },
     'simple_six': {
@@ -49,7 +48,6 @@ INSTRUMENT_MODES = {
         'mod2_key_mode': 'group_next',
         'wrap_presets': False,
         'wrap_groups': True,
-        'multi_chien_threshold': False,
         'string_group_by_type': False,
     },
     'nine_rows': {
@@ -58,7 +56,6 @@ INSTRUMENT_MODES = {
         'mod2_key_mode': 'group_preset_next',
         'wrap_presets': False,
         'wrap_groups': False,
-        'multi_chien_threshold': False,
         'string_group_by_type': False,
     },
     'nine_cols': {
@@ -67,7 +64,6 @@ INSTRUMENT_MODES = {
         'mod2_key_mode': 'group',
         'wrap_presets': False,
         'wrap_groups': True,
-        'multi_chien_threshold': False,
         'string_group_by_type': True,
     },
     'old_mg': {
@@ -76,7 +72,6 @@ INSTRUMENT_MODES = {
         'mod2_key_mode': 'group2',
         'wrap_presets': False,
         'wrap_groups': False,
-        'multi_chien_threshold': False,
         'string_group_by_type': False,
     },
 }
@@ -337,9 +332,13 @@ class State(EventEmitter):
             _set(self, 'mod2_key_mode', ui, 'mod2_key_mode', 'preset_next', partial)
             _set(self, 'wrap_presets', ui, 'wrap_presets', False, partial)
             _set(self, 'wrap_groups', ui, 'wrap_groups', False, partial)
-            _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
             _set(self.ui, 'string_group_by_type', ui, 'string_group_by_type', False, partial)
             self.ui.string_group = self.default_string_group()
+
+        if self.string_count > 1:
+            _set(self, 'multi_chien_threshold', ui, 'multi_chien_threshold', False, partial)
+        else:
+            self.multi_chien_threshold = False
 
     def set_instrument_mode(self, name):
         self.instrument_mode = name
@@ -351,9 +350,9 @@ class State(EventEmitter):
         self.mod2_key_mode = mode['mod2_key_mode']
         self.wrap_presets = mode['wrap_presets']
         self.wrap_groups = mode['wrap_groups']
-        self.multi_chien_threshold = mode['multi_chien_threshold']
         self.ui.string_group_by_type = mode['string_group_by_type']
         self.ui.string_group = self.default_string_group()
+
         return True
 
     def voice_is_active(self, voice):
