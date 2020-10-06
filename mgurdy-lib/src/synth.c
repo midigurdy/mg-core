@@ -21,12 +21,12 @@ static void update_trompette_model(struct mg_core *mg);
 static void update_keynoise_model(struct mg_core *mg);
 
 
-static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
+static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count,
         int expression, int prev_expression,
         int velocity_switching);
 
-static void update_keyboard_melody(struct mg_core *mg, struct mg_string *st,
+static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count);
 
 static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
@@ -161,7 +161,7 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
 }
 
 
-static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
+static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count,
         int expression, int prev_expression,
         int velocity_switching)
@@ -271,7 +271,7 @@ static void update_midigurdy_melody(struct mg_core *mg, struct mg_string *st,
 }
 
 
-static void update_keyboard_melody(struct mg_core *mg, struct mg_string *st,
+static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count)
 {
     struct mg_voice *model = &st->model;
@@ -356,14 +356,14 @@ static void update_melody_model(struct mg_core *mg)
 
         if (st->mode == MG_MODE_MIDIGURDY) {
             // with velocity switching
-            update_midigurdy_melody(mg, st, active_keys, active_count, expression, prev_expression, 1);
+            melody_model_midigurdy(mg, st, active_keys, active_count, expression, prev_expression, 1);
         }
         else if (st->mode == MG_MODE_GENERIC) {
             // without velocity switching
-            update_midigurdy_melody(mg, st, active_keys, active_count, expression, prev_expression, 0);
+            melody_model_midigurdy(mg, st, active_keys, active_count, expression, prev_expression, 0);
         }
         else {
-            update_keyboard_melody(mg, st, active_keys, active_count);
+            melody_model_keyboard(mg, st, active_keys, active_count);
         }
     }
 
