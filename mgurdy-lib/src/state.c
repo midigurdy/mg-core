@@ -329,7 +329,6 @@ static void reset_string(struct mg_string *string)
     string->empty_key = 0;  // open string
 
     string->threshold = 0;
-    string->attack = 0;
 
     string->fixed_note_count = 0;
 

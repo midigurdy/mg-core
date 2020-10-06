@@ -19,7 +19,6 @@ PARAMS = {
     'volume': lib.MG_PARAM_VOLUME,
     'polyphonic': lib.MG_PARAM_POLYPHONIC,
     'chien_threshold': lib.MG_PARAM_THRESHOLD,
-    'chien_attack': lib.MG_PARAM_ATTACK,
     'capo': lib.MG_PARAM_EMPTY_KEY,
     'panning': lib.MG_PARAM_PANNING,
     'note_on': lib.MG_PARAM_NOTE_ENABLE,

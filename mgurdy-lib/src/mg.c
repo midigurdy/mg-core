@@ -301,9 +301,6 @@ int mg_set_string(struct mg_string_config *configs)
             case MG_PARAM_THRESHOLD:
                 mg_string_set_chien_threshold(st, c->val);
                 break;
-            case MG_PARAM_ATTACK:
-                // printf("string %d attack key: %d\n", snum, c->val);
-                break;
             case MG_PARAM_NOTE_ENABLE:
                 mg_string_set_fixed_note(st, c->val, 127);
                 break;

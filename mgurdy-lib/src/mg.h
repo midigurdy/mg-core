@@ -179,7 +179,6 @@ struct mg_string {
 
     /* only used on trompette strings */
     int threshold;
-    int attack;
 
     /* only used on trompette and drone strings */
     int fixed_notes[NUM_NOTES];
@@ -387,7 +386,6 @@ enum mg_param_enum {
 
     /* trompette voice only */
     MG_PARAM_THRESHOLD,
-    MG_PARAM_ATTACK,
 
     MG_PARAM_NOTE_ENABLE,
     MG_PARAM_NOTE_DISABLE,
