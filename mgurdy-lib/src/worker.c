@@ -75,6 +75,8 @@ void *mg_worker_thread(void *args)
             perror("Error while sleeping in worker thread");
             goto cleanup;
         }
+        clock_gettime(CLOCK_MONOTONIC, &t);
+        mg_timespec_add_us(&t, WORKER_INTERVAL_US);
 
         if (mg->started) {
             if (mg_worker_run(mg)) {
@@ -82,11 +84,6 @@ void *mg_worker_thread(void *args)
                 goto cleanup;
             }
         }
-
-        /* TODO: maybe use the previously fetched time in t to have a more
-         * constant interval? */
-        clock_gettime(CLOCK_MONOTONIC, &t);
-        mg_timespec_add_us(&t, WORKER_INTERVAL_US);
     }
 
 cleanup:
