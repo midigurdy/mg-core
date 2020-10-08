@@ -228,20 +228,30 @@ class FluidSynth(object):
         self.synth = lib.new_fluid_synth(self.settings)
         if not self.synth:
             raise FluidSynthError('Unable to create synthesizer')
-        self.adriver = lib.new_fluid_audio_driver(self.settings, self.synth)
-        if not self.adriver:
-            raise FluidSynthError('Unable to create synth audio driver')
+        self.start_audio_driver()
 
     def stop(self):
-        if self.adriver:
-            lib.delete_fluid_audio_driver(self.adriver)
-            self.adriver = None
+        self.stop_audio_driver()
+
         if self.synth:
             lib.delete_fluid_synth(self.synth)
             self.synth = None
         if self.settings:
             lib.delete_fluid_settings(self.settings)
             self.settings = None
+
+    def start_audio_driver(self):
+        if self.adriver or not self.settings or not self.synth:
+            return
+        self.adriver = lib.new_fluid_audio_driver(self.settings, self.synth)
+        if not self.adriver:
+            raise FluidSynthError('Unable to create synth audio driver')
+
+    def stop_audio_driver(self):
+        if not self.adriver:
+            return
+        lib.delete_fluid_audio_driver(self.adriver)
+        self.adriver = None
 
     def _send_cc(self, channel, ctrl, val):
         ret = lib.fluid_synth_cc(self.synth, channel, ctrl, val)
