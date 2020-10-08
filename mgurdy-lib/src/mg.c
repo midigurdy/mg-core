@@ -101,6 +101,14 @@ int mg_stop(void)
         perror("Unable to join worker thread");
         goto exit;
     }
+    mg_core.worker_pth = NULL;
+
+    err = pthread_join(mg_core.server_pth, NULL);
+    if (err) {
+        perror("Unable to join server thread");
+        goto exit;
+    }
+    mg_core.server_pth = NULL;
 
     mg_core.started = 0;
 
