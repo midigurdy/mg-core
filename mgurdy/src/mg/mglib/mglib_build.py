@@ -86,7 +86,7 @@ int mg_initialize();
 int mg_start(void);
 int mg_stop(void);
 
-int mg_halt_midi_output(int halted);
+int mg_halt_outputs(int halted);
 
 int mg_set_pitchbend_factor(float factor);
 int mg_set_key_on_debounce(int num);

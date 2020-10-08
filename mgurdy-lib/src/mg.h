@@ -298,8 +298,6 @@ struct mg_core {
     /* notifies thread to terminate */
     int should_stop;
 
-    int halt_midi_output;
-
     /* notifies worker thread that initialization is finished and that it
      * can start doing it's work */
     int started;
@@ -307,6 +305,7 @@ struct mg_core {
     /* list of outputs */
     struct mg_output *outputs[MG_OUTPUT_COUNT];
     int output_count;
+    int halt_outputs;
 
     /* protects access to the fields above */
     pthread_mutex_t mutex;
@@ -423,7 +422,7 @@ extern int mg_initialize();
 extern int mg_start(void);
 extern int mg_stop(void);
 
-extern int mg_halt_midi_output(int halted);
+extern int mg_halt_outputs(int halted);
 
 extern int mg_set_pitchbend_factor(float factor);
 extern int mg_set_key_on_debounce(int num);

@@ -248,17 +248,17 @@ class MGCore:
         cfg = [(s, 'mute', 1 if muted else 0) for s in STRINGS]
         self.set_string_params([cfg])
 
-    def halt_midi_output(self):
-        if lib.mg_halt_midi_output(1):
+    def halt_outputs(self):
+        if lib.mg_halt_outputs(1):
             raise RuntimeError('Unable to halt midi output')
         self.halted += 1
 
-    def resume_midi_output(self):
+    def resume_outputs(self):
         if self.halted > 0:
             self.halted -= 1
         if self.halted > 0:
             return
-        if lib.mg_halt_midi_output(0):
+        if lib.mg_halt_outputs(0):
             raise RuntimeError('Unable to resume midi output')
 
     def get_wheel_gain(self):

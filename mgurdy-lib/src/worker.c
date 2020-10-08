@@ -112,7 +112,7 @@ static int mg_worker_run(struct mg_core *mg)
     mg_synth_update(mg);
 
     /* synchronize internal state with outputs */
-    if (!mg->halt_midi_output) {
+    if (!mg->halt_outputs) {
         mg_output_all_sync(mg);
     }
 

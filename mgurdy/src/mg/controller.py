@@ -165,7 +165,7 @@ class SynthController(EventListener):
         self.fluid.clear_preload_sounds()
 
     def configure_all_voices(self, clear_sounds=False):
-        mgcore.halt_midi_output()
+        mgcore.halt_outputs()
         try:
             if clear_sounds:
                 self.fluid.clear_all_channel_sounds()
@@ -207,7 +207,7 @@ class SynthController(EventListener):
 
             self.fluid.unload_unused_soundfonts()
         finally:
-            mgcore.resume_midi_output()
+            mgcore.resume_outputs()
 
     def melody_capo_configs(self):
         configs = []

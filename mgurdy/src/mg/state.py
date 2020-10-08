@@ -163,7 +163,7 @@ class State(EventEmitter):
         return cached
 
     def preload_presets(self):
-        mgcore.halt_midi_output()
+        mgcore.halt_outputs()
         try:
             current_id = self.preset.id
             for preset in Preset.select().order_by(Preset.number):
@@ -171,7 +171,7 @@ class State(EventEmitter):
             self.load_preset(current_id)
             self.presets_preloaded = True
         finally:
-            mgcore.resume_midi_output()
+            mgcore.resume_outputs()
 
     def unpreload_presets(self):
         signals.emit('clear:preload')

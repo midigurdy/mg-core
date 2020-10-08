@@ -42,7 +42,7 @@ int mg_start()
     }
 
     mg_core.should_stop = 0;
-    mg_core.halt_midi_output = 0;
+    mg_core.halt_outputs = 0;
 
     err = pthread_create(&mg_core.worker_pth, NULL, mg_worker_thread,
             &mg_core);
@@ -510,7 +510,7 @@ int mg_get_wheel_gain(void)
 }
 
 
-int mg_halt_midi_output(int halted)
+int mg_halt_outputs(int halted)
 {
     int err;
 
@@ -520,7 +520,7 @@ int mg_halt_midi_output(int halted)
         return err;
     }
 
-    mg_core.halt_midi_output = halted;
+    mg_core.halt_outputs = halted;
 
     if (halted) {
         mg_output_all_reset(&mg_core);
