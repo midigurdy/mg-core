@@ -33,7 +33,6 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
 #define MG_OUTPUT_COUNT (5)
-#define MG_OUTPUT_FLUID (0)
 
 #define MG_OUTPUT_STREAM_MAX (10)
 #define MG_STREAM_SENDER_MAX (10)
@@ -305,10 +304,7 @@ struct mg_core {
      * can start doing it's work */
     int started;
 
-    /* created by Python program and passed when starting the core */
-    fluid_synth_t *fluid;
-
-    /* list of midi outputs */
+    /* list of outputs */
     struct mg_output *outputs[MG_OUTPUT_COUNT];
     int output_count;
 
@@ -423,8 +419,10 @@ struct mg_string_config {
 };
 
 extern int mg_initialize();
-extern int mg_start(fluid_synth_t *fluid);
+
+extern int mg_start(void);
 extern int mg_stop(void);
+
 extern int mg_halt_midi_output(int halted);
 
 extern int mg_set_pitchbend_factor(float factor);
@@ -438,10 +436,13 @@ extern int mg_get_mapping(struct mg_map *dst, int idx);
 extern int mg_set_mapping(const struct mg_map *src, int idx);
 extern int mg_reset_mapping_ranges(int idx);
 
+extern int mg_add_fluid_output(fluid_synth_t *fluid);
+
 extern int mg_add_midi_output(const char *device);
-extern int mg_enable_midi_output(int output_id, int enabled);
 extern int mg_config_midi_output(int output_id, int melody_ch, int drone_ch, int trompette_ch, int prog_change, int speed);
-extern int mg_remove_midi_output(int output_id);
+
+extern int mg_enable_output(int output_id, int enabled);
+extern int mg_remove_output(int output_id);
 
 struct mg_image {
     char *filename;

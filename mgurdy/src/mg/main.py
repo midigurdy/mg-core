@@ -74,7 +74,9 @@ def start(args):
 
     menu.message('Starting core')
     from mg.mglib import mgcore
-    mgcore.start(fluid)
+    mgcore.start()
+    mgcore.add_fluid_output(fluid.synth)
+    mgcore.enable_fluid_output()
 
     menu.message('Opening database')
     from mg import db

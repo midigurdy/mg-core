@@ -4,8 +4,6 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
-#include <fluidsynth.h>
-
 #include "sensors.h"
 #include "server.h"
 #include "synth.h"

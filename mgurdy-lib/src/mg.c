@@ -20,7 +20,7 @@ static struct mg_core mg_core;
 
 /* Public API functions */
 
-int mg_start(fluid_synth_t *fluid)
+int mg_start()
 {
     int err = 0;
 
@@ -41,26 +41,14 @@ int mg_start(fluid_synth_t *fluid)
         goto exit;
     }
 
-    mg_core.fluid = fluid;
     mg_core.should_stop = 0;
     mg_core.halt_midi_output = 0;
-
-    struct mg_output *output;
-    output = new_fluid_output(&mg_core);
-    if (output == NULL) {
-        fprintf(stderr, "Unable to create FluidSynth output\n");
-        err = -1;
-        goto cleanup_core;
-    }
-    mg_core.outputs[MG_OUTPUT_FLUID] = output;
-    mg_core.output_count++;
-    mg_output_enable(output, 1);
 
     err = pthread_create(&mg_core.worker_pth, NULL, mg_worker_thread,
             &mg_core);
     if (err) {
         perror("Unable to start worker thread");
-        goto cleanup_core;
+        goto exit;
     }
 
     err = pthread_create(&mg_core.server_pth, NULL, mg_server_thread,
@@ -79,10 +67,6 @@ cleanup_worker:
     err = pthread_join(mg_core.worker_pth, NULL);
     if (err)
         perror("Unable to join worker thread");
-
-cleanup_core:
-    mg_core.fluid = NULL;
-
 
 exit:
     err = pthread_mutex_unlock(&mg_core.mutex);
@@ -118,7 +102,6 @@ int mg_stop(void)
         goto exit;
     }
 
-    mg_core.fluid = NULL;
     mg_core.started = 0;
 
 exit:
@@ -331,6 +314,39 @@ exit:
     return mg_state_unlock(s);
 }
 
+int mg_add_fluid_output(fluid_synth_t *fluid)
+{
+    int ret;
+    struct mg_output *output;
+
+    output = new_fluid_output(&mg_core, fluid);
+    if (output == NULL) {
+        return -1;
+    }
+
+    ret = mg_state_lock(&mg_core.state);
+    if (ret) {
+        fprintf(stderr, "Unable to get state lock!\n");
+        mg_output_delete(output);
+        return ret;
+    }
+
+    if (mg_core.output_count >= MG_OUTPUT_COUNT) {
+        fprintf(stderr, "Maximum output count reached\n");
+        mg_output_delete(output);
+        ret = -1;
+        goto exit;
+    }
+
+    mg_core.outputs[mg_core.output_count++] = output;
+
+    ret = output->id;
+
+exit:
+    mg_state_unlock(&mg_core.state);
+    return ret;
+}
+
 int mg_add_midi_output(const char *device)
 {
     int ret;
@@ -364,7 +380,7 @@ exit:
     return ret;
 }
 
-int mg_enable_midi_output(int output_id, int enabled)
+int mg_enable_output(int output_id, int enabled)
 {
     int ret;
     int output_idx;
@@ -451,7 +467,7 @@ exit:
 }
 
 
-int mg_remove_midi_output(int output_id)
+int mg_remove_output(int output_id)
 {
     int err;
     int output_idx;

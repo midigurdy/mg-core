@@ -82,8 +82,10 @@ struct mg_string_config {
 };
 
 int mg_initialize();
-int mg_start(void *synth);
+
+int mg_start(void);
 int mg_stop(void);
+
 int mg_halt_midi_output(int halted);
 
 int mg_set_pitchbend_factor(float factor);
@@ -97,10 +99,13 @@ int mg_get_mapping(struct mg_map *dst, int idx);
 int mg_set_mapping(const struct mg_map *src, int idx);
 int mg_reset_mapping_ranges(int idx);
 
+int mg_add_fluid_output(void *fluid);
+
 int mg_add_midi_output(const char *device);
-int mg_enable_midi_output(int output_id, int enabled);
 int mg_config_midi_output(int output_id, int melody_ch, int drone_ch, int trompette_ch, int prog_change, int speed);
-int mg_remove_midi_output(int output_id);
+
+int mg_enable_output(int output_id, int enabled);
+int mg_remove_output(int output_id);
 
 struct mg_image;
 

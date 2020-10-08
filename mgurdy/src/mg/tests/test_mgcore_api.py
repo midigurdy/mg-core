@@ -11,7 +11,7 @@ def mg():
 @pytest.mark.skip
 def test_start_stop(mg):
     assert mg.started is False
-    mg.start(None)
+    mg.start()
     assert mg.started is True
     mg.stop()
     assert mg.started is False

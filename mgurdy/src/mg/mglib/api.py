@@ -195,8 +195,9 @@ MAPPINGS = {
 
 
 class MGCore:
+    FLUID_OUTPUT_NAME = '___FLUID___'
+
     def __init__(self):
-        self.synth = None
         self.started = False
         self.outputs = {}
         self.halted = 0
@@ -204,16 +205,40 @@ class MGCore:
         if lib.mg_initialize():
             raise RuntimeError('Unable to initialize mgcore')
 
-    def start(self, synth):
-        self.synth = synth
-        if lib.mg_start(self.synth.synth if self.synth else ffi.NULL):
+    def start(self):
+        if lib.mg_start():
             raise RuntimeError('Unable to start mgcore')
         self.started = True
 
     def stop(self):
-        if self.started:
-            lib.mg_stop()
-            self.started = False
+        if not self.started:
+            return
+        lib.mg_stop()
+        self.started = False
+
+    def add_fluid_output(self, fluid):
+        if self.FLUID_OUTPUT_NAME in self.outputs:
+            return self.outputs[self.FLUID_OUTPUT_NAME]
+        output_id = lib.mg_add_fluid_output(fluid)
+        if output_id < 0:
+            raise RuntimeError('Unable to add FluidSynth output')
+        self.outputs[self.FLUID_OUTPUT_NAME] = output_id
+        return output_id
+
+    def remove_fluid_output(self):
+        output_id = self.outputs.get(self.FLUID_OUTPUT_NAME)
+        if output_id is None:
+            raise RuntimeError('FluidSynth output does not exist')
+        if lib.mg_remove_output(output_id):
+            raise RuntimeError('Unable to remove FluidSynth output')
+        del self.outputs[self.FLUID_OUTPUT_NAME]
+
+    def enable_fluid_output(self, enabled=True):
+        output_id = self.outputs.get(self.FLUID_OUTPUT_NAME)
+        if output_id is None:
+            raise RuntimeError('FluidSynth output does not exist')
+        if lib.mg_enable_output(output_id, 1 if enabled else 0):
+            raise RuntimeError('Unable to set FluidSynth output enable state')
 
     def mute_string(self, string, muted):
         cfg = (string, 'mute', 1 if muted else 0)
@@ -336,7 +361,7 @@ class MGCore:
     def enable_midi_output(self, device, enabled=True):
         if device not in self.outputs:
             raise RuntimeError('MIDI output %s not found' % device)
-        if lib.mg_enable_midi_output(self.outputs[device], 1 if enabled else 0):
+        if lib.mg_enable_output(self.outputs[device], 1 if enabled else 0):
             raise RuntimeError('Unable to set MIDI output enable state')
 
     def config_midi_output(self, device, melody_channel, drone_channel, trompette_channel, program_change, speed):
@@ -353,7 +378,7 @@ class MGCore:
     def remove_midi_output(self, device):
         if device not in self.outputs:
             raise RuntimeError('MIDI output %s not found' % device)
-        if lib.mg_remove_midi_output(self.outputs[device]):
+        if lib.mg_remove_output(self.outputs[device]):
             raise RuntimeError('Unable to remove MIDI output')
         del self.outputs[device]
 

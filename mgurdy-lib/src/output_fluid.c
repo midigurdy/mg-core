@@ -18,7 +18,7 @@ static int mg_output_fluid_channel_pressure(struct mg_output *output, struct mg_
 static int mg_output_fluid_balance(struct mg_output *output, struct mg_stream *stream);
 
 
-struct mg_output *new_fluid_output(struct mg_core *mg)
+struct mg_output *new_fluid_output(struct mg_core *mg, fluid_synth_t *fluid)
 {
     struct mg_output *output;
     
@@ -27,7 +27,7 @@ struct mg_output *new_fluid_output(struct mg_core *mg)
         return NULL;
     }
 
-    output->data = mg->fluid;
+    output->data = fluid;
     output->noteon = mg_output_fluid_noteon;
     output->noteoff = mg_output_fluid_noteoff;
     output->reset = mg_output_fluid_reset;
