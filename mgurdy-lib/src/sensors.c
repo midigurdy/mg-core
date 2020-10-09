@@ -61,7 +61,6 @@ int mg_sensors_init(struct mg_core *mg)
     mg->wheel.elapsed_us = 0;
     mg->wheel.gain = 0;
     mg->wheel.speed = 0;
-    mg->wheel.accel = 0;
 
     return 0;
 }

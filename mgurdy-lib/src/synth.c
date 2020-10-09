@@ -48,7 +48,7 @@ void mg_synth_update(struct mg_core *mg)
 
 
 /**
- * Calculate both speed and acceleration of the wheel.
+ * Calculate speed of the wheel and related parameters.
  *
  * We do this on every core tick instead of on every wheel sensor reading,
  * because the wheel sensor kernel driver only reports if the angle has
@@ -59,7 +59,6 @@ static void calc_wheel_speed(struct mg_core *mg)
     struct mg_wheel *wh = &mg->wheel;
     int dist = wh->distance;
     int speed;
-    static int prev_speed = 0;
     static int stop_count = 0;
 
     if (wh->last_distance == 0) {
@@ -91,13 +90,9 @@ static void calc_wheel_speed(struct mg_core *mg)
         /* smooth the speed for a more realistic volume and attack response.
          * Acoustic strings are quite slow :-) */
         wh->speed = mg_smooth(speed, wh->speed, 0.8);
-        wh->accel = wh->speed - prev_speed;
-        prev_speed = wh->speed;
     }
     else {
         wh->speed = 0;
-        wh->accel = 0;
-        prev_speed = 0;
     }
 }
 

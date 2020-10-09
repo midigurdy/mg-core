@@ -251,9 +251,6 @@ struct mg_wheel {
 
     /* current speed of the wheel */
     unsigned int speed;
-
-    /* accelleration (positive) or decelleration (negative) of wheel speed */
-    unsigned int accel;
 };
 
 
