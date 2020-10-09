@@ -65,8 +65,10 @@ int mg_start()
 cleanup_worker:
     mg_core.should_stop = 1;
     err = pthread_join(mg_core.worker_pth, NULL);
-    if (err)
+    if (err) {
         perror("Unable to join worker thread");
+    }
+    mg_core.worker_pth = 0;
 
 exit:
     err = pthread_mutex_unlock(&mg_core.mutex);
@@ -101,14 +103,14 @@ int mg_stop(void)
         perror("Unable to join worker thread");
         goto exit;
     }
-    mg_core.worker_pth = NULL;
+    mg_core.worker_pth = 0;
 
     err = pthread_join(mg_core.server_pth, NULL);
     if (err) {
         perror("Unable to join server thread");
         goto exit;
     }
-    mg_core.server_pth = NULL;
+    mg_core.server_pth = 0;
 
     mg_core.started = 0;
 
