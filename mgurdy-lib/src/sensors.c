@@ -57,9 +57,9 @@ int mg_sensors_init(struct mg_core *mg)
     /* initialize wheel to default values */
     mg->wheel.position = 0;
     mg->wheel.distance = 0;
-    mg->wheel.last_distance = 0;
     mg->wheel.elapsed_us = 0;
     mg->wheel.gain = 0;
+    mg->wheel.raw_speed = 0;
     mg->wheel.speed = 0;
 
     return 0;
@@ -235,7 +235,6 @@ static int mg_sensors_read_wheel(struct mg_core *mg)
             else if (ev[i].type == 0 && ev[i].code == 0 &&
                     ev[i].value == 0) {
                 if (_dist != DIST_UNSET) {
-                    mg->wheel.last_distance = _dist;
                     distance += _dist;
                     total_us += _us;
                     _us = 0;

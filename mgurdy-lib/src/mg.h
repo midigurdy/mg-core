@@ -240,17 +240,16 @@ struct mg_wheel {
      * distance. Only valid if distance > 0 */
     unsigned int elapsed_us;
 
-    /* last distance reading. As distance might be a combination of multiple
-     * wheel events, we use this value to determine if the wheel is actually
-     * stationary. */
-    int last_distance;
-
     /* diagnostic data: the virtual gain set by the wheel sensor. used for
      * calibrating the distance of the magnet from the sensor chip */
     unsigned int gain;
 
-    /* current speed of the wheel */
+    /* raw calculated wheel speed */
+    unsigned int raw_speed;
+
+    /* speed of the wheel, taking speed hysteresis into account */
     unsigned int speed;
+
 };
 
 
