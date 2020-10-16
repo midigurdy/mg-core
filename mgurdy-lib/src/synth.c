@@ -342,6 +342,11 @@ static void update_melody_model(struct mg_core *mg)
             continue;
         }
 
+        if (model->mode != st->mode) {
+            mg_voice_clear_notes(model);
+            model->mode = st->mode;
+        }
+
         if (st->mode == MG_MODE_MIDIGURDY) {
             // with velocity switching
             melody_model_midigurdy(mg, st, active_keys, active_count, expression, prev_expression, 1);
@@ -454,6 +459,11 @@ static void update_trompette_model(struct mg_core *mg)
         } else {
             raw_chien_speed = 0;
             normalized_chien_speed = 0;
+        }
+
+        if (model->mode != st->mode) {
+            mg_voice_clear_notes(model);
+            model->mode = st->mode;
         }
 
         /* Standard modelling for MidiGurdy Soundfonts: trompette string sound

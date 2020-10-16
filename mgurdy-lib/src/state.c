@@ -301,6 +301,7 @@ void mg_state_reset_model_voice(struct mg_voice *voice)
     voice->pressure = 0;
     voice->bank = 0;
     voice->program = 0;
+    voice->mode = -1;
 
     voice->chien_on_debounce = 2;
     voice->chien_off_debounce = 3;
@@ -326,6 +327,7 @@ void mg_state_reset_output_voice(struct mg_voice *voice)
     voice->pressure = -1;
     voice->bank = -1;
     voice->program = 1;
+    voice->mode = -1;
 
     for (i = 0; i < NUM_NOTES; i++) {
         voice->notes[i].on = 0;

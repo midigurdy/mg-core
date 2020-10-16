@@ -300,8 +300,6 @@ int mg_set_string(struct mg_string_config *configs)
             case MG_PARAM_MODE:
                 if (c->val >= 0 && c->val <= 2) {
                     st->mode = c->val;
-                    /* FIXME: this is a hack. We should not directly modify voice model state here! */
-                    mg_voice_clear_notes(&st->model);
                 }
                 break;
             default:

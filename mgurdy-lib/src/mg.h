@@ -85,6 +85,8 @@ struct mg_voice {
     int bank;
     int program;
 
+    int mode;
+
     struct mg_note notes[NUM_NOTES];
     int active_notes[NUM_NOTES];
     int note_count;
