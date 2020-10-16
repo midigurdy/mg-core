@@ -18,7 +18,7 @@ LDFLAGS += -lcmocka
 
 TARGET = runtests
 
-SRC = mg.c state.c worker.c sensors.c server.c midi.c midi_lowlevel.c utils.c synth.c
+SRC = mg.c state.c worker.c sensors.c server.c utils.c synth.c output.c output_fluid.c output_midi.c
 TEST_SRC = tests.c test_utils.c
 
 SRC_OBJ = $(patsubst %.c,obj/%.o,$(SRC)) 

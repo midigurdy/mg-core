@@ -84,56 +84,68 @@ static void test_map_bipolar_output_range(void **state)
 }
 
 
-/* utils multimap tests */
-static void test_multimap_single_range(void **state)
+/* utils map_value tests */
+static void test_map_value_single_range(void **state)
 {
-    int ranges[][2] = {
-        {0, 0},
+    struct mg_map mapping = {
+        .ranges = {
+            {0, 0},
+        },
+        .count = 1,
     };
 
-    assert_int_equal(multimap(0, ranges, 1), 0);
+    assert_int_equal(map_value(0, &mapping), 0);
 }
 
-static void test_multimap_outside_min_max(void **state)
+static void test_map_value_outside_min_max(void **state)
 {
-    int ranges[][2] = {
-        {0, 0},
-        {10, 10},
+    struct mg_map mapping = {
+        .ranges = { 
+            {0, 0},
+            {10, 10},
+        },
+        .count = 2,
     };
 
-    assert_int_equal(multimap(-999, ranges, 2), 0);
-    assert_int_equal(multimap(999, ranges, 2), 10);
+    assert_int_equal(map_value(-999, &mapping), 0);
+    assert_int_equal(map_value(999, &mapping), 10);
 }
 
-static void test_multimap_negative_start(void **state)
+static void test_map_value_negative_start(void **state)
 {
-    int ranges[][2] = {
-        {-4, 0},
-        { 0, 2},
-        { 4, 4},
+    struct mg_map mapping = {
+        .ranges = {
+            {-4, 0},
+            { 0, 2},
+            { 4, 4},
+        },
+        .count = 3,
     };
 
-    assert_int_equal(multimap(-3, ranges, 3), 0);
-    assert_int_equal(multimap(-2, ranges, 3), 1);
-    assert_int_equal(multimap(0, ranges, 3), 2);
-    assert_int_equal(multimap(2, ranges, 3), 3);
-    assert_int_equal(multimap(4, ranges, 3), 4);
+    assert_int_equal(map_value(-3, &mapping), 0);
+    assert_int_equal(map_value(-2, &mapping), 1);
+    assert_int_equal(map_value(0, &mapping), 2);
+    assert_int_equal(map_value(2, &mapping), 3);
+    assert_int_equal(map_value(4, &mapping), 4);
 }
 
-static void test_multimap_smaller_input_ranges(void **state)
+static void test_map_value_smaller_input_ranges(void **state)
 {
-    int ranges[][2] = {
-        {0, 10},
-        {2, 20},
-        {4, 30},
-        {6, 40},
+    struct mg_map mapping = {
+        .ranges = {
+            {0, 10},
+            {2, 20},
+            {4, 30},
+            {6, 40},
+        },
+        .count = 4,
     };
 
-    assert_int_equal(multimap(0, ranges, 4), 10);
-    assert_int_equal(multimap(1, ranges, 4), 15);
-    assert_int_equal(multimap(2, ranges, 4), 20);
-    assert_int_equal(multimap(5, ranges, 4), 35);
-    assert_int_equal(multimap(6, ranges, 4), 40);
+    assert_int_equal(map_value(0, &mapping), 10);
+    assert_int_equal(map_value(1, &mapping), 15);
+    assert_int_equal(map_value(2, &mapping), 20);
+    assert_int_equal(map_value(5, &mapping), 35);
+    assert_int_equal(map_value(6, &mapping), 40);
 }
 
 
@@ -146,7 +158,6 @@ static void test_smooth_reaches_upper_bound(void **state)
 
     for(;;) {
         val = mg_smooth(8000, val, 0.9);
-        printf("val: %d\n", val);
         if (val == 8000) {
             bound_count++;
             if (bound_count > 10)
@@ -174,7 +185,6 @@ static void test_smooth_reaches_lower_bound(void **state)
 
     for(;;) {
         val = mg_smooth(0, val, 0.9);
-        printf("val: %d\n", val);
         if (val == 0) {
             bound_count++;
             if (bound_count > 10)
@@ -208,10 +218,10 @@ int run_utils_tests(void)
         cmocka_unit_test(test_map_negative_output_range),
         cmocka_unit_test(test_map_bipolar_output_range),
 
-        cmocka_unit_test(test_multimap_single_range),
-        cmocka_unit_test(test_multimap_negative_start),
-        cmocka_unit_test(test_multimap_outside_min_max),
-        cmocka_unit_test(test_multimap_smaller_input_ranges),
+        cmocka_unit_test(test_map_value_single_range),
+        cmocka_unit_test(test_map_value_negative_start),
+        cmocka_unit_test(test_map_value_outside_min_max),
+        cmocka_unit_test(test_map_value_smaller_input_ranges),
 
         cmocka_unit_test(test_smooth_reaches_upper_bound),
         cmocka_unit_test(test_smooth_reaches_lower_bound),

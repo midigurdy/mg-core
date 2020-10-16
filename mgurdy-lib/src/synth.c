@@ -212,10 +212,9 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
         model->pitch = 0x2000;
     } else {
         model->pitch = 0x2000 + (
-                mg->state.pitchbend_factor *
-                multimap(key->smoothed_pressure,
-                    mg->state.pressure_to_pitch.ranges,
-                    mg->state.pressure_to_pitch.count));
+            mg->state.pitchbend_factor *
+            map_value(key->smoothed_pressure, &mg->state.pressure_to_pitch)
+        );
     }
 
     /* Now go though all pressed keys in reverse order and set up the
@@ -237,9 +236,7 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
             * then use the fixed velocity of 32.
             */
             if (key->active_since < mg->state.base_note_delay) {
-                note->velocity = 64 + multimap(key->velocity,
-                        mg->state.keyvel_to_tangent.ranges,
-                        mg->state.keyvel_to_tangent.count);
+                note->velocity = 64 + map_value(key->velocity, &mg->state.keyvel_to_tangent);
             } else {
                 note->velocity = 32;
             }
@@ -291,9 +288,7 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
         note = enable_voice_note(model, st->base_note + key_num + 1);
 
         /* ...and configure note parameters */
-        note->velocity = multimap(key->velocity,
-                mg->state.keyvel_to_notevel.ranges,
-                mg->state.keyvel_to_notevel.count);
+        note->velocity = map_value(key->velocity, &mg->state.keyvel_to_notevel);
 
         key_idx--;
 
@@ -323,9 +318,7 @@ static void update_melody_model(struct mg_core *mg)
     }
 
     /* Expression is the same for all melody strings, calculate here only once. */
-    expression = multimap(mg->wheel.speed,
-            mg->state.speed_to_melody_volume.ranges,
-            mg->state.speed_to_melody_volume.count);
+    expression = map_value(mg->wheel.speed, &mg->state.speed_to_melody_volume);
 
     /* Update the model of all three melody strings */
     for (s = 0; s < 3; s++) {
@@ -368,9 +361,7 @@ static void update_drone_model(struct mg_core *mg)
     struct mg_voice *model;
 
     /* Expression is also the same for all drone strings, calculate here only once. */
-    expression = multimap(mg->wheel.speed,
-            mg->state.speed_to_drone_volume.ranges,
-            mg->state.speed_to_drone_volume.count);
+    expression = map_value(mg->wheel.speed, &mg->state.speed_to_drone_volume);
 
     for (s = 0; s < 3; s++) {
         st = &mg->state.drone[s];
@@ -429,10 +420,9 @@ static void update_trompette_model(struct mg_core *mg)
         }
 
         if (st->threshold < MG_SPEED_MAX) {
-            chien_speed_factor = multimap(
+            chien_speed_factor = map_value(
                     (5000 - st->threshold) / 50,
-                    mg->state.chien_threshold_to_range.ranges,
-                    mg->state.chien_threshold_to_range.count);
+                    &mg->state.chien_threshold_to_range);
             raw_chien_speed = mg->wheel.speed - st->threshold;
             if (raw_chien_speed > 0) {
                 if (chien_speed_factor > 0) {
@@ -461,9 +451,7 @@ static void update_trompette_model(struct mg_core *mg)
         if (st->mode == MG_MODE_MIDIGURDY) {
 
             if (normalized_chien_speed > 0) {
-                pressure = multimap(normalized_chien_speed,
-                        mg->state.speed_to_chien.ranges,
-                        mg->state.speed_to_chien.count);
+                pressure = map_value(normalized_chien_speed, &mg->state.speed_to_chien);
             } else {
                 pressure = 0;
             }
@@ -471,9 +459,7 @@ static void update_trompette_model(struct mg_core *mg)
             /* Expression is the same for all trompette strings in MidiGurdy mode,
             * calculate here only once. */
             if (expression == -1) {
-                expression = multimap(mg->wheel.speed,
-                        mg->state.speed_to_trompette_volume.ranges,
-                        mg->state.speed_to_trompette_volume.count);
+                expression = map_value(mg->wheel.speed, &mg->state.speed_to_trompette_volume);
             }
 
             model->expression = expression;
@@ -535,9 +521,7 @@ static void update_trompette_model(struct mg_core *mg)
                     /* Velocity is the same for all trompette strings in percussive mode, so
                     * calculate this here only once. */
                     if (velocity == -1) {
-                        velocity = multimap(raw_chien_speed,
-                                mg->state.speed_to_percussion.ranges,
-                                mg->state.speed_to_percussion.count);
+                        velocity = map_value(raw_chien_speed, &mg->state.speed_to_percussion);
                     }
 
                     if (ws_chien_volume == -1) {
@@ -614,9 +598,7 @@ static void update_keynoise_model(struct mg_core *mg)
             velocity = 0;
         }
 
-        velocity = multimap(velocity,
-                mg->state.keyvel_to_keynoise.ranges,
-                mg->state.keyvel_to_keynoise.count);
+        velocity = map_value(velocity, &mg->state.keyvel_to_keynoise);
 
         if (velocity == 0)
             continue;  // no need to send these...

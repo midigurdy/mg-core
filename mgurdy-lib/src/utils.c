@@ -114,29 +114,28 @@ int map(int x, int in_min, int in_max, int out_min, int out_max)
 
 
 /**
- * Multilinear map
- *
- * ranges is a two-dimensional array of [in, out] arrays.
- *
+ * Multilinear map of integer values
  */
-int multimap(int x, const int ranges[][2], int num_ranges)
+int map_value(int x, const struct mg_map *mapping)
 {
     int i;
 
-    assert(num_ranges >= 1);
+    assert(mapping->count >= 1);
 
-    if (x <= ranges[0][0])
-        return ranges[0][1];
+    if (x <= mapping->ranges[0][0])
+        return mapping->ranges[0][1];
 
-    for (i=1; i < num_ranges; i++) {
-        if (x > ranges[i][0])
+    for (i=1; i < mapping->count; i++) {
+        if (x > mapping->ranges[i][0])
             continue;
 
-        return MAP_IMPL(x, ranges[i-1][0], ranges[i][0], ranges[i-1][1], ranges[i][1]);
+        return MAP_IMPL(x,
+                mapping->ranges[i-1][0], mapping->ranges[i][0],
+                mapping->ranges[i-1][1], mapping->ranges[i][1]);
     }
 
     // x is larger than last max so just return that 
-    return ranges[num_ranges-1][1];
+    return mapping->ranges[mapping->count-1][1];
 }
 
 

@@ -3,6 +3,8 @@
 
 #include <time.h>
 
+#include "mg.h"
+
 
 int mg_nsleep(unsigned int nsec);
 int mg_usleep(unsigned int usecs);
@@ -12,7 +14,7 @@ int duration_us(struct timespec start, struct timespec end);
 int duration_ns(struct timespec start, struct timespec end);
 
 int map(int x, int in_min, int in_max, int out_min, int out_max);
-int multimap(int x, const int ranges[][2], int num_ranges);
+int map_value(int x, const struct mg_map *mapping);
 
 int ary_indexof(int val, int ary[], int size);
 int ary_remove(int val, int src[], int dst[], int size);
