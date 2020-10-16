@@ -13,8 +13,9 @@
 #include "utils.h"
 
 
-static int mg_sensors_read_keys(struct mg_core *mg);
-static int mg_sensors_read_wheel(struct mg_core *mg);
+static int mg_sensors_read_keys(int fd, struct mg_key keys[],
+        const struct mg_key_calib key_calib[]);
+static int mg_sensors_read_wheel(int fd, struct mg_wheel *wheel);
 
 /* Setup the pollfd entries for keyboard and wheel input devices. Caller is
  * responsible for calling mg_sensors_cleanup() in case this function returns
@@ -23,7 +24,6 @@ static int mg_sensors_read_wheel(struct mg_core *mg);
 int mg_sensors_init(struct mg_core *mg)
 {
     int ret = 0;
-    int i;
 
     mg->sensor_fd_count = 0;
 
@@ -47,12 +47,6 @@ int mg_sensors_init(struct mg_core *mg)
 
     /* initialize the keys to default values */
     memset(mg->keys, 0, sizeof(struct mg_key) * KEY_COUNT);
-
-    /* Set initial key calibration values */
-    for (i = 0; i < KEY_COUNT; i++) {
-        mg->key_calib[i].pressure_adjust = 1.0f;
-        mg->key_calib[i].velocity_adjust = 1.0f;
-    }
 
     /* initialize wheel to default values */
     mg->wheel.position = 0;
@@ -94,7 +88,7 @@ int mg_sensors_read(struct mg_core *mg)
     }
 
     if (mg->sensor_fds[0].revents & POLLIN) {
-        ret = mg_sensors_read_keys(mg);
+        ret = mg_sensors_read_keys(mg->sensor_fds[0].fd, mg->keys, mg->state.key_calib);
         if (ret < 0) {
             fprintf(stderr, "Error reading key events!\n");
             return ret;
@@ -103,7 +97,7 @@ int mg_sensors_read(struct mg_core *mg)
     }
 
     if (mg->sensor_fds[1].revents & POLLIN) {
-        ret = mg_sensors_read_wheel(mg);
+        ret = mg_sensors_read_wheel(mg->sensor_fds[1].fd, &mg->wheel);
         if (ret < 0) {
             fprintf(stderr, "Error reading wheel events!\n");
             return ret;
@@ -118,7 +112,8 @@ int mg_sensors_read(struct mg_core *mg)
 /* Read the keyboard sensor input device and return the number of key pressure
  * changes received or a negative value on error.
  */
-static int mg_sensors_read_keys(struct mg_core *mg)
+static int mg_sensors_read_keys(int fd, struct mg_key keys[],
+        const struct mg_key_calib key_calib[])
 {
     int count = 0;
     int rd, num, i;
@@ -128,7 +123,7 @@ static int mg_sensors_read_keys(struct mg_core *mg)
     int idx;
 
     for(;;) {
-        rd = read(mg->sensor_fds[0].fd, ev, sizeof(ev));
+        rd = read(fd, ev, sizeof(ev));
         if (rd < 0) {
             if (errno == EAGAIN) {
                 /* no more events to read */
@@ -147,9 +142,9 @@ static int mg_sensors_read_keys(struct mg_core *mg)
 
             idx = ev[i].code;
 
-            key = &mg->keys[idx];
+            key = &keys[idx];
 
-            val = ev[i].value * mg->key_calib[idx].pressure_adjust;
+            val = ev[i].value * key_calib[idx].pressure_adjust;
 
             key->raw_pressure = ev[i].value;
             key->pressure = val;
@@ -170,7 +165,7 @@ static int mg_sensors_read_keys(struct mg_core *mg)
 /* Read the wheel sensor input device and return the number of position and/or
  * gain value updated received or a negative value on error.
  */
-static int mg_sensors_read_wheel(struct mg_core *mg)
+static int mg_sensors_read_wheel(int fd, struct mg_wheel *wheel)
 {
     int count = 0;
     int rd, num, i;
@@ -193,7 +188,7 @@ static int mg_sensors_read_wheel(struct mg_core *mg)
     static int _us = 0;
 
     for(;;) {
-        rd = read(mg->sensor_fds[1].fd, ev, sizeof(ev));
+        rd = read(fd, ev, sizeof(ev));
         if (rd < 0) {
             if (errno == EAGAIN) {
                 /* no more events to read */
@@ -221,7 +216,7 @@ static int mg_sensors_read_wheel(struct mg_core *mg)
         for (i=0; i < num; i++) {
             /* position */
             if (ev[i].type == 3 && ev[i].code == 0) {
-                mg->wheel.position = (16383 - ev[i].value);
+                wheel->position = (16383 - ev[i].value);
             }
             /* distance */
             else if (ev[i].type == 3 && ev[i].code == 1) {
@@ -244,15 +239,15 @@ static int mg_sensors_read_wheel(struct mg_core *mg)
             }
             /* gain */
             else if (ev[i].type == 3 && ev[i].code == 2) {
-                mg->wheel.gain = ev[i].value;
+                wheel->gain = ev[i].value;
                 count++;
             }
         }
     }
 
     if (total_us > 0) {
-        mg->wheel.distance = distance;
-        mg->wheel.elapsed_us = total_us;
+        wheel->distance = distance;
+        wheel->elapsed_us = total_us;
    }
 
     return count;

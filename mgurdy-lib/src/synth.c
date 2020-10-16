@@ -45,7 +45,7 @@ static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
  */
 void mg_synth_update(struct mg_core *mg)
 {
-    debounce_keys(mg->keys, mg->key_calib,
+    debounce_keys(mg->keys, mg->state.key_calib,
             mg->state.key_on_debounce, mg->state.key_off_debounce,
             mg->state.base_note_delay);
 

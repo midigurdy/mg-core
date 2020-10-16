@@ -123,6 +123,12 @@ int mg_state_init(struct mg_state *state)
     mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_NOTEVEL);
     mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_TANGENT);
     mg_reset_mapping_ranges(MG_MAP_KEYVEL_TO_KEYNOISE);
+
+    /* Set initial key calibration values */
+    for (i = 0; i < KEY_COUNT; i++) {
+        state->key_calib[i].pressure_adjust = 1.0f;
+        state->key_calib[i].velocity_adjust = 1.0f;
+    }
     
     return 0;
 }

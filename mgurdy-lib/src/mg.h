@@ -187,6 +187,31 @@ struct mg_string {
     struct mg_voice model;
 };
 
+
+/* State for a single keyboard key */
+struct mg_key {
+    /* sensor readings from kernel driver */
+    int raw_pressure;
+    int pressure;
+    int max_pressure;
+    int smoothed_pressure;
+
+    /* internally calculated from sensor readings */
+    int velocity;
+    int state;  // current state of key: active or inactive
+    int action; // if the key has changed state since last reading
+    int active_since;
+
+    int debounce; // only used for debouncing
+};
+
+
+struct mg_key_calib {
+    float pressure_adjust;
+    float velocity_adjust;
+};
+
+
 /* The internal and external state of the instrument. Contains the collection of
  * all available strings in the instrument. Many of the state values can be set
  * by the Python program, so protect the whole structure with a single mutex.
@@ -221,6 +246,9 @@ struct mg_state {
     struct mg_map keyvel_to_tangent;
     struct mg_map keyvel_to_keynoise;
 
+    /* key calibration data */
+    struct mg_key_calib key_calib[KEY_COUNT];
+
     pthread_mutex_t mutex; /* protects access to this structure */
 };
 
@@ -249,30 +277,6 @@ struct mg_wheel {
     /* speed of the wheel, taking speed hysteresis into account */
     unsigned int speed;
 
-};
-
-
-/* State for a single keyboard key */
-struct mg_key {
-    /* sensor readings from kernel driver */
-    int raw_pressure;
-    int pressure;
-    int max_pressure;
-    int smoothed_pressure;
-
-    /* internally calculated from sensor readings */
-    int velocity;
-    int state;  // current state of key: active or inactive
-    int action; // if the key has changed state since last reading 
-    int active_since;
-
-    int debounce; // only used for debouncing
-};
-
-
-struct mg_key_calib {
-    float pressure_adjust;
-    float velocity_adjust;
 };
 
 
@@ -316,9 +320,6 @@ struct mg_core {
 
     /* key sensor data */
     struct mg_key keys[KEY_COUNT];
-
-    /* key calibration data */
-    struct mg_key_calib key_calib[KEY_COUNT];
 
     int chien_volume;
     int chien_speed;

@@ -579,24 +579,32 @@ int mg_reset_mapping_ranges(int idx)
 
 int mg_calibrate_set_key(int key, float pressure_adjust, float velocity_adjust)
 {
+    struct mg_key_calib *key_calib;
+
     if (key < 0 || key > KEY_COUNT - 1) {
         return -1;
     }
 
-    mg_core.key_calib[key].pressure_adjust = pressure_adjust;
-    mg_core.key_calib[key].velocity_adjust = velocity_adjust;
+    key_calib = &mg_core.state.key_calib[key];
+
+    key_calib->pressure_adjust = pressure_adjust;
+    key_calib->velocity_adjust = velocity_adjust;
 
     return 0;
 }
 
 int mg_calibrate_get_key(int key, float *pressure_adjust, float *velocity_adjust)
 {
+    struct mg_key_calib *key_calib;
+
     if (key < 0 || key > KEY_COUNT - 1) {
         return -1;
     }
 
-    *pressure_adjust = mg_core.key_calib[key].pressure_adjust;
-    *velocity_adjust = mg_core.key_calib[key].velocity_adjust;
+    key_calib = &mg_core.state.key_calib[key];
+
+    *pressure_adjust = key_calib->pressure_adjust;
+    *velocity_adjust = key_calib->velocity_adjust;
 
     return 0;
 }
