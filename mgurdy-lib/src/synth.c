@@ -314,6 +314,7 @@ static void update_melody_model(struct mg_core *mg)
     int active_count = 0;
 
     struct mg_string *st;
+    struct mg_voice *model;
     int expression = 0;
 
     static int prev_expression = 0;
@@ -331,9 +332,13 @@ static void update_melody_model(struct mg_core *mg)
     /* Update the model of all three melody strings */
     for (s = 0; s < 3; s++) {
         st = &mg->state.melody[s];
+        model = &st->model;
 
         /* If the string is muted, then there's no need to do anything */
         if (st->muted) {
+            if (model->note_count > 0) {
+                mg_voice_clear_notes(model);
+            }
             continue;
         }
 
@@ -404,6 +409,7 @@ static void update_trompette_model(struct mg_core *mg)
     int s;
 
     struct mg_string *st;
+    struct mg_voice *model;
 
     int ws_chien_volume = -1;
     int ws_chien_speed = -1;
@@ -414,9 +420,13 @@ static void update_trompette_model(struct mg_core *mg)
 
     for (s = 0; s < 3; s++) {
         st = &mg->state.trompette[s];
+        model = &st->model;
 
         /* If the string is muted, then there's no need to do any anything */
         if (st->muted) {
+            if (model->note_count > 0) {
+                mg_voice_clear_notes(model);
+            }
             continue;
         }
 
@@ -599,7 +609,13 @@ static void update_keynoise_model(struct mg_core *mg)
     struct mg_voice *model = &st->model;
     struct mg_note *note;
 
-    mg_voice_clear_notes(model);
+    if (model->note_count > 0) {
+        mg_voice_clear_notes(model);
+    }
+
+    if (st->muted) {
+        return;
+    }
 
     if (mg->wheel.speed > 0) {
         model->pressure = 127;

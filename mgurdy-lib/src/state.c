@@ -158,11 +158,6 @@ int mg_state_unlock(struct mg_state *state)
 void mg_string_set_mute(struct mg_string *st, int muted)
 {
     st->muted = muted;
-
-    if (muted) {
-        /* FIXME: this is a hack! Should not modify model state from here! */
-        mg_voice_clear_notes(&st->model);
-    }
 }
 
 
