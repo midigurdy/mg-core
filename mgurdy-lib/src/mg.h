@@ -63,7 +63,7 @@ struct mg_map {
 };
 
 
-/* Represents the (internal or external) state of a single note */
+/* Represents a state of a single note */
 struct mg_note {
     int on;
     int velocity;
@@ -156,10 +156,9 @@ struct mg_output {
 };
 
 
-/* Combines two mg_voice structs to record the internal and external state of a
- * single string. The modelling keeps the internal view of the string in
- * 'model', the external (synth) state in 'synth'. The difference between model
- * and synth state is used to determine which messages to send to the synth.
+/* Represents the configuration and internal state of a single string.
+ * The modelling writes the desired external state of the string into
+ * 'model', the outputs keep track of the external state themselves.
  */
 struct mg_string {
     int base_note;
@@ -212,7 +211,7 @@ struct mg_key_calib {
 };
 
 
-/* The internal and external state of the instrument. Contains the collection of
+/* The internal state and setup of the instrument. Contains the collection of
  * all available strings in the instrument. Many of the state values can be set
  * by the Python program, so protect the whole structure with a single mutex.
  *
@@ -294,7 +293,7 @@ struct mg_core {
     int server_client_count;
     struct lws_context *websocket_ctx;
 
-    /* notifies thread to terminate */
+    /* notifies threads to terminate */
     int should_stop;
 
     /* notifies worker thread that initialization is finished and that it
