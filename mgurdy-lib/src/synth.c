@@ -16,27 +16,24 @@
 static void debounce_keys(struct mg_key keys[], const struct mg_key_calib key_calib[],
         int on_count, int off_count, int base_note_delay);
 static void calc_wheel_speed(struct mg_core *mg);
+
 static void update_melody_model(struct mg_core *mg);
-static void update_drone_model(struct mg_core *mg);
-static void update_trompette_model(struct mg_core *mg);
-static void update_keynoise_model(struct mg_core *mg);
-
-
 static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count,
         int expression, int prev_expression,
         int velocity_switching);
-
 static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count);
 
+static void update_trompette_model(struct mg_core *mg);
 static void trompette_model_percussion(const struct mg_state *state,
         struct mg_string *st, int raw_chien_speed, int *ws_chien_speed, int *ws_chien_volume);
-
-
 static void trompette_model_midigurdy(const struct mg_state *state,
         struct mg_string *st, int normalized_chien_speed, int wheel_speed,
         int *ws_chien_speed, int *ws_chien_volume);
+
+static void update_drone_model(struct mg_core *mg);
+static void update_keynoise_model(struct mg_core *mg);
 
 static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
 
