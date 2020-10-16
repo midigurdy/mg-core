@@ -42,7 +42,7 @@ static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
  */
 void mg_synth_update(struct mg_core *mg)
 {
-    debounce_keys(mg->keys, mg->state.key_calib,
+    debounce_keys(mg->keyboard.keys, mg->state.key_calib,
             mg->state.key_on_debounce, mg->state.key_off_debounce,
             mg->state.base_note_delay);
 
@@ -215,7 +215,7 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
 
     /* Determine string pitch using the highest key */
     key_num = active_keys[key_idx];
-    key = &mg->keys[key_num];
+    key = &mg->keyboard.keys[key_num];
 
     if (st->polyphonic && !mg->state.poly_pitch_bend) {
         model->pitch = 0x2000;
@@ -231,7 +231,7 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
      * the highest key. */
     do {
         key_num = active_keys[key_idx];
-        key = &mg->keys[key_num];
+        key = &mg->keyboard.keys[key_num];
 
         note = enable_voice_note(model, st->base_note + key_num + 1);
 
@@ -292,7 +292,7 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
      * the highest key. */
     do {
         key_num = active_keys[key_idx];
-        key = &mg->keys[key_num];
+        key = &mg->keyboard.keys[key_num];
 
         note = enable_voice_note(model, st->base_note + key_num + 1);
 
@@ -322,7 +322,7 @@ static void update_melody_model(struct mg_core *mg)
 
     /* Find all currently active keys. */
     for (i = 0; i < KEY_COUNT; i++) {
-        if (mg->keys[i].state == KEY_ACTIVE) {
+        if (mg->keyboard.keys[i].state == KEY_ACTIVE) {
             active_keys[active_count++] = i;
         }
     }
@@ -635,7 +635,7 @@ static void update_keynoise_model(struct mg_core *mg)
     }
 
     for (i = 0; i < KEY_COUNT; i++) {
-        key = &mg->keys[i];
+        key = &mg->keyboard.keys[i];
 
         if (!key->action)
             continue;

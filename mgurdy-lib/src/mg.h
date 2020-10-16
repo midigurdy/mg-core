@@ -211,6 +211,14 @@ struct mg_key_calib {
 };
 
 
+struct mg_keyboard {
+    /* key sensor data */
+    struct mg_key keys[KEY_COUNT];
+
+    int inactive_count;  // used for debouncing return to base note
+};
+
+
 /* The internal state and setup of the instrument. Contains the collection of
  * all available strings in the instrument. Many of the state values can be set
  * by the Python program, so protect the whole structure with a single mutex.
@@ -317,8 +325,8 @@ struct mg_core {
     /* wheel sensor data */
     struct mg_wheel wheel;
 
-    /* key sensor data */
-    struct mg_key keys[KEY_COUNT];
+    /* keyboard sensor data */
+    struct mg_keyboard keyboard;
 
     int chien_volume;
     int chien_speed;

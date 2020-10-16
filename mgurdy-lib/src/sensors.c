@@ -46,7 +46,8 @@ int mg_sensors_init(struct mg_core *mg)
     mg->sensor_fd_count++;
 
     /* initialize the keys to default values */
-    memset(mg->keys, 0, sizeof(struct mg_key) * KEY_COUNT);
+    memset(mg->keyboard.keys, 0, sizeof(struct mg_key) * KEY_COUNT);
+    mg->keyboard.inactive_count = 0;
 
     /* initialize wheel to default values */
     mg->wheel.position = 0;
@@ -88,7 +89,7 @@ int mg_sensors_read(struct mg_core *mg)
     }
 
     if (mg->sensor_fds[0].revents & POLLIN) {
-        ret = mg_sensors_read_keys(mg->sensor_fds[0].fd, mg->keys, mg->state.key_calib);
+        ret = mg_sensors_read_keys(mg->sensor_fds[0].fd, mg->keyboard.keys, mg->state.key_calib);
         if (ret < 0) {
             fprintf(stderr, "Error reading key events!\n");
             return ret;
