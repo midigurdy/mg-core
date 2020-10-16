@@ -49,6 +49,7 @@
 
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
+#define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
 
 
 struct mg_output;

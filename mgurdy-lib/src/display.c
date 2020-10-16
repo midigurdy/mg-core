@@ -376,11 +376,11 @@ exit:
 static void draw_ft_bitmap(int width, int height, char *buffer, FT_Bitmap *bitmap,
         int x, int y, int color, int start_x, int max_x)
 {
-    int row;
+    unsigned int row;
     int col;
     int ix, iy;
     char b;
-    int bit;
+    unsigned int bit;
     int i;
 
     for (row=0; row < bitmap->rows; row++) {

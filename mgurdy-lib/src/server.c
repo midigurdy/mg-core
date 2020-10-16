@@ -49,10 +49,10 @@ static int _keys_callback(struct lws *wsi, enum lws_callback_reasons reason,
 
 static struct lws_protocols _protocols[] = {
     /* first protocol must always be HTTP handler */
-    {"http-only", _http_callback, 0},
-    {"wheel", _wheel_callback, 0},
-    {"keys", _keys_callback, 0},
-    {NULL, NULL, 0}
+    {"http-only", _http_callback, 0, 0, 0, NULL},
+    {"wheel", _wheel_callback, 0, 0, 0, NULL},
+    {"keys", _keys_callback, 0, 0, 0, NULL},
+    {NULL, NULL, 0, 0, 0, NULL}
 };
 
 
@@ -109,8 +109,9 @@ void *mg_server_thread(void *args)
 }
 
 
-static int _http_callback(struct lws *wsi, enum lws_callback_reasons reason,
-        void *user, void *in, size_t len)
+static int _http_callback(struct lws *UNUSED(wsi),
+        enum lws_callback_reasons UNUSED(reason),
+        void *UNUSED(user), void *UNUSED(in), size_t UNUSED(len))
 {
     return 0;
 }
@@ -156,7 +157,7 @@ int mg_server_report_wheel()
 
 
 static int _wheel_callback(struct lws *wsi, enum lws_callback_reasons reason,
-        void *user, void *in, size_t len)
+        void *UNUSED(user), void *UNUSED(in), size_t UNUSED(len))
 {
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED:
@@ -243,7 +244,7 @@ void mg_server_report_keys(const struct mg_key *keys)
 }
 
 static int _keys_callback(struct lws *wsi, enum lws_callback_reasons reason,
-        void *user, void *in, size_t len)
+        void *UNUSED(user), void *UNUSED(in), size_t UNUSED(len))
 {
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED:

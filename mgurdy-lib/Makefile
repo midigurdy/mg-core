@@ -1,5 +1,5 @@
 FREETYPE_CFLAGS=-I/usr/include/freetype2
-CFLAGS=-O3 -Wall -std=gnu99 -fPIC $(FREETYPE_CFLAGS) -ffast-math
+CFLAGS=-O3 -Wall -Wextra -Wunsafe-loop-optimizations -Wcast-align -std=gnu99 -fPIC $(FREETYPE_CFLAGS) -ffast-math
 LDFLAGS=-lc -lrt -lasound -lm -lpthread -lfluidsynth -lwebsockets -fPIC -shared -Wl,-soname,libmgurdy.so -lfreetype
 
 BUILD_DIR = build

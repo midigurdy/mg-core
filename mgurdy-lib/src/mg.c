@@ -136,7 +136,10 @@ int mg_initialize()
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&mg_core.mutex, &attr);
 
-    if (pthread_mutex_init(&mg_core.state.mutex, &attr));
+    if (pthread_mutex_init(&mg_core.state.mutex, &attr)) {
+        pthread_mutexattr_destroy(&attr);
+        return -1;
+    }
 
     pthread_mutexattr_destroy(&attr);
 

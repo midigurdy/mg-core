@@ -35,6 +35,7 @@ int mg_nsleep(unsigned int nsec)
 int mg_usleep(unsigned int usecs)
 {
     struct timespec req, t0, t1;
+    unsigned int duration;
 
     if (usecs > 1) {
         return mg_nsleep(usecs * 1000);
@@ -50,7 +51,8 @@ int mg_usleep(unsigned int usecs)
             continue;
         }
         clock_gettime(CLOCK_MONOTONIC, &t1);
-        if (duration_us(t0, t1) >= usecs) {
+        duration = duration_us(t0, t1);
+        if (duration >= usecs) {
             return 1;
         }
     }

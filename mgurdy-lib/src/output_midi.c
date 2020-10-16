@@ -344,8 +344,8 @@ static int mg_midi_write(struct mg_output *output, uint8_t *buffer, size_t size)
 
     ret = snd_rawmidi_write(info->rawmidi, buffer, size);
     if (ret != size) {
-        fprintf(stderr, "rawmidi write failed on %s: %s\n", info->device,
-                (ret < 0) ? snd_strerror(ret): "unknown error");
+        fprintf(stderr, "rawmidi write failed to write %zu bytes on %s, wrote %zu\n",
+                size, info->device, ret);
         return -1;
     }
 
