@@ -98,21 +98,6 @@ int duration_ns(struct timespec start, struct timespec end)
       (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min )
 
 
-int map(int x, int in_min, int in_max, int out_min, int out_max)
-{
-    assert(in_min < in_max);
-    assert(out_min < out_max);
-
-    if (x <= in_min)
-        return out_min;
-
-    if (x > in_max)
-        return out_max;
-
-    return MAP_IMPL(x, in_min, in_max, out_min, out_max);
-}
-
-
 /**
  * Multilinear map of integer values
  */

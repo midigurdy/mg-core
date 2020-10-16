@@ -13,7 +13,6 @@ void mg_timespec_add_us(struct timespec *t, int usecs);
 int duration_us(struct timespec start, struct timespec end);
 int duration_ns(struct timespec start, struct timespec end);
 
-int map(int x, int in_min, int in_max, int out_min, int out_max);
 int map_value(int x, const struct mg_map *mapping);
 
 int ary_indexof(int val, int ary[], int size);
