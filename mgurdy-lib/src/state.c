@@ -174,46 +174,6 @@ void mg_string_set_volume(struct mg_string *st, int volume)
 
 
 /**
- * Set a fixed note on a string. Should only be used for trompette and drone strings,
- * as melody strings get their note from the keyboard, of course.
- */
-void mg_string_set_fixed_note(struct mg_string *st, int midi_note, int velocity)
-{
-    int i, k;
-    int fixed[NUM_NOTES];
-    int found = 0;
-
-    ENSURE_NOTE_RANGE(midi_note);
-
-    for (i = 0, k = 0; i < st->fixed_note_count; i++) {
-        if (st->fixed_notes[i] == midi_note) {
-            found = 1;
-            if (velocity == 0)
-                continue;
-        }
-        fixed[k++] = st->fixed_notes[i];
-    }
-
-    if (velocity > 0 && !found)
-        fixed[k++] = midi_note;
-
-    for (i = 0; i < k; i++)
-        st->fixed_notes[i] = fixed[i];
-    st->fixed_note_count = k;
-
-    mg_string_clear_notes(st);
-}
-
-
-/* Clear all fixed notes from a string */
-void mg_string_clear_fixed_notes(struct mg_string *st)
-{
-    st->fixed_note_count = 0;
-    mg_string_clear_notes(st);
-}
-
-
-/**
  * This has only effect on the melody string. Drone and trompette get
  * their notes set directly.
  */
@@ -329,8 +289,6 @@ static void reset_string(struct mg_string *string)
     string->empty_key = 0;  // open string
 
     string->threshold = 0;
-
-    string->fixed_note_count = 0;
 
     mg_state_reset_model_voice(&string->model);
 }

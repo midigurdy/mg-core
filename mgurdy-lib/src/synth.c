@@ -354,7 +354,7 @@ static void update_melody_model(struct mg_core *mg)
  */
 static void update_drone_model(struct mg_core *mg)
 {
-    int s, i;
+    int s;
     int expression;
     struct mg_string *st;
     struct mg_note *note;
@@ -380,19 +380,20 @@ static void update_drone_model(struct mg_core *mg)
             continue;
         }
 
-        if (model->note_count != st->fixed_note_count) {
-            for (i = 0; i < st->fixed_note_count; i++) {
-                note = enable_voice_note(model, st->fixed_notes[i]);
-                note->velocity = 127;
-                note->pressure = 0;
-            }
+        /* No change in base note, moving on... */
+        if (model->note_count > 0 && model->active_notes[0] == st->base_note) {
+            continue;
         }
+
+        mg_string_clear_notes(st);
+        note = enable_voice_note(model, st->base_note);
+        note->velocity = 127;
     }
 }
 
 static void update_trompette_model(struct mg_core *mg)
 {
-    int s, i;
+    int s;
 
     struct mg_string *st;
     struct mg_note *note;
@@ -479,13 +480,17 @@ static void update_trompette_model(struct mg_core *mg)
                 if (model->note_count > 0) {
                     mg_string_clear_notes(st);
                 }
+                continue;
             }
-            else if (model->note_count != st->fixed_note_count) {
-                for (i = 0; i < st->fixed_note_count; i++) {
-                    note = enable_voice_note(model, st->fixed_notes[i]);
-                    note->velocity = 127; // volume controlled via expression
-                }
+
+
+            if (model->note_count > 0 && model->active_notes[0] == st->base_note) {
+                continue;
             }
+
+            mg_string_clear_notes(st);
+            note = enable_voice_note(model, st->base_note);
+            note->velocity = 127; // volume controlled via expression
         }
 
         /* Percussive mode, more suitable for other sounds like drums or other percussive sounds:
@@ -516,41 +521,44 @@ static void update_trompette_model(struct mg_core *mg)
             }
             model->chien_debounce = 0;
 
-            if (raw_chien_speed > 0) {
-                if (model->note_count != st->fixed_note_count) {
-                    /* Velocity is the same for all trompette strings in percussive mode, so
-                    * calculate this here only once. */
-                    if (velocity == -1) {
-                        velocity = map_value(raw_chien_speed, &mg->state.speed_to_percussion);
-                    }
 
+            if (raw_chien_speed <= 0) {
+                if (model->note_count > 0) {
                     if (ws_chien_volume == -1) {
-                        ws_chien_volume = velocity;
+                        ws_chien_volume = 0;
                     }
-
                     if (ws_chien_speed == -1) {
-                        ws_chien_speed = raw_chien_speed;
+                        ws_chien_speed = 0;
                     }
+                    mg_string_clear_notes(st);
+                }
+                continue;
+            }
 
-                    for (i = 0; i < st->fixed_note_count; i++) {
-                        note = enable_voice_note(model, st->fixed_notes[i]);
-                        note->velocity = velocity;
-                    }
-                } else {
-                    /* Set to -2 so that the speed reported via websockets does
-                     * not change until we get a noteoff */
-                    ws_chien_speed = -2;
-                }
+            if (model->note_count > 0 && model->active_notes[0] == st->base_note) {
+                /* Set to -2 so that the speed reported via websockets does
+                 * not change until we get a noteoff */
+                ws_chien_speed = -2;
+                continue;
             }
-            else if (model->note_count > 0) {
-                if (ws_chien_volume == -1) {
-                    ws_chien_volume = 0;
-                }
-                if (ws_chien_speed == -1) {
-                    ws_chien_speed = 0;
-                }
-                mg_string_clear_notes(st);
+
+            /* Velocity is the same for all trompette strings in percussive mode, so
+            * calculate this here only once. */
+            if (velocity == -1) {
+                velocity = map_value(raw_chien_speed, &mg->state.speed_to_percussion);
             }
+
+            if (ws_chien_volume == -1) {
+                ws_chien_volume = velocity;
+            }
+
+            if (ws_chien_speed == -1) {
+                ws_chien_speed = raw_chien_speed;
+            }
+
+            mg_string_clear_notes(st);
+            note = enable_voice_note(model, st->base_note);
+            note->velocity = velocity;
         }
     }
 

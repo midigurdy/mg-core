@@ -11,8 +11,6 @@ void mg_state_reset_output_voice(struct mg_voice *voice);
 
 void mg_string_clear_notes(struct mg_string *st);
 void mg_string_set_base_note(struct mg_string *st, int base_note);
-void mg_string_set_fixed_note(struct mg_string *st, int midi_note, int velocity);
-void mg_string_clear_fixed_notes(struct mg_string *st);
 void mg_string_set_volume(struct mg_string *st, int volume);
 void mg_string_set_mute(struct mg_string *st, int muted);
 void mg_string_set_chien_threshold(struct mg_string *st, int threshold);

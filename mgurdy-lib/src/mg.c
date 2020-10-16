@@ -294,15 +294,6 @@ int mg_set_string(struct mg_string_config *configs)
             case MG_PARAM_THRESHOLD:
                 mg_string_set_chien_threshold(st, c->val);
                 break;
-            case MG_PARAM_NOTE_ENABLE:
-                mg_string_set_fixed_note(st, c->val, 127);
-                break;
-            case MG_PARAM_NOTE_DISABLE:
-                mg_string_set_fixed_note(st, c->val, 0);
-                break;
-            case MG_PARAM_NOTE_CLEAR:
-                mg_string_clear_fixed_notes(st);
-                break;
             case MG_PARAM_RESET:
                 mg_output_all_reset_string(&mg_core, st);
                 break;

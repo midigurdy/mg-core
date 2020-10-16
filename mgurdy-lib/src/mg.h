@@ -179,10 +179,6 @@ struct mg_string {
     /* only used on trompette strings */
     int threshold;
 
-    /* only used on trompette and drone strings */
-    int fixed_notes[NUM_NOTES];
-    int fixed_note_count;
-
     /* the intended state of the synthesizer voice, output streams
      * reference and read this structure but will never modify it */
     struct mg_voice model;
@@ -378,9 +374,6 @@ enum mg_param_enum {
     /* trompette voice only */
     MG_PARAM_THRESHOLD,
 
-    MG_PARAM_NOTE_ENABLE,
-    MG_PARAM_NOTE_DISABLE,
-    MG_PARAM_NOTE_CLEAR,
     MG_PARAM_RESET,
     MG_PARAM_MODE,
 
