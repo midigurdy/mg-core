@@ -47,8 +47,8 @@
 #define MG_CC_ALL_CTRL_OFF (0x79)
 
 
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
+#define LIKELY(x)       __builtin_expect(!!(x), 1)
+#define UNLIKELY(x)     __builtin_expect(!!(x), 0)
 #define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
 
 

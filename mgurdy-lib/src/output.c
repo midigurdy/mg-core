@@ -278,7 +278,7 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
 
         if (!dst_note->on) {
             ret = output->noteon(output, stream->channel, key, src_note->velocity);
-            if (unlikely(ret < 0)) {
+            if (UNLIKELY(ret < 0)) {
                 /* If sending a noteon failed and we want to abort, make sure
                  * we record which notes we have already sent noteons for
                  * before exiting. No need to consider notes which have changed
@@ -311,7 +311,7 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
         }
         else {
             ret = output->noteoff(output, stream->channel, key);
-            if (unlikely(ret < 0)) {
+            if (UNLIKELY(ret < 0)) {
                 /* If sending a noteoff failed and we want to abort, update the
                  * dst->active_notes array immediately, but make sure to also
                  * add all notes for which we haven't checked for a noteoff yet. */
@@ -354,7 +354,7 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
         }
         mg_output_send_t *sender = stream->sender[stream->sender_idx];
         ret = sender(output, stream);
-        if (unlikely(ret < 0)) {
+        if (UNLIKELY(ret < 0)) {
             /* No need to clean up anything here, as senders are supposed to only update the
              * destination state if they succeeded in sending their message. */
             return -1;
