@@ -195,13 +195,13 @@ class SynthController(EventListener):
                 configs.append((string, 'mode', VOICE_MODES.index(voice.get_mode())))
 
                 if voice.type == 'melody':
-                    configs.append((string, 'base_note', voice.base_note))
+                    configs.append((string, 'base_note', self.get_effective_base_note(voice)))
                     configs.append((string, 'capo', voice.capo))
                     configs.append((string, 'polyphonic', int(voice.polyphonic)))
 
                 elif voice.type in ('drone', 'trompette'):
                     configs.append((string, 'all_notes_off', 0))
-                    configs.append((string, 'note_on', int(voice.base_note)))
+                    configs.append((string, 'note_on', self.get_effective_base_note(voice)))
 
             mgcore.set_string_params(configs)
 
