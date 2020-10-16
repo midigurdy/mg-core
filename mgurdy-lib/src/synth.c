@@ -13,17 +13,17 @@
 #define MG_WHEEL_START_SPEED (80)
 
 
-static void debounce_keys(struct mg_key keys[], const struct mg_key_calib key_calib[],
+static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_calib[],
         int on_count, int off_count, int base_note_delay);
 static void calc_wheel_speed(struct mg_core *mg);
 
 static void update_melody_model(struct mg_core *mg);
 static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
-        int *active_keys, int active_count,
+        const struct mg_keyboard *kb,
         int expression, int prev_expression,
         int velocity_switching);
 static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
-        int *active_keys, int active_count);
+        const struct mg_keyboard *kb);
 
 static void update_trompette_model(struct mg_core *mg);
 static void trompette_model_percussion(const struct mg_state *state,
@@ -42,7 +42,7 @@ static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
  */
 void mg_synth_update(struct mg_core *mg)
 {
-    debounce_keys(mg->keyboard.keys, mg->state.key_calib,
+    debounce_keys(&mg->keyboard, mg->state.key_calib,
             mg->state.key_on_debounce, mg->state.key_off_debounce,
             mg->state.base_note_delay);
 
@@ -92,20 +92,24 @@ static void calc_wheel_speed(struct mg_core *mg)
 }
 
 
-static void debounce_keys(struct mg_key keys[], const struct mg_key_calib key_calib[],
+static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_calib[],
         int on_count, int off_count, int base_note_delay)
 {
     int i;
     struct mg_key *key;
 
+    kb->active_key_count = 0;
+    kb->changed_key_count = 0;
+
     for (i=0; i < KEY_COUNT; i++) {
-        key = &keys[i];
+        key = &kb->keys[i];
 
         key->action = 0;
 
         if (key->pressure > 0) {
             /* Key stays active */
             if (key->state == KEY_ACTIVE) {
+                kb->active_keys[kb->active_key_count++] = i;
                 key->debounce = 0;
                 if (key->active_since < base_note_delay) {
                     key->active_since++;
@@ -119,6 +123,10 @@ static void debounce_keys(struct mg_key keys[], const struct mg_key_calib key_ca
                     key->state = KEY_ACTIVE;
                     key->action = KEY_PRESSED;
                     key->active_since = 0;
+
+                    kb->changed_keys[kb->changed_key_count++] = i;
+                    kb->active_keys[kb->active_key_count++] = i;
+
                     /* Key on velocity is the maximum of all pressure values 
                      * seen during debounce period */
                     key->velocity = key->max_pressure * key_calib[i].velocity_adjust;
@@ -139,6 +147,9 @@ static void debounce_keys(struct mg_key keys[], const struct mg_key_calib key_ca
                     key->state = KEY_INACTIVE;
                     key->action = KEY_RELEASED;
                     key->active_since = 0;
+
+                    kb->changed_keys[kb->changed_key_count++] = i;
+
                     /* Key off velocity is the last pressure value before
                      * going into inactive state */
                     key->velocity = key->smoothed_pressure * key_calib[i].velocity_adjust;
@@ -153,13 +164,13 @@ static void debounce_keys(struct mg_key keys[], const struct mg_key_calib key_ca
 
 
 static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
-        int *active_keys, int active_count,
+        const struct mg_keyboard *kb,
         int expression, int prev_expression,
         int velocity_switching)
 {
     struct mg_voice *model = &st->model;
     struct mg_note *note;
-    struct mg_key *key;
+    const struct mg_key *key;
     int key_idx;
     int key_num;
 
@@ -174,7 +185,7 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
 
     /* If no key is pressed or the highest key is below the capo key,
      * output the base note or capo key note. */
-    if (active_count == 0 || (active_keys[active_count - 1] < st->empty_key)) {
+    if (kb->active_key_count == 0 || (kb->active_keys[kb->active_key_count - 1] < st->empty_key)) {
 
         /* If a base note delay is set, wait for that number of iterations before reacting */
         if (st->base_note_count < mg->state.base_note_delay) {
@@ -211,11 +222,11 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
     st->base_note_count = 0;
 
     /* Start processing from highest to lowest key */
-    key_idx = active_count - 1;
+    key_idx = kb->active_key_count - 1;
 
     /* Determine string pitch using the highest key */
-    key_num = active_keys[key_idx];
-    key = &mg->keyboard.keys[key_num];
+    key_num = kb->active_keys[key_idx];
+    key = &kb->keys[key_num];
 
     if (st->polyphonic && !mg->state.poly_pitch_bend) {
         model->pitch = 0x2000;
@@ -230,8 +241,8 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
      * corresponding notes. In monophonic mode, we do this only once for
      * the highest key. */
     do {
-        key_num = active_keys[key_idx];
-        key = &mg->keyboard.keys[key_num];
+        key_num = kb->active_keys[key_idx];
+        key = &kb->keys[key_num];
 
         note = enable_voice_note(model, st->base_note + key_num + 1);
 
@@ -260,11 +271,11 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
 
 
 static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
-        int *active_keys, int active_count)
+        const struct mg_keyboard *kb)
 {
     struct mg_voice *model = &st->model;
     struct mg_note *note;
-    struct mg_key *key;
+    const struct mg_key *key;
     int key_idx;
     int key_num;
 
@@ -272,7 +283,7 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
     model->expression = 127;
 
     /* If no key is pressed then the string is silent, like a piano */
-    if (active_count == 0 || (active_keys[active_count - 1] < st->empty_key)) {
+    if (kb->active_key_count == 0 || (kb->active_keys[kb->active_key_count - 1] < st->empty_key)) {
         model->pitch = 0x2000; // no key pressed, no pitch bend.
         mg_voice_clear_notes(model);
         return;
@@ -282,7 +293,7 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
     st->base_note_count = 0;
 
     /* Start processing from highest to lowest key */
-    key_idx = active_count - 1;
+    key_idx = kb->active_key_count - 1;
 
     /* No pitch bend in keyboard mode */
     model->pitch = 0x2000;
@@ -291,8 +302,8 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
      * corresponding notes. In monophonic mode, we do this only once for
      * the highest key. */
     do {
-        key_num = active_keys[key_idx];
-        key = &mg->keyboard.keys[key_num];
+        key_num = kb->active_keys[key_idx];
+        key = &kb->keys[key_num];
 
         note = enable_voice_note(model, st->base_note + key_num + 1);
 
@@ -309,23 +320,13 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
  */
 static void update_melody_model(struct mg_core *mg)
 {
-    int i, s;
-
-    int active_keys[KEY_COUNT + 1];
-    int active_count = 0;
+    int s;
 
     struct mg_string *st;
     struct mg_voice *model;
     int expression = 0;
 
     static int prev_expression = 0;
-
-    /* Find all currently active keys. */
-    for (i = 0; i < KEY_COUNT; i++) {
-        if (mg->keyboard.keys[i].state == KEY_ACTIVE) {
-            active_keys[active_count++] = i;
-        }
-    }
 
     /* Expression is the same for all melody strings, calculate here only once. */
     expression = map_value(mg->wheel.speed, &mg->state.speed_to_melody_volume);
@@ -350,14 +351,14 @@ static void update_melody_model(struct mg_core *mg)
 
         if (st->mode == MG_MODE_MIDIGURDY) {
             // with velocity switching
-            melody_model_midigurdy(mg, st, active_keys, active_count, expression, prev_expression, 1);
+            melody_model_midigurdy(mg, st, &mg->keyboard, expression, prev_expression, 1);
         }
         else if (st->mode == MG_MODE_GENERIC) {
             // without velocity switching
-            melody_model_midigurdy(mg, st, active_keys, active_count, expression, prev_expression, 0);
+            melody_model_midigurdy(mg, st, &mg->keyboard, expression, prev_expression, 0);
         }
         else {
-            melody_model_keyboard(mg, st, active_keys, active_count);
+            melody_model_keyboard(mg, st, &mg->keyboard);
         }
     }
 
@@ -612,11 +613,12 @@ static void trompette_model_percussion(const struct mg_state *state,
 
 static void update_keynoise_model(struct mg_core *mg)
 {
-    int i;
+    int i, key_idx;
     struct mg_key *key;
     int midi_note;
     int velocity;
     struct mg_string *st = &mg->state.keynoise;
+    struct mg_keyboard *kb = &mg->keyboard;
     struct mg_voice *model = &st->model;
     struct mg_note *note;
 
@@ -634,11 +636,9 @@ static void update_keynoise_model(struct mg_core *mg)
         model->pressure = 0;
     }
 
-    for (i = 0; i < KEY_COUNT; i++) {
-        key = &mg->keyboard.keys[i];
-
-        if (!key->action)
-            continue;
+    for (i = 0; i < kb->changed_key_count; i++) {
+        key_idx = kb->changed_keys[i];
+        key = &kb->keys[key_idx];
 
         velocity = key->velocity;
 

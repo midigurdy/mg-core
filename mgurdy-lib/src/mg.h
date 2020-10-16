@@ -215,6 +215,12 @@ struct mg_keyboard {
     /* key sensor data */
     struct mg_key keys[KEY_COUNT];
 
+    int active_keys[KEY_COUNT];
+    int active_key_count;
+
+    int changed_keys[KEY_COUNT];
+    int changed_key_count;
+
     int inactive_count;  // used for debouncing return to base note
 };
 
