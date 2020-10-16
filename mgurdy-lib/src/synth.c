@@ -158,7 +158,7 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
 
     /* The wheel is not moving, so we clear all notes */
     if (expression == 0) {
-        mg_string_clear_notes(st);
+        mg_voice_clear_notes(model);
         st->base_note_count = mg->state.base_note_delay;
         return;
     }
@@ -175,7 +175,7 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
 
         model->pitch = 0x2000; // no key pressed, no pitch bend.
 
-        mg_string_clear_notes(st);
+        mg_voice_clear_notes(model);
 
         /* No base note in polyphonic mode unless enabled */
         if (st->polyphonic && !mg->state.poly_base_note) {
@@ -198,7 +198,7 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
     }
 
     /* We have at least one pressed key and the wheel is moving. */
-    mg_string_clear_notes(st);
+    mg_voice_clear_notes(model);
     st->base_note_count = 0;
 
     /* Start processing from highest to lowest key */
@@ -265,11 +265,11 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
     /* If no key is pressed then the string is silent, like a piano */
     if (active_count == 0 || (active_keys[active_count - 1] < st->empty_key)) {
         model->pitch = 0x2000; // no key pressed, no pitch bend.
-        mg_string_clear_notes(st);
+        mg_voice_clear_notes(model);
         return;
     }
 
-    mg_string_clear_notes(st);
+    mg_voice_clear_notes(model);
     st->base_note_count = 0;
 
     /* Start processing from highest to lowest key */
@@ -375,7 +375,7 @@ static void update_drone_model(struct mg_core *mg)
 
         if (model->expression <= 0) {
             if (model->note_count > 0) {
-                mg_string_clear_notes(st);
+                mg_voice_clear_notes(model);
             }
             continue;
         }
@@ -385,7 +385,7 @@ static void update_drone_model(struct mg_core *mg)
             continue;
         }
 
-        mg_string_clear_notes(st);
+        mg_voice_clear_notes(model);
         note = enable_voice_note(model, st->base_note);
         note->velocity = 127;
     }
@@ -478,7 +478,7 @@ static void update_trompette_model(struct mg_core *mg)
 
             if (expression <= 0) {
                 if (model->note_count > 0) {
-                    mg_string_clear_notes(st);
+                    mg_voice_clear_notes(model);
                 }
                 continue;
             }
@@ -488,7 +488,7 @@ static void update_trompette_model(struct mg_core *mg)
                 continue;
             }
 
-            mg_string_clear_notes(st);
+            mg_voice_clear_notes(model);
             note = enable_voice_note(model, st->base_note);
             note->velocity = 127; // volume controlled via expression
         }
@@ -530,7 +530,7 @@ static void update_trompette_model(struct mg_core *mg)
                     if (ws_chien_speed == -1) {
                         ws_chien_speed = 0;
                     }
-                    mg_string_clear_notes(st);
+                    mg_voice_clear_notes(model);
                 }
                 continue;
             }
@@ -556,7 +556,7 @@ static void update_trompette_model(struct mg_core *mg)
                 ws_chien_speed = raw_chien_speed;
             }
 
-            mg_string_clear_notes(st);
+            mg_voice_clear_notes(model);
             note = enable_voice_note(model, st->base_note);
             note->velocity = velocity;
         }
@@ -586,7 +586,7 @@ static void update_keynoise_model(struct mg_core *mg)
     struct mg_voice *model = &st->model;
     struct mg_note *note;
 
-    mg_string_clear_notes(st);
+    mg_voice_clear_notes(model);
 
     if (mg->wheel.speed > 0) {
         model->pressure = 127;

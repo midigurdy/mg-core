@@ -160,7 +160,8 @@ void mg_string_set_mute(struct mg_string *st, int muted)
     st->muted = muted;
 
     if (muted) {
-        mg_string_clear_notes(st);
+        /* FIXME: this is a hack! Should not modify model state from here! */
+        mg_voice_clear_notes(&st->model);
     }
 }
 
@@ -195,16 +196,16 @@ void mg_string_set_chien_threshold(struct mg_string *st, int threshold)
 
 
 /**
- * Removes all notes from a string.
+ * Removes all active notes from a voice.
  */
-void mg_string_clear_notes(struct mg_string *st)
+void mg_voice_clear_notes(struct mg_voice *voice)
 {
     int i;
 
-    for (i = 0; i < st->model.note_count; i++) {
-        st->model.notes[st->model.active_notes[i]].on = 0;
+    for (i = 0; i < voice->note_count; i++) {
+        voice->notes[voice->active_notes[i]].on = 0;
     }
-    st->model.note_count = 0;
+    voice->note_count = 0;
 }
 
 
