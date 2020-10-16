@@ -13,7 +13,8 @@
 #define MG_WHEEL_START_SPEED (80)
 
 
-static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count, int off_count);
+static void debounce_keys(struct mg_key keys[], const struct mg_key_calib key_calib[],
+        int on_count, int off_count, int base_note_delay);
 static void calc_wheel_speed(struct mg_core *mg);
 static void update_melody_model(struct mg_core *mg);
 static void update_drone_model(struct mg_core *mg);
@@ -44,7 +45,9 @@ static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
  */
 void mg_synth_update(struct mg_core *mg)
 {
-    debounce_keys(mg, mg->keys, mg->state.key_on_debounce, mg->state.key_off_debounce);
+    debounce_keys(mg->keys, mg->key_calib,
+            mg->state.key_on_debounce, mg->state.key_off_debounce,
+            mg->state.base_note_delay);
 
     calc_wheel_speed(mg);
 
@@ -92,7 +95,8 @@ static void calc_wheel_speed(struct mg_core *mg)
 }
 
 
-static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count, int off_count)
+static void debounce_keys(struct mg_key keys[], const struct mg_key_calib key_calib[],
+        int on_count, int off_count, int base_note_delay)
 {
     int i;
     struct mg_key *key;
@@ -106,7 +110,7 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
             /* Key stays active */
             if (key->state == KEY_ACTIVE) {
                 key->debounce = 0;
-                if (key->active_since < mg->state.base_note_delay) {
+                if (key->active_since < base_note_delay) {
                     key->active_since++;
                 }
             }
@@ -120,7 +124,7 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
                     key->active_since = 0;
                     /* Key on velocity is the maximum of all pressure values 
                      * seen during debounce period */
-                    key->velocity = key->max_pressure * mg->key_calib[i].velocity_adjust;
+                    key->velocity = key->max_pressure * key_calib[i].velocity_adjust;
                     key->debounce = 0;
                 }
             }
@@ -140,7 +144,7 @@ static void debounce_keys(struct mg_core *mg, struct mg_key keys[], int on_count
                     key->active_since = 0;
                     /* Key off velocity is the last pressure value before
                      * going into inactive state */
-                    key->velocity = key->smoothed_pressure * mg->key_calib[i].velocity_adjust;
+                    key->velocity = key->smoothed_pressure * key_calib[i].velocity_adjust;
                     key->max_pressure = 0;
                     key->smoothed_pressure = 0;
                     key->debounce = 0;
