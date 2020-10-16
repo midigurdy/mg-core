@@ -29,6 +29,14 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
 static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
         int *active_keys, int active_count);
 
+static void trompette_model_percussion(const struct mg_state *state,
+        struct mg_string *st, int raw_chien_speed, int *ws_chien_speed, int *ws_chien_volume);
+
+
+static void trompette_model_midigurdy(const struct mg_state *state,
+        struct mg_string *st, int normalized_chien_speed, int wheel_speed,
+        int *ws_chien_speed, int *ws_chien_volume);
+
 static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
 
 /* Main entry point, called regularly by worker thread. Takes sensor readings
@@ -396,13 +404,7 @@ static void update_trompette_model(struct mg_core *mg)
     int s;
 
     struct mg_string *st;
-    struct mg_note *note;
-    struct mg_voice *model;
 
-    int pressure;
-
-    int expression = -1;
-    int velocity = -1;
     int ws_chien_volume = -1;
     int ws_chien_speed = -1;
 
@@ -412,8 +414,6 @@ static void update_trompette_model(struct mg_core *mg)
 
     for (s = 0; s < 3; s++) {
         st = &mg->state.trompette[s];
-        model = &st->model;
-
 
         /* If the string is muted, then there's no need to do any anything */
         if (st->muted) {
@@ -450,115 +450,16 @@ static void update_trompette_model(struct mg_core *mg)
          * and chien sound are part of a single preset and mixed together,
          * their individual volumes controlled by channel pressure */
         if (st->mode == MG_MODE_MIDIGURDY) {
-
-            if (normalized_chien_speed > 0) {
-                pressure = map_value(normalized_chien_speed, &mg->state.speed_to_chien);
-            } else {
-                pressure = 0;
-            }
-
-            /* Expression is the same for all trompette strings in MidiGurdy mode,
-            * calculate here only once. */
-            if (expression == -1) {
-                expression = map_value(mg->wheel.speed, &mg->state.speed_to_trompette_volume);
-            }
-
-            model->expression = expression;
-            model->pressure = pressure;
-
-            /* The first enabled trompette string (regardless of mode) determines
-             * the chien volume we report to the visualizations via websocket */
-            if (ws_chien_volume == -1) {
-                ws_chien_volume = pressure;
-            }
-
-            if (ws_chien_speed == -1) {
-                ws_chien_speed = normalized_chien_speed;
-            }
-
-            if (expression <= 0) {
-                if (model->note_count > 0) {
-                    mg_voice_clear_notes(model);
-                }
-                continue;
-            }
-
-
-            if (model->note_count > 0 && model->active_notes[0] == st->base_note) {
-                continue;
-            }
-
-            mg_voice_clear_notes(model);
-            note = enable_voice_note(model, st->base_note);
-            note->velocity = 127; // volume controlled via expression
+            trompette_model_midigurdy(&mg->state, st, normalized_chien_speed, mg->wheel.speed,
+                    &ws_chien_speed, &ws_chien_volume);
         }
 
         /* Percussive mode, more suitable for other sounds like drums or other percussive sounds:
          * Only when the threshold is reached does a note-on occur, the velocity of the
          * note-on is calculated from the wheel speed above the threshold */
-        else if (st->mode == MG_MODE_GENERIC) {
-            // real-time volume only controlled via note-on velocity
-            model->expression = 127;
-
-            /* As we're dealing with percussive sounds, we need to debounce the
-             * on / off transitions.
-             * FIXME: make the debounce times configurable via the web-interface! */
-            if (raw_chien_speed > 0) {
-                if (model->note_count == 0) {
-                    if (model->chien_debounce < model->chien_on_debounce) {
-                        model->chien_debounce++;
-                        continue;
-                    }
-                }
-            }
-            else {
-                if (model->note_count > 0) {
-                    if (model->chien_debounce < model->chien_off_debounce) {
-                        model->chien_debounce++;
-                        continue;
-                    }
-                }
-            }
-            model->chien_debounce = 0;
-
-
-            if (raw_chien_speed <= 0) {
-                if (model->note_count > 0) {
-                    if (ws_chien_volume == -1) {
-                        ws_chien_volume = 0;
-                    }
-                    if (ws_chien_speed == -1) {
-                        ws_chien_speed = 0;
-                    }
-                    mg_voice_clear_notes(model);
-                }
-                continue;
-            }
-
-            if (model->note_count > 0 && model->active_notes[0] == st->base_note) {
-                /* Set to -2 so that the speed reported via websockets does
-                 * not change until we get a noteoff */
-                ws_chien_speed = -2;
-                continue;
-            }
-
-            /* Velocity is the same for all trompette strings in percussive mode, so
-            * calculate this here only once. */
-            if (velocity == -1) {
-                velocity = map_value(raw_chien_speed, &mg->state.speed_to_percussion);
-            }
-
-            if (ws_chien_volume == -1) {
-                ws_chien_volume = velocity;
-            }
-
-            if (ws_chien_speed == -1) {
-                ws_chien_speed = raw_chien_speed;
-            }
-
-            mg_voice_clear_notes(model);
-            note = enable_voice_note(model, st->base_note);
-            note->velocity = velocity;
+        else { // st->mode == MG_MODE_GENERIC
+            trompette_model_percussion(&mg->state, st, raw_chien_speed,
+                    &ws_chien_speed, &ws_chien_volume);
         }
     }
 
@@ -575,6 +476,118 @@ static void update_trompette_model(struct mg_core *mg)
         mg->chien_volume = ws_chien_volume;
     }
 }
+
+
+static void trompette_model_midigurdy(const struct mg_state *state,
+        struct mg_string *st, int normalized_chien_speed, int wheel_speed,
+        int *ws_chien_speed, int *ws_chien_volume)
+{
+    struct mg_voice *model = &st->model;
+    struct mg_note *note;
+
+    if (normalized_chien_speed > 0) {
+        model->pressure = map_value(normalized_chien_speed, &state->speed_to_chien);
+    } else {
+        model->pressure = 0;
+    }
+
+    model->expression = map_value(wheel_speed, &state->speed_to_trompette_volume);
+
+    /* The first enabled trompette string (regardless of mode) determines
+     * the chien volume we report to the visualizations via websocket */
+    if (*ws_chien_volume == -1) {
+        *ws_chien_volume = model->pressure;
+    }
+
+    if (*ws_chien_speed == -1) {
+        *ws_chien_speed = normalized_chien_speed;
+    }
+
+    if (model->expression <= 0) {
+        if (model->note_count > 0) {
+            mg_voice_clear_notes(model);
+        }
+        return;
+    }
+
+
+    if (model->note_count > 0 && model->active_notes[0] == st->base_note) {
+        return;
+    }
+
+    mg_voice_clear_notes(model);
+    note = enable_voice_note(model, st->base_note);
+    note->velocity = 127; // volume controlled via expression
+}
+
+
+static void trompette_model_percussion(const struct mg_state *state,
+        struct mg_string *st, int raw_chien_speed, int *ws_chien_speed, int *ws_chien_volume)
+{
+    struct mg_voice *model = &st->model;
+    int velocity;
+    struct mg_note *note;
+
+    // real-time volume only controlled via note-on velocity
+    model->expression = 127;
+
+    /* As we're dealing with percussive sounds, we need to debounce the
+     * on / off transitions.
+     * FIXME: make the debounce times configurable via the web-interface! */
+    if (raw_chien_speed > 0) {
+        if (model->note_count == 0) {
+            if (model->chien_debounce < model->chien_on_debounce) {
+                model->chien_debounce++;
+                return;
+            }
+        }
+    }
+    else {
+        if (model->note_count > 0) {
+            if (model->chien_debounce < model->chien_off_debounce) {
+                model->chien_debounce++;
+                return;
+            }
+        }
+    }
+
+    model->chien_debounce = 0;
+
+    if (raw_chien_speed <= 0) {
+        if (model->note_count > 0) {
+            if (*ws_chien_volume == -1) {
+                *ws_chien_volume = 0;
+            }
+            if (*ws_chien_speed == -1) {
+                *ws_chien_speed = 0;
+            }
+            mg_voice_clear_notes(model);
+        }
+        return;
+    }
+
+    if (model->note_count > 0 && model->active_notes[0] == st->base_note) {
+        /* Set to -2 so that the speed reported via websockets does
+         * not change until we get a noteoff */
+        *ws_chien_speed = -2;
+        return;
+    }
+
+    velocity = map_value(raw_chien_speed, &state->speed_to_percussion);
+
+    if (*ws_chien_volume == -1) {
+        *ws_chien_volume = velocity;
+    }
+
+    if (*ws_chien_speed == -1) {
+        *ws_chien_speed = raw_chien_speed;
+    }
+
+    mg_voice_clear_notes(model);
+    note = enable_voice_note(model, st->base_note);
+    note->velocity = velocity;
+}
+
 
 static void update_keynoise_model(struct mg_core *mg)
 {
