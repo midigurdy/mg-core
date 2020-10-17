@@ -15,7 +15,7 @@
 
 static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_calib[],
         int on_count, int off_count, int base_note_delay);
-static void calc_wheel_speed(struct mg_core *mg);
+static void calc_wheel_speed(struct mg_wheel *wheel);
 
 static void update_melody_model(struct mg_core *mg);
 static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
@@ -50,7 +50,7 @@ void mg_synth_update(struct mg_core *mg)
             state->key_on_debounce, state->key_off_debounce,
             state->base_note_delay);
 
-    calc_wheel_speed(mg);
+    calc_wheel_speed(wheel);
 
     if (wheel->speed == 0) {
         kb->inactive_count = state->base_note_delay;
@@ -77,13 +77,12 @@ void mg_synth_update(struct mg_core *mg)
  * because the wheel sensor kernel driver only reports if the angle has
  * actually changed.
  */
-static void calc_wheel_speed(struct mg_core *mg)
+static void calc_wheel_speed(struct mg_wheel *wheel)
 {
-    struct mg_wheel *wh = &mg->wheel;
     int speed;
 
     /* Ignore readings that have a very small or too long timeval. */
-    if ((wh->elapsed_us < 500) || (wh->elapsed_us > 3000)) {
+    if ((wheel->elapsed_us < 500) || (wheel->elapsed_us > 3000)) {
         return;
     }
 
@@ -91,18 +90,18 @@ static void calc_wheel_speed(struct mg_core *mg)
         * reading. Normalize the speed to angle per tick (millisecond),
         * remove the directional information
         * (speed is always positive or 0) and increase the scale by 100 */
-    speed = (wh->distance * (wh->distance < 0 ? -100 : 100) * MG_WHEEL_EXPECTED_US) / wh->elapsed_us;
+    speed = (wheel->distance * (wheel->distance < 0 ? -100 : 100) * MG_WHEEL_EXPECTED_US) / wheel->elapsed_us;
 
-    if (speed > 0 || wh->raw_speed > 0) {
+    if (speed > 0 || wheel->raw_speed > 0) {
         /* smooth the speed for a more realistic volume and attack response.
          * Acoustic strings are quite slow :-) */
-        wh->raw_speed = mg_smooth(speed, wh->raw_speed, 0.8);
+        wheel->raw_speed = mg_smooth(speed, wheel->raw_speed, 0.8);
     }
 
-    if (wh->speed || wh->raw_speed >= MG_WHEEL_START_SPEED) {
-        wh->speed = wh->raw_speed;
+    if (wheel->speed || wheel->raw_speed >= MG_WHEEL_START_SPEED) {
+        wheel->speed = wheel->raw_speed;
     } else {
-        wh->speed = 0;
+        wheel->speed = 0;
     }
 }
 
