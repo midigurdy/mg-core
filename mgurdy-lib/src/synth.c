@@ -339,7 +339,7 @@ static void update_melody_model(struct mg_state *state, const struct mg_wheel *w
 {
     int s;
 
-    struct mg_string *st;
+    const struct mg_string *st;
     struct mg_voice *model;
     int expression = 0;
 
@@ -349,7 +349,7 @@ static void update_melody_model(struct mg_state *state, const struct mg_wheel *w
     /* Update the model of all three melody strings */
     for (s = 0; s < 3; s++) {
         st = &state->melody[s];
-        model = &st->model;
+        model = &state->melody[s].model;
 
         /* If the string is muted, then there's no need to do anything */
         if (st->muted) {
@@ -389,7 +389,7 @@ static void update_drone_model(struct mg_state *state, const struct mg_wheel *wh
 {
     int s;
     int expression;
-    struct mg_string *st;
+    const struct mg_string *st;
     struct mg_note *note;
     struct mg_voice *model;
 
@@ -398,7 +398,7 @@ static void update_drone_model(struct mg_state *state, const struct mg_wheel *wh
 
     for (s = 0; s < 3; s++) {
         st = &state->drone[s];
-        model = &st->model;
+        model = &state->drone[s].model;
 
         if (st->muted) {
             model->expression = 0;
@@ -428,7 +428,7 @@ static void update_trompette_model(struct mg_state *state, const struct mg_wheel
 {
     int s;
 
-    struct mg_string *st;
+    const struct mg_string *st;
     struct mg_voice *model;
 
     int chien_speed_factor;
@@ -437,7 +437,7 @@ static void update_trompette_model(struct mg_state *state, const struct mg_wheel
 
     for (s = 0; s < 3; s++) {
         st = &state->trompette[s];
-        model = &st->model;
+        model = &state->trompette[s].model;
 
         /* If the string is muted, then there's no need to do any anything */
         if (st->muted) {
