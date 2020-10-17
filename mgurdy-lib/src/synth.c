@@ -448,28 +448,23 @@ static void update_trompette_model(struct mg_core *mg)
             continue;
         }
 
-        if (st->threshold < MG_SPEED_MAX) {
-            chien_speed_factor = map_value(
-                    (5000 - st->threshold) / 50,
-                    &mg->state.chien_threshold_to_range);
-            raw_chien_speed = mg->wheel.speed - st->threshold;
-            if (raw_chien_speed > 0) {
-                if (chien_speed_factor > 0) {
-                    normalized_chien_speed = (raw_chien_speed * (chien_speed_factor + 100)) / 100;
-                } else if (chien_speed_factor < 0) {
-                    normalized_chien_speed = (raw_chien_speed * -100) /  (chien_speed_factor - 100);
-                } else {
-                    normalized_chien_speed = raw_chien_speed;
-                }
-                if (normalized_chien_speed > MG_CHIEN_MAX) {
-                    normalized_chien_speed = MG_CHIEN_MAX;
-                }
+        chien_speed_factor = map_value(
+                (5000 - st->threshold) / 50,
+                &mg->state.chien_threshold_to_range);
+        raw_chien_speed = mg->wheel.speed - st->threshold;
+        if (raw_chien_speed > 0) {
+            if (chien_speed_factor > 0) {
+                normalized_chien_speed = (raw_chien_speed * (chien_speed_factor + 100)) / 100;
+            } else if (chien_speed_factor < 0) {
+                normalized_chien_speed = (raw_chien_speed * -100) /  (chien_speed_factor - 100);
+            } else {
+                normalized_chien_speed = raw_chien_speed;
             }
-            else {
-                raw_chien_speed = 0;
-                normalized_chien_speed = 0;
+            if (normalized_chien_speed > MG_CHIEN_MAX) {
+                normalized_chien_speed = MG_CHIEN_MAX;
             }
-        } else {
+        }
+        else {
             raw_chien_speed = 0;
             normalized_chien_speed = 0;
         }

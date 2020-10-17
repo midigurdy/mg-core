@@ -192,7 +192,7 @@ void mg_string_set_base_note(struct mg_string *st, int base_note)
  */
 void mg_string_set_chien_threshold(struct mg_string *st, int threshold)
 {
-    st->threshold = threshold;
+    st->threshold = MIN(threshold, MG_SPEED_MAX - 1);
 }
 
 
