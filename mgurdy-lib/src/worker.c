@@ -17,8 +17,9 @@
 #define MAX_SAFE_STACK (8*1024)
 
 static int mg_worker_run(struct mg_core *mg);
+
 static void stack_prefault(void);
-static void position_to_websockets(struct mg_core *mg);
+static void position_to_websockets(void);
 
 
 int mg_worker_init(struct mg_core *mg)
@@ -121,8 +122,10 @@ static int mg_worker_run(struct mg_core *mg)
         fprintf(stderr, "Unable to unlock state!\n");
     }
 
+    mg_server_record_wheel_data(mg->wheel.position, mg->wheel.speed);
+
     /* report to attached clients */
-    position_to_websockets(mg);
+    position_to_websockets();
     if (mg_server_key_client_count()) {
         mg_server_report_keys(mg->keyboard.keys);
     }
@@ -133,48 +136,17 @@ static int mg_worker_run(struct mg_core *mg)
 
 /* Report the current position to any connected websocket listeners, but only
  * every MG_WHEEL_REPORT_INTERVAL call */
-static void position_to_websockets(struct mg_core *mg)
+static void position_to_websockets(void)
 {
     static int calls = 0;
-    static int prev_pos = 0;
-    static int prev_speed = 0;
-    static int prev_chien_volume = 0;
-    static int prev_chien_speed = 0;
-    static int prev_clients = 0;
-    int pos;
-    int speed;
-    int chien_volume;
-    int chien_speed;
-    int clients;
 
-    pos = mg->wheel.position;
-    speed = mg->wheel.speed;
-    chien_volume = mg->chien_volume;
-    chien_speed = mg->chien_speed;
-    if (pos != prev_pos || speed != prev_speed || chien_volume != prev_chien_volume || chien_speed != prev_chien_speed) {
-        mg_server_record_wheel_data(pos, speed, chien_volume, chien_speed);
-        prev_pos = pos;
-        prev_speed = speed;
-        prev_chien_volume = chien_volume;
-        prev_chien_speed = chien_speed;
-    }
-
-    if (calls >= MG_WHEEL_REPORT_INTERVAL) {
-        clients = mg_server_report_wheel();
-
-        if (clients > prev_clients) {
-            // If we got a new client, record a wheel position so that it gets the
-            // current position automatically. There is the possibility that we
-            // miss new clients if a deconnect happens in the same millisecond as a connect,
-            // but that case is probably so rare that it won't matter.
-            mg_server_record_wheel_data(pos, speed, chien_volume, chien_speed);
-        }
-        prev_clients = clients;
-        calls = 0;
-    }
-    else {
+    if (calls < MG_WHEEL_REPORT_INTERVAL) {
         calls++;
+        return;
     }
+
+    mg_server_report_wheel();
+    calls = 0;
 }
 
 static void stack_prefault(void)

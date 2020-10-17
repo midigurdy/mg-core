@@ -332,9 +332,6 @@ struct mg_core {
     /* keyboard sensor data */
     struct mg_keyboard keyboard;
 
-    int chien_volume;
-    int chien_speed;
-
     int initialized;
 };
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include <libwebsockets.h>
@@ -12,13 +13,19 @@
 static struct lws_context *_context;
 static volatile int _do_write = 0;
 
-#define WHEEL_PACKET_SIZE (8)
+#define WHEEL_PACKET_SIZE (4)
 #define WHEEL_MAX_PACKETS (100)
 #define WHEEL_DATA_SIZE (WHEEL_PACKET_SIZE * WHEEL_MAX_PACKETS)
 
+static int _wheel_position = 0;
+static int _wheel_speed = 0;
+static int _chien_active = 0;
+static int _chien_volume = 0;
+static int _chien_speed = 0;
+
 static unsigned char _wheel_buf[LWS_PRE + WHEEL_DATA_SIZE];
 static int _wheel_buf_count = 0;
-static unsigned char _wheel_data[WHEEL_DATA_SIZE];
+static uint16_t _wheel_data[WHEEL_DATA_SIZE];
 static int _wheel_data_count = 0;
 static atomic_t _wheel_client_count = ATOMIC_INIT(0);
 
@@ -117,22 +124,54 @@ static int _http_callback(struct lws *UNUSED(wsi),
 }
 
 
-void mg_server_record_wheel_data(int position, int speed, int chien_volume, int chien_speed)
+void mg_server_record_chien_data(int chien_volume, int chien_speed)
 {
-    if (atomic_read(&_wheel_client_count) <= 0)
+    if (_chien_active) {
         return;
+    }
 
-    if (_wheel_data_count >= WHEEL_DATA_SIZE - WHEEL_PACKET_SIZE)
-        return;
+    _chien_active = 1;
 
-    _wheel_data[_wheel_data_count++] = position & 0xFF;
-    _wheel_data[_wheel_data_count++] = position >> 8;
-    _wheel_data[_wheel_data_count++] = speed & 0xFF;
-    _wheel_data[_wheel_data_count++] = speed >> 8;
-    _wheel_data[_wheel_data_count++] = chien_volume & 0xFF;
-    _wheel_data[_wheel_data_count++] = chien_volume >> 8;
-    _wheel_data[_wheel_data_count++] = chien_speed & 0xFF;
-    _wheel_data[_wheel_data_count++] = chien_speed >> 8;
+    if (chien_volume >= 0) {
+        _chien_volume = chien_volume;
+    }
+
+    if (chien_speed >= 0) {
+        _chien_speed = chien_speed;
+    }
+}
+
+
+void mg_server_record_wheel_data(int position, int speed)
+{
+    if (position == _wheel_position && speed == _wheel_speed) {
+        goto exit;
+    }
+
+    if (atomic_read(&_wheel_client_count) <= 0) {
+        goto exit;
+    }
+
+    if (_wheel_data_count >= WHEEL_DATA_SIZE - WHEEL_PACKET_SIZE) {
+        goto exit;
+    }
+
+    /* Note: this uses little-endian byte order and the web interface expects
+     * this... not using network byte ordering saves us some byte swapping. */
+    _wheel_data[_wheel_data_count++] = (uint16_t)(position);
+    _wheel_data[_wheel_data_count++] = (uint16_t)(speed);
+    if (_chien_active) {
+        _wheel_data[_wheel_data_count++] = (uint16_t)(_chien_volume);
+        _wheel_data[_wheel_data_count++] = (uint16_t)(_chien_speed);
+    } else {
+        _wheel_data[_wheel_data_count++] = 0;
+        _wheel_data[_wheel_data_count++] = 0;
+    }
+
+exit:
+    _wheel_position = position;
+    _wheel_speed = speed;
+    _chien_active = 0;
 }
 
 
@@ -143,10 +182,9 @@ int mg_server_report_wheel()
     if (client_count <= 0 || _wheel_data_count == 0 || _wheel_buf_count)
         return client_count;
 
-    memcpy(&_wheel_buf[LWS_PRE], _wheel_data, _wheel_data_count);
-    _wheel_buf_count = _wheel_data_count;
+    memcpy(&_wheel_buf[LWS_PRE], _wheel_data, _wheel_data_count * sizeof(uint16_t));
+    _wheel_buf_count = _wheel_data_count * sizeof(uint16_t);
 
-    memset(_wheel_data, 0, _wheel_data_count);
     _wheel_data_count = 0;
 
     _do_write = 1;
