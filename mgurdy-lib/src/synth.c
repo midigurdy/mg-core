@@ -17,12 +17,13 @@ static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_
         int on_count, int off_count, int base_note_delay);
 static void calc_wheel_speed(struct mg_wheel *wheel);
 
-static void update_melody_model(struct mg_core *mg);
-static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
+static void update_melody_model(struct mg_state *state, const struct mg_wheel *wheel,
+        const struct mg_keyboard *kb);
+static void melody_model_midigurdy(struct mg_string *st, const struct mg_state *state,
         const struct mg_keyboard *kb,
         int expression, int prev_expression,
         int velocity_switching);
-static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
+static void melody_model_keyboard(struct mg_string *st, const struct mg_state *state,
         const struct mg_keyboard *kb);
 
 static void update_trompette_model(struct mg_core *mg);
@@ -32,8 +33,10 @@ static void trompette_model_midigurdy(const struct mg_state *state,
         struct mg_string *st, int normalized_chien_speed, int wheel_speed,
         int *ws_chien_speed, int *ws_chien_volume);
 
-static void update_drone_model(struct mg_core *mg);
-static void update_keynoise_model(struct mg_core *mg);
+static void update_drone_model(struct mg_state *state, const struct mg_wheel *wheel);
+
+static void update_keynoise_model(struct mg_state *state, const struct mg_wheel *wheel,
+        const struct mg_keyboard *kb);
 
 static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
 
@@ -63,10 +66,10 @@ void mg_synth_update(struct mg_core *mg)
         kb->inactive_count = 0;
     }
 
-    update_melody_model(mg);
+    update_melody_model(state, wheel, kb);
     update_trompette_model(mg);
-    update_drone_model(mg);
-    update_keynoise_model(mg);
+    update_drone_model(state, wheel);
+    update_keynoise_model(state, wheel, kb);
 }
 
 
@@ -178,7 +181,8 @@ static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_
 }
 
 
-static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
+static void melody_model_midigurdy(struct mg_string *st,
+        const struct mg_state *state,
         const struct mg_keyboard *kb,
         int expression, int prev_expression,
         int velocity_switching)
@@ -204,14 +208,14 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
         model->pitch = 0x2000; // no key pressed, no pitch bend.
 
         /* If a base note delay is set, wait for that number of iterations before reacting */
-        if (kb->inactive_count < mg->state.base_note_delay) {
+        if (kb->inactive_count < state->base_note_delay) {
             return;
         }
 
         mg_voice_clear_notes(model);
 
         /* No base note in polyphonic mode unless enabled */
-        if (st->polyphonic && !mg->state.poly_base_note) {
+        if (st->polyphonic && !state->poly_base_note) {
             return;
         }
 
@@ -240,12 +244,12 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
     key_num = kb->active_keys[key_idx];
     key = &kb->keys[key_num];
 
-    if (st->polyphonic && !mg->state.poly_pitch_bend) {
+    if (st->polyphonic && !state->poly_pitch_bend) {
         model->pitch = 0x2000;
     } else {
         model->pitch = 0x2000 + (
-            mg->state.pitchbend_factor *
-            map_value(key->smoothed_pressure, &mg->state.pressure_to_pitch)
+            state->pitchbend_factor *
+            map_value(key->smoothed_pressure, &state->pressure_to_pitch)
         );
     }
 
@@ -267,8 +271,8 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
             * If the key for the note we're enabling was already pressed for longer,
             * then use the fixed velocity of 32.
             */
-            if (key->active_since < mg->state.base_note_delay) {
-                note->velocity = 64 + map_value(key->velocity, &mg->state.keyvel_to_tangent);
+            if (key->active_since < state->base_note_delay) {
+                note->velocity = 64 + map_value(key->velocity, &state->keyvel_to_tangent);
             } else {
                 note->velocity = 32;
             }
@@ -282,7 +286,8 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
 }
 
 
-static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
+static void melody_model_keyboard(struct mg_string *st,
+        const struct mg_state *state,
         const struct mg_keyboard *kb)
 {
     struct mg_voice *model = &st->model;
@@ -319,7 +324,7 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
         note = enable_voice_note(model, st->base_note + key_num + 1);
 
         /* ...and configure note parameters */
-        note->velocity = map_value(key->velocity, &mg->state.keyvel_to_notevel);
+        note->velocity = map_value(key->velocity, &state->keyvel_to_notevel);
 
         key_idx--;
 
@@ -329,7 +334,8 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
 /**
  * Update all values in the melody models that depend on a sensor reading.
  */
-static void update_melody_model(struct mg_core *mg)
+static void update_melody_model(struct mg_state *state, const struct mg_wheel *wheel,
+        const struct mg_keyboard *kb)
 {
     int s;
 
@@ -340,11 +346,11 @@ static void update_melody_model(struct mg_core *mg)
     static int prev_expression = 0;
 
     /* Expression is the same for all melody strings, calculate here only once. */
-    expression = map_value(mg->wheel.speed, &mg->state.speed_to_melody_volume);
+    expression = map_value(wheel->speed, &state->speed_to_melody_volume);
 
     /* Update the model of all three melody strings */
     for (s = 0; s < 3; s++) {
-        st = &mg->state.melody[s];
+        st = &state->melody[s];
         model = &st->model;
 
         /* If the string is muted, then there's no need to do anything */
@@ -362,14 +368,14 @@ static void update_melody_model(struct mg_core *mg)
 
         if (st->mode == MG_MODE_MIDIGURDY) {
             // with velocity switching
-            melody_model_midigurdy(mg, st, &mg->keyboard, expression, prev_expression, 1);
+            melody_model_midigurdy(st, state, kb, expression, prev_expression, 1);
         }
         else if (st->mode == MG_MODE_GENERIC) {
             // without velocity switching
-            melody_model_midigurdy(mg, st, &mg->keyboard, expression, prev_expression, 0);
+            melody_model_midigurdy(st, state, kb, expression, prev_expression, 0);
         }
         else {
-            melody_model_keyboard(mg, st, &mg->keyboard);
+            melody_model_keyboard(st, state, kb);
         }
     }
 
@@ -383,7 +389,7 @@ static void update_melody_model(struct mg_core *mg)
  *
  * Only need to calculate the expression.
  */
-static void update_drone_model(struct mg_core *mg)
+static void update_drone_model(struct mg_state *state, const struct mg_wheel *wheel)
 {
     int s;
     int expression;
@@ -392,10 +398,10 @@ static void update_drone_model(struct mg_core *mg)
     struct mg_voice *model;
 
     /* Expression is also the same for all drone strings, calculate here only once. */
-    expression = map_value(mg->wheel.speed, &mg->state.speed_to_drone_volume);
+    expression = map_value(wheel->speed, &state->speed_to_drone_volume);
 
     for (s = 0; s < 3; s++) {
-        st = &mg->state.drone[s];
+        st = &state->drone[s];
         model = &st->model;
 
         if (st->muted) {
@@ -622,14 +628,14 @@ static void trompette_model_percussion(const struct mg_state *state,
 }
 
 
-static void update_keynoise_model(struct mg_core *mg)
+static void update_keynoise_model(struct mg_state *state, const struct mg_wheel *wheel,
+        const struct mg_keyboard *kb)
 {
     int i, key_idx;
-    struct mg_key *key;
+    const struct mg_key *key;
     int midi_note;
     int velocity;
-    struct mg_string *st = &mg->state.keynoise;
-    struct mg_keyboard *kb = &mg->keyboard;
+    struct mg_string *st = &state->keynoise;
     struct mg_voice *model = &st->model;
     struct mg_note *note;
 
@@ -641,7 +647,7 @@ static void update_keynoise_model(struct mg_core *mg)
         return;
     }
 
-    if (mg->wheel.speed > 0) {
+    if (wheel->speed > 0) {
         model->pressure = 127;
     } else {
         model->pressure = 0;
@@ -657,7 +663,7 @@ static void update_keynoise_model(struct mg_core *mg)
             velocity = 0;
         }
 
-        velocity = map_value(velocity, &mg->state.keyvel_to_keynoise);
+        velocity = map_value(velocity, &state->keyvel_to_keynoise);
 
         if (velocity == 0)
             continue;  // no need to send these...
