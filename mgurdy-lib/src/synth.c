@@ -26,11 +26,13 @@ static void melody_model_midigurdy(struct mg_voice *model, const struct mg_strin
 static void melody_model_keyboard(struct mg_voice *model, const struct mg_string *st,
         const struct mg_state *state, const struct mg_keyboard *kb);
 
-static void update_trompette_model(struct mg_core *mg);
-static void trompette_model_percussion(const struct mg_state *state,
-        struct mg_string *st, int raw_chien_speed);
-static void trompette_model_midigurdy(const struct mg_state *state,
-        struct mg_string *st, int normalized_chien_speed, int wheel_speed);
+static void update_trompette_model(struct mg_state *state, const struct mg_wheel *wheel);
+static void trompette_model_percussion(struct mg_voice *model,
+        const struct mg_string *st, const struct mg_state *state,
+        int raw_chien_speed);
+static void trompette_model_midigurdy(struct mg_voice *model,
+        const struct mg_string *st, const struct mg_state *state,
+        int normalized_chien_speed, int wheel_speed);
 
 static void update_drone_model(struct mg_state *state, const struct mg_wheel *wheel);
 
@@ -66,7 +68,7 @@ void mg_synth_update(struct mg_core *mg)
     }
 
     update_melody_model(state, wheel, kb);
-    update_trompette_model(mg);
+    update_trompette_model(state, wheel);
     update_drone_model(state, wheel);
     update_keynoise_model(state, wheel, kb);
 }
@@ -422,7 +424,7 @@ static void update_drone_model(struct mg_state *state, const struct mg_wheel *wh
     }
 }
 
-static void update_trompette_model(struct mg_core *mg)
+static void update_trompette_model(struct mg_state *state, const struct mg_wheel *wheel)
 {
     int s;
 
@@ -434,7 +436,7 @@ static void update_trompette_model(struct mg_core *mg)
     int normalized_chien_speed = 0;
 
     for (s = 0; s < 3; s++) {
-        st = &mg->state.trompette[s];
+        st = &state->trompette[s];
         model = &st->model;
 
         /* If the string is muted, then there's no need to do any anything */
@@ -445,10 +447,10 @@ static void update_trompette_model(struct mg_core *mg)
             continue;
         }
 
-        raw_chien_speed = mg->wheel.speed - st->threshold;
+        raw_chien_speed = wheel->speed - st->threshold;
         if (raw_chien_speed > 0) {
             chien_speed_factor = map_value((5000 - st->threshold) / 50,
-                    &mg->state.chien_threshold_to_range);
+                    &state->chien_threshold_to_range);
 
             if (chien_speed_factor > 0) {
                 normalized_chien_speed = (raw_chien_speed * (chien_speed_factor + 100)) / 100;
@@ -476,23 +478,23 @@ static void update_trompette_model(struct mg_core *mg)
          * and chien sound are part of a single preset and mixed together,
          * their individual volumes controlled by channel pressure */
         if (st->mode == MG_MODE_MIDIGURDY) {
-            trompette_model_midigurdy(&mg->state, st, normalized_chien_speed, mg->wheel.speed);
+            trompette_model_midigurdy(model, st, state, normalized_chien_speed, wheel->speed);
         }
 
         /* Percussive mode, more suitable for other sounds like drums or other percussive sounds:
          * Only when the threshold is reached does a note-on occur, the velocity of the
          * note-on is calculated from the wheel speed above the threshold */
         else { // st->mode == MG_MODE_GENERIC
-            trompette_model_percussion(&mg->state, st, raw_chien_speed);
+            trompette_model_percussion(model, st, state, raw_chien_speed);
         }
     }
 }
 
 
-static void trompette_model_midigurdy(const struct mg_state *state,
-        struct mg_string *st, int normalized_chien_speed, int wheel_speed)
+static void trompette_model_midigurdy(struct mg_voice *model,
+        const struct mg_string *st, const struct mg_state *state,
+        int normalized_chien_speed, int wheel_speed)
 {
-    struct mg_voice *model = &st->model;
     struct mg_note *note;
 
     if (normalized_chien_speed > 0) {
@@ -523,10 +525,10 @@ static void trompette_model_midigurdy(const struct mg_state *state,
 }
 
 
-static void trompette_model_percussion(const struct mg_state *state,
-        struct mg_string *st, int raw_chien_speed)
+static void trompette_model_percussion(struct mg_voice *model,
+        const struct mg_string *st, const struct mg_state *state,
+        int raw_chien_speed)
 {
-    struct mg_voice *model = &st->model;
     int velocity;
     struct mg_note *note;
 
