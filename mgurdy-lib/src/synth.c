@@ -145,7 +145,7 @@ static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_
                     kb->changed_keys[kb->changed_key_count++] = i;
                     kb->active_keys[kb->active_key_count++] = i;
 
-                    /* Key on velocity is the maximum of all pressure values 
+                    /* Key on velocity is the maximum of all pressure values
                      * seen during debounce period */
                     key->velocity = key->max_pressure * key_calib[i].velocity_adjust;
                     key->debounce = 0;
@@ -380,7 +380,7 @@ static void update_melody_model(struct mg_state *state, const struct mg_wheel *w
 
 
 /**
- * Update all drone strings. This is fairly simple, as note changes to the 
+ * Update all drone strings. This is fairly simple, as note changes to the
  * model come from the Python program and are set directly on the model.
  *
  * Only need to calculate the expression.
