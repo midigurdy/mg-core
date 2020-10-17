@@ -19,12 +19,11 @@ static void calc_wheel_speed(struct mg_wheel *wheel);
 
 static void update_melody_model(struct mg_state *state, const struct mg_wheel *wheel,
         const struct mg_keyboard *kb);
-static void melody_model_midigurdy(struct mg_string *st, const struct mg_state *state,
-        const struct mg_keyboard *kb,
-        int expression, int prev_expression,
-        int velocity_switching);
-static void melody_model_keyboard(struct mg_string *st, const struct mg_state *state,
-        const struct mg_keyboard *kb);
+static void melody_model_midigurdy(struct mg_voice *model, const struct mg_string *st,
+        const struct mg_state *state, const struct mg_keyboard *kb,
+        int expression, int velocity_switching);
+static void melody_model_keyboard(struct mg_voice *model, const struct mg_string *st,
+        const struct mg_state *state, const struct mg_keyboard *kb);
 
 static void update_trompette_model(struct mg_core *mg);
 static void trompette_model_percussion(const struct mg_state *state,
@@ -181,17 +180,18 @@ static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_
 }
 
 
-static void melody_model_midigurdy(struct mg_string *st,
+static void melody_model_midigurdy(struct mg_voice *model,
+        const struct mg_string *st,
         const struct mg_state *state,
         const struct mg_keyboard *kb,
-        int expression, int prev_expression,
+        int expression,
         int velocity_switching)
 {
-    struct mg_voice *model = &st->model;
     struct mg_note *note;
     const struct mg_key *key;
     int key_idx;
     int key_num;
+    int prev_expression = model->expression;
 
     model->expression = expression;
 
@@ -286,11 +286,9 @@ static void melody_model_midigurdy(struct mg_string *st,
 }
 
 
-static void melody_model_keyboard(struct mg_string *st,
-        const struct mg_state *state,
-        const struct mg_keyboard *kb)
+static void melody_model_keyboard(struct mg_voice *model, const struct mg_string *st,
+        const struct mg_state *state, const struct mg_keyboard *kb)
 {
-    struct mg_voice *model = &st->model;
     struct mg_note *note;
     const struct mg_key *key;
     int key_idx;
@@ -343,8 +341,6 @@ static void update_melody_model(struct mg_state *state, const struct mg_wheel *w
     struct mg_voice *model;
     int expression = 0;
 
-    static int prev_expression = 0;
-
     /* Expression is the same for all melody strings, calculate here only once. */
     expression = map_value(wheel->speed, &state->speed_to_melody_volume);
 
@@ -368,18 +364,16 @@ static void update_melody_model(struct mg_state *state, const struct mg_wheel *w
 
         if (st->mode == MG_MODE_MIDIGURDY) {
             // with velocity switching
-            melody_model_midigurdy(st, state, kb, expression, prev_expression, 1);
+            melody_model_midigurdy(model, st, state, kb, expression, 1);
         }
         else if (st->mode == MG_MODE_GENERIC) {
             // without velocity switching
-            melody_model_midigurdy(st, state, kb, expression, prev_expression, 0);
+            melody_model_midigurdy(model, st, state, kb, expression, 0);
         }
         else {
-            melody_model_keyboard(st, state, kb);
+            melody_model_keyboard(model, st, state, kb);
         }
     }
-
-    prev_expression = expression;
 }
 
 
