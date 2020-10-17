@@ -169,8 +169,6 @@ struct mg_string {
     int bank;
     int program;
 
-    int base_note_count;
-
     /*  Used to control the modelling mode for melody strings */
     int mode;
 
@@ -221,7 +219,7 @@ struct mg_keyboard {
     int changed_keys[KEY_COUNT];
     int changed_key_count;
 
-    int inactive_count;  // used for debouncing return to base note
+    int inactive_count;  // used for debouncing the return to base note
 };
 
 

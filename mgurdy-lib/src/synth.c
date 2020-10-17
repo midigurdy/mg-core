@@ -42,11 +42,26 @@ static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
  */
 void mg_synth_update(struct mg_core *mg)
 {
-    debounce_keys(&mg->keyboard, mg->state.key_calib,
-            mg->state.key_on_debounce, mg->state.key_off_debounce,
-            mg->state.base_note_delay);
+    struct mg_keyboard *kb = &mg->keyboard;
+    struct mg_wheel *wheel = &mg->wheel;
+    struct mg_state *state = &mg->state;
+
+    debounce_keys(kb, state->key_calib,
+            state->key_on_debounce, state->key_off_debounce,
+            state->base_note_delay);
 
     calc_wheel_speed(mg);
+
+    if (wheel->speed == 0) {
+        kb->inactive_count = state->base_note_delay;
+    }
+    else if (kb->active_key_count == 0) {
+        if (kb->inactive_count < state->base_note_delay) {
+            kb->inactive_count++;
+        }
+    } else {
+        kb->inactive_count = 0;
+    }
 
     update_melody_model(mg);
     update_trompette_model(mg);
@@ -160,6 +175,7 @@ static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_
             }
         }
     }
+
 }
 
 
@@ -179,7 +195,6 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
     /* The wheel is not moving, so we clear all notes */
     if (expression == 0) {
         mg_voice_clear_notes(model);
-        st->base_note_count = mg->state.base_note_delay;
         return;
     }
 
@@ -187,13 +202,12 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
      * output the base note or capo key note. */
     if (kb->active_key_count == 0 || (kb->active_keys[kb->active_key_count - 1] < st->empty_key)) {
 
+        model->pitch = 0x2000; // no key pressed, no pitch bend.
+
         /* If a base note delay is set, wait for that number of iterations before reacting */
-        if (st->base_note_count < mg->state.base_note_delay) {
-            st->base_note_count++;
+        if (kb->inactive_count < mg->state.base_note_delay) {
             return;
         }
-
-        model->pitch = 0x2000; // no key pressed, no pitch bend.
 
         mg_voice_clear_notes(model);
 
@@ -219,7 +233,6 @@ static void melody_model_midigurdy(struct mg_core *mg, struct mg_string *st,
 
     /* We have at least one pressed key and the wheel is moving. */
     mg_voice_clear_notes(model);
-    st->base_note_count = 0;
 
     /* Start processing from highest to lowest key */
     key_idx = kb->active_key_count - 1;
@@ -290,7 +303,6 @@ static void melody_model_keyboard(struct mg_core *mg, struct mg_string *st,
     }
 
     mg_voice_clear_notes(model);
-    st->base_note_count = 0;
 
     /* Start processing from highest to lowest key */
     key_idx = kb->active_key_count - 1;

@@ -285,8 +285,6 @@ static void reset_string(struct mg_string *string)
 
     string->mode = MG_MODE_MIDIGURDY;
 
-    string->base_note_count = 0;
-
     string->polyphonic = 0; // normal mode
     string->empty_key = 0;  // open string
 
