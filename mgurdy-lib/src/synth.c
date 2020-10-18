@@ -584,7 +584,7 @@ static void trompette_model_percussion(struct mg_voice *model,
 static void update_keynoise_model(struct mg_state *state, const struct mg_wheel *wheel,
         const struct mg_keyboard *kb)
 {
-    int i, key_idx;
+    int i, key_num;
     const struct mg_key *key;
     int midi_note;
     int velocity;
@@ -607,8 +607,8 @@ static void update_keynoise_model(struct mg_state *state, const struct mg_wheel 
     }
 
     for (i = 0; i < kb->changed_key_count; i++) {
-        key_idx = kb->changed_keys[i];
-        key = &kb->keys[key_idx];
+        key_num = kb->changed_keys[i];
+        key = &kb->keys[key_num];
 
         velocity = key->velocity;
 
@@ -618,14 +618,17 @@ static void update_keynoise_model(struct mg_state *state, const struct mg_wheel 
 
         velocity = map_value(velocity, &state->keyvel_to_keynoise);
 
-        if (velocity == 0)
+        if (velocity == 0) {
             continue;  // no need to send these...
+        }
 
         /* Key on noise always uses the note range 60 - 83, key off noise 30 - 53 */
-        if (key->action == KEY_PRESSED)
-            midi_note = 60 + i;
-        else
-            midi_note = 30 + i;
+        if (key->action == KEY_PRESSED) {
+            midi_note = 60 + key_num;
+        }
+        else {
+            midi_note = 30 + key_num;
+        }
 
         note = enable_voice_note(model, midi_note);
         note->velocity = velocity;
