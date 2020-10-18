@@ -41,15 +41,10 @@ static void update_keynoise_model(struct mg_state *state, const struct mg_wheel 
 
 static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
 
-/* Main entry point, called regularly by worker thread. Takes sensor readings
- * and updates the internal state of the instrument model.
- */
-void mg_synth_update(struct mg_core *mg)
-{
-    struct mg_keyboard *kb = &mg->keyboard;
-    struct mg_wheel *wheel = &mg->wheel;
-    struct mg_state *state = &mg->state;
 
+void mg_synth_update_sensors(struct mg_wheel *wheel, struct mg_keyboard *kb,
+        const struct mg_state *state)
+{
     debounce_keys(kb, state->key_calib,
             state->key_on_debounce, state->key_off_debounce,
             state->base_note_delay);
@@ -66,7 +61,12 @@ void mg_synth_update(struct mg_core *mg)
     } else {
         kb->inactive_count = 0;
     }
+}
 
+
+void mg_synth_update_strings(struct mg_state *state,
+        const struct mg_wheel *wheel, const struct mg_keyboard *kb)
+{
     update_melody_model(state, wheel, kb);
     update_trompette_model(state, wheel);
     update_drone_model(state, wheel);

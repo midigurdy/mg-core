@@ -96,6 +96,10 @@ static int mg_worker_run(struct mg_core *mg)
     int ret;
     int err;
 
+    struct mg_state *state = &mg->state;
+    struct mg_wheel *wheel = &mg->wheel;
+    struct mg_keyboard *keyboard = &mg->keyboard;
+
     /* read any pending sensor values */
     ret = mg_sensors_read(mg);
     if (ret < 0) {
@@ -104,30 +108,32 @@ static int mg_worker_run(struct mg_core *mg)
     }
 
     /* update the internal model state */
-    err = mg_state_lock(&mg->state);
+    err = mg_state_lock(state);
     if (err) {
         fprintf(stderr, "Unable to get state lock!\n");
         return err;
     }
 
-    mg_synth_update(mg);
+    mg_synth_update_sensors(wheel, keyboard, state);
+
+    mg_synth_update_strings(state, wheel, keyboard);
 
     /* synchronize internal state with outputs */
     if (!mg->halt_outputs) {
         mg_output_all_sync(mg);
     }
 
-    err = mg_state_unlock(&mg->state);
+    err = mg_state_unlock(state);
     if (err) {
         fprintf(stderr, "Unable to unlock state!\n");
     }
 
-    mg_server_record_wheel_data(mg->wheel.position, mg->wheel.speed);
+    mg_server_record_wheel_data(wheel->position, wheel->speed);
 
     /* report to attached clients */
     position_to_websockets();
     if (mg_server_key_client_count()) {
-        mg_server_report_keys(mg->keyboard.keys);
+        mg_server_report_keys(keyboard->keys);
     }
 
     return 0;

@@ -4,7 +4,10 @@
 #include "mg.h"
 
 
-void mg_synth_update(struct mg_core *mg);
+void mg_synth_update_sensors(struct mg_wheel *wheel, struct mg_keyboard *kb,
+        const struct mg_state *state);
 
+void mg_synth_update_strings(struct mg_state *state,
+        const struct mg_wheel *wheel, const struct mg_keyboard *kb);
 
 #endif
