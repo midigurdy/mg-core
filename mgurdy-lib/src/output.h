@@ -8,6 +8,7 @@ void mg_output_delete(struct mg_output *output);
 
 struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_percent, int channel);
 
+void mg_output_all_update(struct mg_core *mg);
 void mg_output_all_sync(struct mg_core *mg);
 void mg_output_all_reset(struct mg_core *mg);
 void mg_output_all_reset_string(struct mg_core *mg, struct mg_string *string);

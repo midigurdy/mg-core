@@ -289,34 +289,6 @@ static void reset_string(struct mg_string *string)
     string->empty_key = 0;  // open string
 
     string->threshold = 0;
-
-    mg_state_reset_model_voice(&string->model);
-}
-
-
-void mg_state_reset_model_voice(struct mg_voice *voice)
-{
-    int i;
-
-    voice->expression = 127;
-    voice->pitch = 0x2000;
-    voice->volume = 127;
-    voice->panning = 64;
-    voice->pressure = 0;
-    voice->bank = 0;
-    voice->program = 0;
-    voice->mode = -1;
-
-    voice->chien_on_debounce = 2;
-    voice->chien_off_debounce = 3;
-    voice->chien_debounce = 0;
-
-    for (i = 0; i < NUM_NOTES; i++) {
-        voice->notes[i].on = 0;
-        voice->notes[i].velocity = 0;
-        voice->notes[i].pressure = 0;
-    }
-    voice->note_count = 0;
 }
 
 
@@ -332,6 +304,10 @@ void mg_state_reset_output_voice(struct mg_voice *voice)
     voice->bank = -1;
     voice->program = 1;
     voice->mode = -1;
+
+    voice->chien_on_debounce = 2;
+    voice->chien_off_debounce = 3;
+    voice->chien_debounce = 0;
 
     for (i = 0; i < NUM_NOTES; i++) {
         voice->notes[i].on = 0;

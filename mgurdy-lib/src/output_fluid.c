@@ -1,11 +1,15 @@
 #include "fluidsynth.h"
 
 #include "output.h"
+#include "model_fluid.h"
 
 static int add_melody_stream(struct mg_output *output, struct mg_string *string, int channel);
 static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int channel);
 static int add_drone_stream(struct mg_output *output, struct mg_string *string, int channel);
 static int add_keynoise_stream(struct mg_output *output, struct mg_string *string, int channel);
+
+static void mg_output_fluid_update(struct mg_output *output, const struct mg_state *state,
+        const struct mg_wheel *wheel, const struct mg_keyboard *keyboard);
 
 static int mg_output_fluid_noteon(struct mg_output *output, int channel, int note, int velocity);
 static int mg_output_fluid_noteoff(struct mg_output *output, int channel, int note);
@@ -28,6 +32,7 @@ struct mg_output *new_fluid_output(struct mg_core *mg, fluid_synth_t *fluid)
     }
 
     output->data = fluid;
+    output->update = mg_output_fluid_update;
     output->noteon = mg_output_fluid_noteon;
     output->noteoff = mg_output_fluid_noteoff;
     output->reset = mg_output_fluid_reset;
@@ -119,6 +124,16 @@ static int add_keynoise_stream(struct mg_output *output, struct mg_string *strin
     return 1;
 }
 
+static void mg_output_fluid_update(struct mg_output *output, const struct mg_state *state,
+        const struct mg_wheel *wheel, const struct mg_keyboard *keyboard)
+{
+    model_fluid_update_melody_streams(output, state, wheel, keyboard);
+    model_fluid_update_trompette_streams(output, state, wheel);
+    model_fluid_update_drone_streams(output, state, wheel);
+
+    model_fluid_update_keynoise_stream(output, state, wheel, keyboard);
+}
+
 static int mg_output_fluid_noteon(struct mg_output *output, int channel, int note, int velocity)
 {
     fluid_synth_noteon((fluid_synth_t *)output->data, channel, note, velocity);
@@ -146,7 +161,7 @@ static int mg_output_fluid_reset(struct mg_output *output, int channel)
 
 static int mg_output_fluid_expression(struct mg_output *output, struct mg_stream *stream)
 {
-    int expression = stream->string->model.expression;
+    int expression = stream->model.expression;
 
     if (stream->dst.expression != expression) {
         fluid_synth_cc((fluid_synth_t *)output->data, stream->channel, MG_CC_EXPRESSION, expression);
@@ -171,7 +186,7 @@ static int mg_output_fluid_volume(struct mg_output *output, struct mg_stream *st
 
 static int mg_output_fluid_pitch(struct mg_output *output, struct mg_stream *stream)
 {
-    int pitch = stream->string->model.pitch;
+    int pitch = stream->model.pitch;
 
     if (stream->dst.pitch != pitch) {
         fluid_synth_pitch_bend((fluid_synth_t *)output->data, stream->channel, pitch);
@@ -183,7 +198,7 @@ static int mg_output_fluid_pitch(struct mg_output *output, struct mg_stream *str
 
 static int mg_output_fluid_channel_pressure(struct mg_output *output, struct mg_stream *stream)
 {
-    int pressure = stream->string->model.pressure;
+    int pressure = stream->model.pressure;
 
     if (stream->dst.pressure != pressure) {
         fluid_synth_channel_pressure((fluid_synth_t *)output->data, stream->channel, pressure);

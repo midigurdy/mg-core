@@ -116,7 +116,7 @@ static int mg_worker_run(struct mg_core *mg)
 
     mg_synth_update_sensors(wheel, keyboard, state);
 
-    mg_synth_update_strings(state, wheel, keyboard);
+    mg_output_all_update(mg);
 
     /* synchronize internal state with outputs */
     if (!mg->halt_outputs) {

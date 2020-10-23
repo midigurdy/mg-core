@@ -64,6 +64,7 @@ struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_perc
         return NULL;
     }
     memset(stream, 0, sizeof(struct mg_stream));
+    mg_state_reset_output_voice(&stream->model);
     mg_state_reset_output_voice(&stream->dst);
 
     stream->string = string;
@@ -71,6 +72,22 @@ struct mg_stream *mg_output_stream_new(struct mg_string *string, int tokens_perc
     stream->channel = channel;
 
     return stream;
+}
+
+void mg_output_all_update(struct mg_core *mg)
+{
+    int i;
+    struct mg_output *output;
+
+    for (i = 0; i < mg->output_count; i++) {
+        output = mg->outputs[i];
+
+        if (!output->enabled) {
+            continue;
+        }
+
+        output->update(output, &mg->state, &mg->wheel, &mg->keyboard);
+    }
 }
 
 void mg_output_all_sync(struct mg_core *mg)
@@ -252,6 +269,7 @@ static void mg_output_calc_stream_tokens_per_tick(struct mg_output *output)
 static void mg_output_stream_reset(struct mg_output *output, struct mg_stream *stream)
 {
     output->reset(output, stream->channel);
+    mg_state_reset_output_voice(&stream->model);
     mg_state_reset_output_voice(&stream->dst);
 }
 
@@ -267,7 +285,7 @@ static int mg_output_stream_sync(struct mg_output *output, struct mg_stream *str
 
     struct mg_note *src_note;
     struct mg_note *dst_note;
-    struct mg_voice *src = &stream->string->model;
+    struct mg_voice *src = &stream->model;
     struct mg_voice *dst = &stream->dst;
 
     /* Send note on events - these are never rate limited */

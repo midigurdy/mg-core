@@ -1,13 +1,17 @@
 #include <stdint.h>
 #include <alsa/asoundlib.h>
 
-#include "output_midi.h"
 #include "output.h"
+#include "output_midi.h"
+#include "model_midi.h"
 
 
 static int add_melody_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel);
 static int add_trompette_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel);
 static int add_drone_stream(struct mg_output *output, struct mg_string *string, int tokens_percent, int channel);
+
+static void mg_output_midi_update(struct mg_output *output, const struct mg_state *state,
+        const struct mg_wheel *wheel, const struct mg_keyboard *keyboard);
 
 static void mg_output_midi_close(struct mg_output *output);
 
@@ -82,6 +86,7 @@ struct mg_output *new_midi_output(struct mg_core *mg, const char *device)
     }
 
     output->data = info;
+    output->update = mg_output_midi_update;
     output->close = mg_output_midi_close;
     output->noteon = mg_output_midi_noteon;
     output->noteoff = mg_output_midi_noteoff;
@@ -176,6 +181,14 @@ static int add_drone_stream(struct mg_output *output, struct mg_string *string, 
     return 1;
 }
 
+static void mg_output_midi_update(struct mg_output *output, const struct mg_state *state,
+        const struct mg_wheel *wheel, const struct mg_keyboard *keyboard)
+{
+    model_midi_update_melody_stream(output->stream[0], state, wheel, keyboard);
+    model_midi_update_trompette_stream(output->stream[1], state, wheel);
+    model_midi_update_drone_stream(output->stream[2], state, wheel);
+}
+
 static int mg_output_midi_noteon(struct mg_output *output, int channel, int note, int velocity)
 {
     if (mg_midi_chmsg2(output, MIDI_MSG_NOTEON, channel, note, velocity)) {
@@ -205,7 +218,7 @@ static int mg_output_midi_reset(struct mg_output *output, int channel)
 
 static int mg_output_midi_expression(struct mg_output *output, struct mg_stream *stream)
 {
-    int expression = stream->string->model.expression;
+    int expression = stream->model.expression;
     if (expression == 0) {
         expression = 1;
     }
@@ -239,7 +252,7 @@ static int mg_output_midi_volume(struct mg_output *output, struct mg_stream *str
 
 static int mg_output_midi_pitch(struct mg_output *output, struct mg_stream *stream)
 {
-    int pitch = stream->string->model.pitch;
+    int pitch = stream->model.pitch;
 
     if (stream->dst.pitch != pitch) {
         if (mg_midi_chmsg2(output, MIDI_MSG_PITCH_BEND, stream->channel, MIDI_LSB(pitch), MIDI_MSB(pitch))) {
@@ -254,7 +267,7 @@ static int mg_output_midi_pitch(struct mg_output *output, struct mg_stream *stre
 
 static int mg_output_midi_channel_pressure(struct mg_output *output, struct mg_stream *stream)
 {
-    int pressure = stream->string->model.pressure;
+    int pressure = stream->model.pressure;
 
     if (stream->dst.pressure != pressure) {
         if (mg_midi_chmsg1(output, MIDI_MSG_CHANNEL_PRESSURE, stream->channel, pressure)) {
