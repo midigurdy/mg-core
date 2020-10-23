@@ -14,11 +14,11 @@ static void melody_model_keyboard(struct mg_voice *model, const struct mg_string
 
 static void trompette_model_percussion(struct mg_voice *model,
         const struct mg_string *st, const struct mg_state *state,
-        int raw_chien_speed);
+        int wheel_speed);
 
 static void trompette_model_midigurdy(struct mg_voice *model,
         const struct mg_string *st, const struct mg_state *state,
-        int normalized_chien_speed, int wheel_speed);
+        int wheel_speed);
 
 static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
 
@@ -82,10 +82,6 @@ void model_fluid_update_trompette_streams(struct mg_output *output,
     const struct mg_string *st;
     struct mg_voice *model;
 
-    int chien_speed_factor;
-    int raw_chien_speed;
-    int normalized_chien_speed = 0;
-
     for (i = 3; i < 6; i++) {
         stream = output->stream[i];
 
@@ -103,28 +99,6 @@ void model_fluid_update_trompette_streams(struct mg_output *output,
         model->volume = st->volume;
         model->panning = st->panning;
 
-        raw_chien_speed = wheel->speed - st->threshold;
-        if (raw_chien_speed > 0) {
-            chien_speed_factor = map_value((5000 - st->threshold) / 50,
-                    &state->chien_threshold_to_range);
-
-            if (chien_speed_factor > 0) {
-                normalized_chien_speed = (raw_chien_speed * (chien_speed_factor + 100)) / 100;
-            } else if (chien_speed_factor < 0) {
-                normalized_chien_speed = (raw_chien_speed * -100) /  (chien_speed_factor - 100);
-            } else {
-                normalized_chien_speed = raw_chien_speed;
-            }
-
-            if (normalized_chien_speed > MG_CHIEN_MAX) {
-                normalized_chien_speed = MG_CHIEN_MAX;
-            }
-        }
-        else {
-            raw_chien_speed = 0;
-            normalized_chien_speed = 0;
-        }
-
         if (model->mode != st->mode) {
             mg_voice_clear_notes(model);
             model->mode = st->mode;
@@ -134,14 +108,14 @@ void model_fluid_update_trompette_streams(struct mg_output *output,
          * and chien sound are part of a single preset and mixed together,
          * their individual volumes controlled by channel pressure */
         if (st->mode == MG_MODE_MIDIGURDY) {
-            trompette_model_midigurdy(model, st, state, normalized_chien_speed, wheel->speed);
+            trompette_model_midigurdy(model, st, state, wheel->speed);
         }
 
         /* Percussive mode, more suitable for other sounds like drums or other percussive sounds:
          * Only when the threshold is reached does a note-on occur, the velocity of the
          * note-on is calculated from the wheel speed above the threshold */
         else { // st->mode == MG_MODE_GENERIC
-            trompette_model_percussion(model, st, state, raw_chien_speed);
+            trompette_model_percussion(model, st, state, wheel->speed);
         }
     }
 }
@@ -403,9 +377,29 @@ static void melody_model_keyboard(struct mg_voice *model, const struct mg_string
 
 static void trompette_model_midigurdy(struct mg_voice *model,
         const struct mg_string *st, const struct mg_state *state,
-        int normalized_chien_speed, int wheel_speed)
+        int wheel_speed)
 {
     struct mg_note *note;
+    int chien_speed_factor;
+    int normalized_chien_speed = 0;
+    int raw_chien_speed = wheel_speed - st->threshold;
+
+    if (raw_chien_speed > 0) {
+        chien_speed_factor = map_value((5000 - st->threshold) / 50,
+                &state->chien_threshold_to_range);
+
+        if (chien_speed_factor > 0) {
+            normalized_chien_speed = (raw_chien_speed * (chien_speed_factor + 100)) / 100;
+        } else if (chien_speed_factor < 0) {
+            normalized_chien_speed = (raw_chien_speed * -100) /  (chien_speed_factor - 100);
+        } else {
+            normalized_chien_speed = raw_chien_speed;
+        }
+
+        if (normalized_chien_speed > MG_CHIEN_MAX) {
+            normalized_chien_speed = MG_CHIEN_MAX;
+        }
+    }
 
     if (normalized_chien_speed > 0) {
         model->pressure = map_value(normalized_chien_speed, &state->speed_to_chien);
@@ -437,10 +431,16 @@ static void trompette_model_midigurdy(struct mg_voice *model,
 
 static void trompette_model_percussion(struct mg_voice *model,
         const struct mg_string *st, const struct mg_state *state,
-        int raw_chien_speed)
+        int wheel_speed)
 {
     int velocity;
     struct mg_note *note;
+
+    int raw_chien_speed = wheel_speed - st->threshold;
+
+    if (raw_chien_speed < 0) {
+        raw_chien_speed = 0;
+    }
 
     // real-time volume only controlled via note-on velocity
     model->expression = 127;
