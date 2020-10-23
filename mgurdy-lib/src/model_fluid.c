@@ -51,6 +51,9 @@ void model_fluid_update_melody_streams(struct mg_output *output,
             continue;
         }
 
+        model->volume = st->volume;
+        model->panning = st->panning;
+
         if (model->mode != st->mode) {
             mg_voice_clear_notes(model);
             model->mode = st->mode;
@@ -96,6 +99,9 @@ void model_fluid_update_trompette_streams(struct mg_output *output,
             }
             continue;
         }
+
+        model->volume = st->volume;
+        model->panning = st->panning;
 
         raw_chien_speed = wheel->speed - st->threshold;
         if (raw_chien_speed > 0) {
@@ -172,6 +178,9 @@ void model_fluid_update_drone_streams(struct mg_output *output,
             continue;
         }
 
+        model->volume = st->volume;
+        model->panning = st->panning;
+
         /* No change in base note, moving on... */
         if (model->note_count > 0 && model->active_notes[0] == st->base_note) {
             continue;
@@ -203,6 +212,9 @@ void model_fluid_update_keynoise_stream(struct mg_output *output,
     if (st->muted) {
         return;
     }
+
+    model->volume = st->volume;
+    model->panning = st->panning;
 
     if (wheel->speed > 0) {
         model->pressure = 127;

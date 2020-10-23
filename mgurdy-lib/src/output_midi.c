@@ -236,8 +236,7 @@ static int mg_output_midi_expression(struct mg_output *output, struct mg_stream 
 
 static int mg_output_midi_volume(struct mg_output *output, struct mg_stream *stream)
 {
-    // volume taken directly from string, no modelling involved
-    int volume = stream->string->volume;
+    int volume = stream->model.volume;
 
     if (stream->dst.volume != volume) {
         if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->channel, MG_CC_VOLUME, volume)) {
@@ -282,8 +281,7 @@ static int mg_output_midi_channel_pressure(struct mg_output *output, struct mg_s
 
 static int mg_output_midi_balance(struct mg_output *output, struct mg_stream *stream)
 {
-    // panning taken directly from string, no modelling involved
-    int panning = stream->string->panning;
+    int panning = stream->model.panning;
 
     if (stream->dst.panning != panning) {
         if (mg_midi_chmsg2(output, MIDI_MSG_CONTROL_CHANGE, stream->channel, MG_CC_PANNING, panning)) {
@@ -298,9 +296,8 @@ static int mg_output_midi_balance(struct mg_output *output, struct mg_stream *st
 
 static int mg_output_midi_bank_prog(struct mg_output *output, struct mg_stream *stream)
 {
-    // bank and prog taken directly from string, no modelling involved
-    int bank = stream->string->bank;
-    int program = stream->string->program;
+    int bank = stream->model.bank;
+    int program = stream->model.program;
     int tokens = 0;
 
     if (!output->send_prog_change) {

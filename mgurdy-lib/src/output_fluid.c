@@ -173,8 +173,7 @@ static int mg_output_fluid_expression(struct mg_output *output, struct mg_stream
 
 static int mg_output_fluid_volume(struct mg_output *output, struct mg_stream *stream)
 {
-    // volume taken directly from string, no modelling involved
-    int volume = stream->string->volume;
+    int volume = stream->model.volume;
 
     if (stream->dst.volume != volume) {
         fluid_synth_cc((fluid_synth_t *)output->data, stream->channel, MG_CC_VOLUME, volume);
@@ -210,8 +209,7 @@ static int mg_output_fluid_channel_pressure(struct mg_output *output, struct mg_
 
 static int mg_output_fluid_balance(struct mg_output *output, struct mg_stream *stream)
 {
-    // panning is taken directly from the string, no modelling involved
-    int panning = stream->string->panning;
+    int panning = stream->model.panning;
 
     if (stream->dst.panning != panning) {
         fluid_synth_cc((fluid_synth_t *)output->data, stream->channel, MG_CC_PANNING, panning);
