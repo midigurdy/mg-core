@@ -294,7 +294,7 @@ typedef int (mg_output_send_t)(struct mg_output *output, struct mg_stream *strea
 
 
 struct mg_stream {
-    struct mg_string *string;
+    const struct mg_string *string;
     struct mg_voice model;
     struct mg_voice dst;
 

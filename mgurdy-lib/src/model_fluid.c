@@ -176,7 +176,7 @@ void model_fluid_update_keynoise_stream(struct mg_output *output,
     struct mg_note *note;
 
     struct mg_stream *stream = output->stream[9];
-    struct mg_string *st = stream->string;
+    const struct mg_string *st = stream->string;
     struct mg_voice *model = &stream->model;
 
     if (model->note_count > 0) {
