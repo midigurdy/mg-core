@@ -29,10 +29,8 @@ int mg_start()
         return -1;
     }
 
-    err = pthread_mutex_lock(&mg_core.mutex);
-    if (err) {
-        perror("Unable to aquire mg_core mutex");
-        return err;
+    if(mg_core_lock()) {
+        return -1;
     }
 
     if (mg_core.started) {
@@ -71,10 +69,7 @@ cleanup_worker:
     mg_core.worker_pth = 0;
 
 exit:
-    err = pthread_mutex_unlock(&mg_core.mutex);
-    if (err) {
-        perror("Unable to release mg_core mutex");
-    }
+    mg_core_unlock();
 
     return err;
 }
@@ -84,10 +79,8 @@ int mg_stop(void)
 {
     int err = 0;
 
-    err = pthread_mutex_lock(&mg_core.mutex);
-    if (err) {
-        perror("Unable to aquire mg_core mutex");
-        return err;
+    if(mg_core_lock()) {
+        return -1;
     }
 
     if (!mg_core.started) {
@@ -115,10 +108,7 @@ int mg_stop(void)
     mg_core.started = 0;
 
 exit:
-    err = pthread_mutex_unlock(&mg_core.mutex);
-    if (err) {
-        perror("Unable to release mg_core mutex");
-    }
+    mg_core_unlock();
 
     return err;
 }
@@ -298,6 +288,7 @@ int mg_set_string(struct mg_string_config *configs)
                 mg_string_set_chien_threshold(st, c->val);
                 break;
             case MG_PARAM_RESET:
+                /* FIXME: this should not be here as it requires a core lock! */
                 mg_output_all_reset_string(&mg_core, st);
                 break;
             case MG_PARAM_MODE:
@@ -327,9 +318,8 @@ int mg_add_fluid_output(fluid_synth_t *fluid)
         return -1;
     }
 
-    ret = mg_state_lock(&mg_core.state);
+    ret = mg_core_lock();
     if (ret) {
-        fprintf(stderr, "Unable to get state lock!\n");
         mg_output_delete(output);
         return ret;
     }
@@ -346,7 +336,7 @@ int mg_add_fluid_output(fluid_synth_t *fluid)
     ret = output->id;
 
 exit:
-    mg_state_unlock(&mg_core.state);
+    mg_core_unlock();
     return ret;
 }
 
@@ -360,9 +350,8 @@ int mg_add_midi_output(const char *device)
         return -1;
     }
 
-    ret = mg_state_lock(&mg_core.state);
+    ret = mg_core_lock();
     if (ret) {
-        fprintf(stderr, "Unable to get state lock!\n");
         mg_output_delete(output);
         return ret;
     }
@@ -379,7 +368,7 @@ int mg_add_midi_output(const char *device)
     ret = output->id;
 
 exit:
-    mg_state_unlock(&mg_core.state);
+    mg_core_unlock();
     return ret;
 }
 
@@ -389,9 +378,8 @@ int mg_enable_output(int output_id, int enabled)
     int output_idx;
     struct mg_output *output = NULL;
 
-    ret = mg_state_lock(&mg_core.state);
+    ret = mg_core_lock();
     if (ret) {
-        fprintf(stderr, "Unable to get state lock!\n");
         return ret;
     }
 
@@ -413,7 +401,7 @@ int mg_enable_output(int output_id, int enabled)
     ret = 0;
 
 exit:
-    mg_state_unlock(&mg_core.state);
+    mg_core_unlock();
     return ret;
 }
 
@@ -425,9 +413,8 @@ int mg_config_midi_output(int output_id, int melody_ch, int drone_ch, int trompe
     struct mg_output *output = NULL;
     int toks_per_tick;
 
-    ret = mg_state_lock(&mg_core.state);
+    ret = mg_core_lock();
     if (ret) {
-        fprintf(stderr, "Unable to get state lock!\n");
         return ret;
     }
 
@@ -465,7 +452,7 @@ int mg_config_midi_output(int output_id, int melody_ch, int drone_ch, int trompe
     ret = 0;
 
 exit:
-    mg_state_unlock(&mg_core.state);
+    mg_core_unlock();
     return ret;
 }
 
@@ -476,9 +463,8 @@ int mg_remove_output(int output_id)
     int output_idx;
     struct mg_output *output = NULL;
 
-    err = mg_state_lock(&mg_core.state);
+    err = mg_core_lock();
     if (err) {
-        fprintf(stderr, "Unable to get state lock!\n");
         return err;
     }
 
@@ -499,7 +485,7 @@ int mg_remove_output(int output_id)
     }
 
     /* no need to hold the state lock while deleting the already removed output */
-    mg_state_unlock(&mg_core.state);
+    mg_core_unlock();
 
     mg_output_delete(output);
 
@@ -517,9 +503,8 @@ int mg_halt_outputs(int halted)
 {
     int err;
 
-    err = mg_state_lock(&mg_core.state);
+    err = mg_core_lock();
     if (err) {
-        fprintf(stderr, "Unable to get state lock!\n");
         return err;
     }
 
@@ -529,7 +514,7 @@ int mg_halt_outputs(int halted)
         mg_output_all_reset(&mg_core);
     }
 
-    return mg_state_unlock(&mg_core.state);
+    return mg_core_unlock();
 }
 
 
@@ -610,3 +595,28 @@ int mg_calibrate_get_key(int key, float *pressure_adjust, float *velocity_adjust
 }
 
 /* End public API */
+
+
+
+int mg_core_lock(void)
+{
+    int err;
+
+    err = pthread_mutex_lock(&mg_core.mutex);
+    if (err)
+        fprintf(stderr, "Unable to aquire core mutex");
+
+    return err;
+}
+
+
+int mg_core_unlock(void)
+{
+    int err;
+
+    err = pthread_mutex_unlock(&mg_core.mutex);
+    if (err)
+        fprintf(stderr, "Unable to release core mutex");
+
+    return err;
+}

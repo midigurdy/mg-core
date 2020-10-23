@@ -140,7 +140,7 @@ int mg_state_lock(struct mg_state *state)
 
     err = pthread_mutex_lock(&state->mutex);
     if (err)
-        perror("Unable to aquire state mutex");
+        fprintf(stderr, "Unable to aquire state mutex");
 
     return err;
 }
@@ -152,7 +152,7 @@ int mg_state_unlock(struct mg_state *state)
 
     err = pthread_mutex_unlock(&state->mutex);
     if (err)
-        perror("Unable to release mg_core mutex");
+        fprintf(stderr, "Unable to release state mutex");
 
     return err;
 }

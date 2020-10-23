@@ -501,4 +501,7 @@ extern void mg_image_get_data(struct mg_image *img, char *buffer);
 extern int mg_calibrate_set_key(int key, float pressure_adjust, float velocity_adjust);
 extern int mg_calibrate_get_key(int key, float *pressure_adjust, float *velocity_adjust);
 
+int mg_core_lock(void);
+int mg_core_unlock(void);
+
 #endif
