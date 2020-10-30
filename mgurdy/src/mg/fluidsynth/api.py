@@ -3,9 +3,6 @@ import os
 
 from ._fluidsynth import lib, ffi
 
-from mg.conf import settings
-
-
 log = logging.getLogger('fluidsynth')
 
 FS_LOG_LEVELS = {
@@ -28,7 +25,7 @@ class FluidSynthError(Exception):
 
 
 class FluidSynth(object):
-    def __init__(self, soundfont_dir=None, config={}):
+    def __init__(self, soundfont_dir=None, config=None):
         self.adriver = None
         self.synth = None
         self._ladspa = None
@@ -37,7 +34,7 @@ class FluidSynth(object):
         self.channels = {}
         self.pinned_sounds = []
         self.settings = lib.new_fluid_settings()
-        self.configure(config)
+        self.configure(config or {})
         self.reverb = {
             'roomsize': 0.8,
             'damping': 0.01,
@@ -149,7 +146,7 @@ class FluidSynth(object):
                 return entry
 
     def clear_all_channel_sounds(self):
-        for channel, sfid in self.channels.items():
+        for channel, _sfid in self.channels.items():
             ret = lib.fluid_synth_unset_program(self.synth, channel)
             if ret != lib.FLUID_OK:
                 log.error('Unable to clear channel sound %s', channel)
