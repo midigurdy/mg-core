@@ -156,13 +156,10 @@ class SynthController(EventListener):
         for voice in self.state.preset.voices:
             if not voice.get_sound():
                 continue
-            if not self.fluid.preload_sound(
-                    voice.soundfont_id, voice.bank,
-                    voice.program, self.state.preset.id):
-                break
+            self.fluid.pin_sound(voice.soundfont_id, voice.bank, voice.program)
 
     def clear_preload(self, *kwargs):
-        self.fluid.clear_preload_sounds()
+        self.fluid.unpin_all_sounds()
 
     def configure_all_voices(self, clear_sounds=False):
         mgcore.halt_outputs()

@@ -56,6 +56,9 @@ int fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfon
                                unsigned int bank_num, unsigned int preset_num);
 int fluid_synth_unset_program (fluid_synth_t *synth, int chan);
 
+int fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
+int fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
+
 void fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize,
                             double damping, double width, double level);
 void fluid_synth_set_reverb_on(fluid_synth_t* synth, int on);
