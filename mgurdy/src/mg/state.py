@@ -170,6 +170,8 @@ class State(EventEmitter):
                 self.load_preset(preset.id, preload=True)
             self.load_preset(current_id)
             self.presets_preloaded = True
+        except RuntimeError:
+            raise
         finally:
             mgcore.resume_outputs()
 
