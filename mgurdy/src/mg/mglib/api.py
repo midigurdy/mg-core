@@ -22,7 +22,6 @@ PARAMS = {
     'capo': lib.MG_PARAM_EMPTY_KEY,
     'panning': lib.MG_PARAM_PANNING,
     'base_note': lib.MG_PARAM_BASE_NOTE,
-    'reset': lib.MG_PARAM_RESET,
     'mode': lib.MG_PARAM_MODE,
     'bank': lib.MG_PARAM_BANK,
     'program': lib.MG_PARAM_PROGRAM,

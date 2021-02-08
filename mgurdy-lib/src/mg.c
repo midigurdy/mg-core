@@ -287,10 +287,6 @@ int mg_set_string(struct mg_string_config *configs)
             case MG_PARAM_THRESHOLD:
                 mg_string_set_chien_threshold(st, c->val);
                 break;
-            case MG_PARAM_RESET:
-                /* FIXME: this should not be here as it requires a core lock! */
-                mg_output_all_reset_string(&mg_core, st);
-                break;
             case MG_PARAM_MODE:
                 if (c->val >= 0 && c->val <= 2) {
                     st->mode = c->val;

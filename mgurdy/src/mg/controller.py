@@ -249,7 +249,6 @@ class SynthController(EventListener):
         self.fluid.set_channel_sound(voice.channel, sound.soundfont.filename,
                                      voice.bank, voice.program)
         configs = [
-            (voice.string, 'reset', 0),
             (voice.string, 'mode', VOICE_MODES.index(voice.get_mode())),
             (voice.string, 'bank', voice.bank),
             (voice.string, 'program', voice.program),

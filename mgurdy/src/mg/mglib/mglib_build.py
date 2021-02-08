@@ -39,7 +39,6 @@ enum mg_param_enum {
          /* trompette voice only */
          MG_PARAM_THRESHOLD,
 
-         MG_PARAM_RESET,
          MG_PARAM_MODE,
 
          MG_PARAM_BANK,
