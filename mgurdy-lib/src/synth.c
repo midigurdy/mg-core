@@ -27,17 +27,6 @@ void mg_synth_update_sensors(struct mg_wheel *wheel, struct mg_keyboard *kb,
             state->base_note_delay);
 
     calc_wheel_speed(wheel);
-
-    if (wheel->speed == 0) {
-        kb->inactive_count = state->base_note_delay;
-    }
-    else if (kb->active_key_count == 0) {
-        if (kb->inactive_count < state->base_note_delay) {
-            kb->inactive_count++;
-        }
-    } else {
-        kb->inactive_count = 0;
-    }
 }
 
 
@@ -144,6 +133,14 @@ static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_
                 }
             }
         }
+    }
+
+    if (kb->active_key_count == 0) {
+        if (kb->inactive_count < base_note_delay) {
+            kb->inactive_count++;
+        }
+    } else {
+        kb->inactive_count = 0;
     }
 }
 
