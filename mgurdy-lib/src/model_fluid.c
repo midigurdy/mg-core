@@ -20,8 +20,6 @@ static void trompette_model_midigurdy(struct mg_voice *model,
         const struct mg_string *st, const struct mg_state *state,
         int wheel_speed);
 
-static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note);
-
 
 void model_fluid_update_melody_streams(struct mg_output *output,
         const struct mg_state *state, const struct mg_wheel *wheel, const struct mg_keyboard *kb)
@@ -167,7 +165,7 @@ void model_fluid_update_drone_streams(struct mg_output *output,
         }
 
         mg_voice_clear_notes(model);
-        note = enable_voice_note(model, st->base_note);
+        note = mg_voice_enable_note(model, st->base_note);
         note->velocity = 127;
     }
 }
@@ -228,7 +226,7 @@ void model_fluid_update_keynoise_stream(struct mg_output *output,
             midi_note = 30 + key_num;
         }
 
-        note = enable_voice_note(model, midi_note);
+        note = mg_voice_enable_note(model, midi_note);
         note->velocity = velocity;
     }
 }
@@ -274,7 +272,7 @@ static void melody_model_midigurdy(struct mg_voice *model,
         }
 
         /* Determine base note MIDI number, taking capo into account */
-        note = enable_voice_note(model, st->base_note + st->empty_key);
+        note = mg_voice_enable_note(model, st->base_note + st->empty_key);
 
         /* ...and configure note parameters */
 
@@ -314,7 +312,7 @@ static void melody_model_midigurdy(struct mg_voice *model,
         key_num = kb->active_keys[key_idx];
         key = &kb->keys[key_num];
 
-        note = enable_voice_note(model, st->base_note + key_num + 1);
+        note = mg_voice_enable_note(model, st->base_note + key_num + 1);
 
         if (velocity_switching) {
             /* Velocity switching:
@@ -379,7 +377,7 @@ static void melody_model_keyboard(struct mg_voice *model, const struct mg_string
         key_num = kb->active_keys[key_idx];
         key = &kb->keys[key_num];
 
-        note = enable_voice_note(model, st->base_note + key_num + 1);
+        note = mg_voice_enable_note(model, st->base_note + key_num + 1);
 
         /* ...and configure note parameters */
         note->velocity = map_value(key->velocity, &state->keyvel_to_notevel);
@@ -438,7 +436,7 @@ static void trompette_model_midigurdy(struct mg_voice *model,
     }
 
     mg_voice_clear_notes(model);
-    note = enable_voice_note(model, st->base_note);
+    note = mg_voice_enable_note(model, st->base_note);
     note->velocity = 127; // volume controlled via expression
 }
 
@@ -498,22 +496,8 @@ static void trompette_model_percussion(struct mg_voice *model,
     velocity = map_value(raw_chien_speed, &state->speed_to_percussion);
 
     mg_voice_clear_notes(model);
-    note = enable_voice_note(model, st->base_note);
+    note = mg_voice_enable_note(model, st->base_note);
     note->velocity = velocity;
 
     mg_server_record_chien_data(velocity, raw_chien_speed);
-}
-
-
-static struct mg_note *enable_voice_note(struct mg_voice *voice, int midi_note)
-{
-    struct mg_note *note;
-
-    if (midi_note > 127) midi_note = 127;
-
-    voice->active_notes[voice->note_count++] = midi_note;
-    note = &voice->notes[midi_note];
-    note->on = 1;
-
-    return note;
 }

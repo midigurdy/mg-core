@@ -210,6 +210,20 @@ void mg_voice_clear_notes(struct mg_voice *voice)
 }
 
 
+struct mg_note *mg_voice_enable_note(struct mg_voice *voice, int midi_note)
+{
+    struct mg_note *note;
+
+    if (midi_note > 127) midi_note = 127;
+
+    voice->active_notes[voice->note_count++] = midi_note;
+    note = &voice->notes[midi_note];
+    note->on = 1;
+
+    return note;
+}
+
+
 struct mg_map *mg_state_get_mapping(struct mg_state *state, int idx)
 {
     switch(idx) {

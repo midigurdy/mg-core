@@ -9,6 +9,7 @@ int mg_state_init(struct mg_state *state);
 void mg_state_reset_output_voice(struct mg_voice *voice);
 
 void mg_voice_clear_notes(struct mg_voice *voice);
+struct mg_note *mg_voice_enable_note(struct mg_voice *voice, int midi_note);
 
 void mg_string_set_base_note(struct mg_string *st, int base_note);
 void mg_string_set_volume(struct mg_string *st, int volume);
