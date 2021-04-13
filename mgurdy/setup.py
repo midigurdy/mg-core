@@ -23,9 +23,12 @@ setup(
         'bin/mgsysinfo.py',
     ],
     install_requires=[
-        'marshmallow',
+        'marshmallow==3.0.0b2',
         'flask',
-        'peewee',
+        'Flask-RESTful',
+        'websockets',
+        'pyalsaaudio',
+        'peewee==2.10.1',
         'cffi>=1.0.0',
     ],
     setup_requires=[
