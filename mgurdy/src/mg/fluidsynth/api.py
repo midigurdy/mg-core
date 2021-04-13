@@ -17,7 +17,7 @@ FS_LOG_LEVELS = {
 @ffi.callback('void(int, char *, void *)')
 def fs_log(level, message, _ignored):
     method = getattr(log, FS_LOG_LEVELS.get(level, 'error'))
-    method(ffi.string(message))
+    method(ffi.string(message).decode())
 
 
 class FluidSynthError(Exception):
