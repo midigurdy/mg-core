@@ -1,11 +1,11 @@
 from flask import request
 from flask_restful import abort, Resource
 
-from mg.input import calibration
 from mg import db
+from mg.input import calibration
+from mg.schema import KeyCalibrationSchema
 
 from .base import StateResource
-from .schema import KeyCalibrationSchema
 
 
 class Keyboard(StateResource):
