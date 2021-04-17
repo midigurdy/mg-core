@@ -164,6 +164,9 @@ static void debounce_keys(struct mg_keyboard *kb, const struct mg_key_calib key_
                     key->smoothed_pressure = 0;
                     key->debounce = 0;
                 }
+                else {
+                    kb->active_keys[kb->active_key_count++] = i;
+                }
             }
         }
     }
