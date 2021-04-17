@@ -133,7 +133,7 @@ static int mg_worker_run(struct mg_core *mg)
     /* report to attached clients */
     position_to_websockets();
     if (mg_server_key_client_count()) {
-        mg_server_report_keys(keyboard->keys);
+        mg_server_report_keys(keyboard);
     }
 
     return 0;

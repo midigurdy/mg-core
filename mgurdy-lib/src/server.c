@@ -228,7 +228,7 @@ int mg_server_key_client_count()
     return _keys_client_count;
 }
 
-void mg_server_report_keys(const struct mg_key *keys)
+void mg_server_report_keys(const struct mg_keyboard *kb)
 {
     int i;
     unsigned char *buf = &_keys_buf[LWS_PRE];
@@ -237,7 +237,7 @@ void mg_server_report_keys(const struct mg_key *keys)
     const struct mg_key *key;
     static int calls = 0;
 
-    if (calls++ < 50) {
+    if (calls++ < 50 && kb->changed_key_count == 0) {
         return;
     }
     calls = 0;
@@ -247,7 +247,7 @@ void mg_server_report_keys(const struct mg_key *keys)
     }
 
     for (i = 0; i < KEY_COUNT; i++) {
-        key = &keys[i];
+        key = &kb->keys[i];
         prev = &prev_keys[i];
 
         if (key->raw_pressure != prev->raw_pressure ||
