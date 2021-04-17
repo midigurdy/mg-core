@@ -37,6 +37,20 @@ class Mapping(Resource):
             mgcore.set_mapping_ranges(name, ranges)
         except Exception:
             abort(400, message='Unable to apply mapping values')
+        return self.get(name)
+
+    def post(self, name):
+        if name not in MAPPINGS:
+            abort(404, message='Invalid mapping name')
+        data = request.get_json()
+        errors = schema.MappingSchema().validate(data)
+        if errors:
+            abort(400, errors=errors)
+        ranges = data['ranges']
+        try:
+            mgcore.set_mapping_ranges(name, ranges)
+        except Exception:
+            abort(400, message='Unable to apply mapping values')
         try:
             db.save_mapping_ranges(name, ranges)
         except Exception:
@@ -44,23 +58,36 @@ class Mapping(Resource):
         return self.get(name)
 
     def delete(self, name):
+        factory_reset = request.args.get('factory', False)
         if name not in MAPPINGS:
             abort(404, message='Invalid mapping name')
-        db.delete_mapping_ranges(name)
         try:
-            mgcore.reset_mapping_ranges(name)
+            if factory_reset:
+                db.delete_mapping_ranges(name)
+                mgcore.reset_mapping_ranges(name)
+            else:
+                ranges = db.load_mapping_ranges(name)
+                if not ranges:
+                    mgcore.reset_mapping_ranges(name)
+                else:
+                    mgcore.set_mapping_ranges(name, ranges)
         except Exception:
+            raise
             abort(400, message='Unable to reset mapping')
+
         return self.get(name)
 
 
 def get_mapping_as_json(name):
     result = dict(MAPPINGS[name])
     result['id'] = name
-    result['ranges'] = db.load_mapping_ranges(name)
+    result['ranges'] = mgcore.get_mapping_ranges(name)
 
-    # fallback to default ranges from mgcore if not found
-    if not result['ranges']:
-        result['ranges'] = mgcore.get_mapping_ranges(name)
+    try:
+        db_ranges = db.load_mapping_ranges(name)
+    except Exception:
+        db_ranges = []
+
+    result['temporary'] = result['ranges'] != db_ranges
 
     return result
