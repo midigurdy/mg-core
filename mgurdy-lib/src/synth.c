@@ -300,6 +300,12 @@ static void melody_model_keyboard(struct mg_voice *model, const struct mg_string
 
     /* If no key is pressed then the string is silent, like a piano */
     if (kb->active_key_count == 0 || (kb->active_keys[kb->active_key_count - 1] < st->empty_key)) {
+
+        /* If a base note delay is set, wait for that number of iterations before reacting */
+        if (kb->inactive_count < state->base_note_delay) {
+            return;
+        }
+
         model->pitch = 0x2000; // no key pressed, no pitch bend.
         mg_voice_clear_notes(model);
         return;
