@@ -9,11 +9,12 @@ static void reset_string(struct mg_string *string);
 #define ENSURE_NOTE_RANGE(param) if (param < 0) param = 0; else if (param > 127) param = 127;
 
 static struct mg_map default_pressure_to_pitch = {
-    .count = 4,
+    .count = 5,
     .ranges = {
-        {0, -0x2000},
-        {650, -280},
+        {0, -2900},
+        {360, -330},
         {2400, 360},
+        {2800, 3200},
         {MG_PRESSURE_MAX, 0x2000}
     }
 };
@@ -28,7 +29,7 @@ static struct mg_map default_pressure_to_poly = {
 static struct mg_map default_speed_to_melody_volume = {
     .count = 6,
     .ranges = {
-        {0, 0}, {430, 35}, {900, 60}, {1400, 75}, {2000, 87}, {5000, 127},
+        {0, 0}, {230, 40}, {620, 66}, {1400, 90}, {2600, 110}, {5000, 127},
     }
 };
 
@@ -47,16 +48,16 @@ static struct mg_map default_speed_to_trompette_volume = {
 };
 
 static struct mg_map default_speed_to_chien = {
-    .count = 4,
+    .count = 5,
     .ranges = {
-        {0, 0}, {400, 80}, {1000, 120}, {4000, 127}
+        {0, 0}, {317, 71}, {948, 105}, {2129, 118}, {4000, 127}
     }
 };
 
 static struct mg_map default_chien_threshold_to_range = {
     .count = 3,
     .ranges = {
-        {0, 50}, {50, 0}, {100, -50},
+        {0, 50}, {13, 0}, {100, 0},
     }
 };
 
@@ -68,23 +69,30 @@ static struct mg_map default_speed_to_percussion = {
 };
 
 static struct mg_map default_keyvel_to_notevel = {
-    .count = 2,
+    .count = 5,
     .ranges = {
-        {0, 20}, {MG_KEYVEL_MAX, 127}
+        {0, 19},
+        {518, 54},
+        {1266, 92},
+        {2168, 116},
+        {MG_KEYVEL_MAX, 127},
     }
 };
 
 static struct mg_map default_keyvel_to_tangent = {
     .count = 2,
     .ranges = {
-        {0, 0}, {MG_KEYVEL_MAX, 63}
+        {0, 0}, {MG_KEYVEL_MAX, 29}
     }
 };
 
 static struct mg_map default_keyvel_to_keynoise = {
-    .count = 2,
+    .count = 4,
     .ranges = {
-        {0, 0}, {MG_KEYVEL_MAX, 127}
+        {0, 0},
+        {448, 30},
+        {1157, 64},
+        {MG_KEYVEL_MAX, 127},
     }
 };
 
