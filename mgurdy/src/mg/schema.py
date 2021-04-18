@@ -116,15 +116,15 @@ class MiscUISchema(Schema):
     multi_chien_threshold = fields.Boolean(default=False)
     mod1_key_mode = fields.Str(default='preset_prev')
     mod2_key_mode = fields.Str(default='preset_next')
-    wrap_groups = fields.Boolean(default=True)
-    wrap_presets = fields.Boolean(default=True)
+    wrap_groups = fields.Boolean(default=False)
+    wrap_presets = fields.Boolean(default=False)
     string_group_by_type = fields.Boolean(default=False)
 
 
 class MiscFeaturesSchema(Schema):
-    poly_base_note = fields.Boolean(default=True)
-    poly_pitch_bend = fields.Boolean(default=True)
-    string_count = fields.Int(default=1, validate=validate.Range(min=1, max=3))
+    poly_base_note = fields.Boolean(default=False)
+    poly_pitch_bend = fields.Boolean(default=False)
+    string_count = fields.Int(default=3, validate=validate.Range(min=1, max=3))
 
 
 class MiscKeyboardSchema(Schema):
@@ -137,7 +137,7 @@ class MiscSchema(Schema):
     ui = fields.Nested(MiscUISchema)
     features = fields.Nested(MiscFeaturesSchema)
     keyboard = fields.Nested(MiscKeyboardSchema)
-    instrument_mode = fields.Str(default='simple_three')
+    instrument_mode = fields.Str(default='old_mg')
 
 
 class MidiSchema(Schema):
