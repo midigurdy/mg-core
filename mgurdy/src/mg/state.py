@@ -315,8 +315,8 @@ class State(EventEmitter):
         ui = data.get('ui', {})
         keyboard = data.get('keyboard', {})
 
-        _set(self, 'poly_base_note', features, 'poly_base_note', True, partial)
-        _set(self, 'poly_pitch_bend', features, 'poly_pitch_bend', True, partial)
+        _set(self, 'poly_base_note', features, 'poly_base_note', False, partial)
+        _set(self, 'poly_pitch_bend', features, 'poly_pitch_bend', False, partial)
 
         _set(self.ui, 'timeout', ui, 'timeout', 10, partial)
         _set(self.ui, 'brightness', ui, 'brightness', 80, partial)
@@ -326,7 +326,7 @@ class State(EventEmitter):
         _set(self, 'key_off_debounce', keyboard, 'key_off_debounce', 10, partial)
         _set(self, 'base_note_delay', keyboard, 'base_note_delay', 20, partial)
 
-        _set(self, 'instrument_mode', data, 'instrument_mode', 'simple_three', partial)
+        _set(self, 'instrument_mode', data, 'instrument_mode', 'old_mg', partial)
 
         if not self.set_instrument_mode(self.instrument_mode):
             _set(self, 'string_count', features, 'string_count', 1, partial)
